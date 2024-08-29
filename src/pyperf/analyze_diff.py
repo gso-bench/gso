@@ -3,7 +3,7 @@ import ast
 import re
 import argparse
 
-from constants import HOME_DIR, REPO_DIR
+from pyperf.constants import HOME_DIR, REPOS_DIR
 
 
 class FunctionVisitor(ast.NodeVisitor):
@@ -92,7 +92,7 @@ def get_modified_functions(repo_name, diff_file_path):
         lines = file.split("\n")
         file_change_line = lines[0]
         file_name = file_change_regex.match(file_change_line).group(1)
-        file_path = os.path.join(REPO_DIR, repo_name, file_name)
+        file_path = os.path.join(REPOS_DIR, repo_name, file_name)
         function_parents_map = parse_python_file_for_function_hierarchy(file_path)
         latest_function = None
 

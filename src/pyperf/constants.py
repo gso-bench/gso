@@ -3,4 +3,4 @@ from pathlib import Path
 
 
 HOME_DIR = Path(os.path.expanduser("~"))
-REPO_DIR = HOME_DIR / "buckets" / "my_repos"
+REPOS_DIR = HOME_DIR / "buckets" / "local_repoeval_bucket" / "repos"

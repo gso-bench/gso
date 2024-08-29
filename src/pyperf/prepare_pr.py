@@ -3,8 +3,9 @@ import argparse
 import requests
 from github import Github
 
-from templates import *
-from analyze_diff import get_modified_functions
+from pyperf.templates import *
+from pyperf.analyze_diff import get_modified_functions
+from pyperf.context import get_context_by_name
 
 
 class PRManager:
@@ -42,8 +43,13 @@ class PRManager:
 
         elif self.mode == "slice":
             modified_functions = get_modified_functions(self.repo_name, self.diff_file)
+
+            # NOTE: temporarily, pick function whose name(second elemtn) is 'async_serialize'
+            func = [f for f in modified_functions if f[1] == self.function_name][0]
+            context = get_context_by_name(self.repo_id, func[0], func[1])
+
             return PR_SUMMARY_SLICE.format(
-                function_name="function_name", sliced_context=modified_functions
+                function_name=args.function_name, sliced_context=modified_functions
             )
 
     def create_scripts(self):
@@ -89,6 +95,7 @@ if __name__ == "__main__":
         type=str,
         help="Mode of operation (diff or slice)",
         default="diff",
+        choices=["diff", "slice"],
     )
     parser.add_argument(
         "--function_name",
