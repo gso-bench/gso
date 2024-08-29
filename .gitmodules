@@ -1,0 +1,3 @@
+[submodule "src/r2e"]
+	path = src/r2e
+	url = https://github.com/r2e-project/r2e.git
