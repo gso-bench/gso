@@ -8,6 +8,7 @@ dependencies = [
     "rich>=13.8.0",
     "r2e",
     "pygithub>=2.4.0",
+    "r2e-test-server>=0.1.4",
 ]
 
 [build-system]

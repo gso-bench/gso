@@ -92,13 +92,10 @@ SETUP_SCRIPT = """
 BASE_COMMIT={base_commit}
 
 # Clone the repository
-git clone https://github.com/{repo_full_name}.git ~/buckets/my_repos/{repo_name}
-
-# Move the cloned repo to r2e's local path
-python ~/Projects/r2e/r2e/repo_builder/setup_repos.py --local_repo_path ~/buckets/my_repos/{repo_name}
+git clone https://github.com/{repo_full_name}.git ~/buckets/local_repoeval_bucket/repos/{repo_name}
 
 # Go to the local repo
-cd ~/buckets/local_repoeval_bucket/repos/LOCAL___{repo_name}
+cd ~/buckets/local_repoeval_bucket/repos/{repo_name}
 
 # Checkout the base commit
 git checkout $BASE_COMMIT
@@ -110,8 +107,8 @@ pip install -e .
 
 APPLY_PATCH_SCRIPT = """
 # Apply the patch to the target repository directory
-git -C ~/buckets/local_repoeval_bucket/repos/LOCAL___{repo_name} apply {diff_file}
+git -C ~/buckets/local_repoeval_bucket/repos/{repo_name} apply {diff_file}
 
 # Optionally, you might want to verify the patch application
-# git -C ~/buckets/local_repoeval_bucket/repos/LOCAL___{repo_name} diff
+# git -C ~/buckets/local_repoeval_bucket/repos/{repo_name} diff
 """

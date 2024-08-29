@@ -12,8 +12,8 @@ from utils import *
 dict_to_str = lambda x: json.dumps(x, indent=4)
 
 repo_data = {
-    "repo_id": "LOCAL___jax",
-    "repo_path": "/home/manishs/buckets/local_repoeval_bucket/repos/LOCAL___jax",
+    "repo_id": "jax",
+    "repo_path": "/home/manishs/buckets/local_repoeval_bucket/repos/jax",
 }
 
 function_data = {
@@ -23,7 +23,7 @@ function_data = {
 
 tests = {"generated_tests": {}}
 
-with open("./perftesting/sample_test.log", "r") as f:
+with open("sample_test.log", "r") as f:
     perf_test = f.read()
 
 ####### Setup the service #######

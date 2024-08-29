@@ -111,7 +111,7 @@ def get_modified_functions(repo_name, diff_file_path):
                     modified_functions.append((file_name, latest_function, parents))
                     latest_function = None
 
-    return set(modified_functions)
+    return list(set(modified_functions))
 
 
 if __name__ == "__main__":
