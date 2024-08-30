@@ -81,7 +81,8 @@ Repo Name: google/jax
 
 Function Name: {function_name}
 
-Function Code: {sliced_context}
+Function Code:
+{sliced_context}
 
 Please write a performance test for the function `{function_name}`.
 """

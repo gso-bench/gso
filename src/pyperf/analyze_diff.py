@@ -75,8 +75,8 @@ def split_diff_into_files(diff_text):
     return file_sections
 
 
-def get_modified_functions(repo_name, diff_file_path):
-    """Identify modified functions in the PR diff and their top-level functions."""
+def get_modified_constructs(repo_name, diff_file_path):
+    """Identify modified constructs in the PR diff and their top-level parents."""
     modified_functions = []
 
     with open(diff_file_path, "r") as diff_file:

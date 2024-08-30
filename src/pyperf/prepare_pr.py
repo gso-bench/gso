@@ -4,7 +4,7 @@ import requests
 from github import Github
 
 from pyperf.templates import *
-from pyperf.analyze_diff import get_modified_functions
+from pyperf.analyze_diff import get_modified_constructs
 from pyperf.context import get_context_by_name
 
 
@@ -42,14 +42,10 @@ class PRManager:
             return PR_SUMMARY_DIFF.format(title, description, files_changed, code_diff)
 
         elif self.mode == "slice":
-            modified_functions = get_modified_functions(self.repo_name, self.diff_file)
-
-            # NOTE: temporarily, pick function whose name(second elemtn) is 'async_serialize'
-            func = [f for f in modified_functions if f[1] == self.function_name][0]
-            context = get_context_by_name(self.repo_id, func[0], func[1])
-
+            constructs = get_modified_constructs(self.repo_name, self.diff_file)
             return PR_SUMMARY_SLICE.format(
-                function_name=args.function_name, sliced_context=modified_functions
+                function_name=args.function_name,
+                sliced_context=self._get_context(constructs),
             )
 
     def create_scripts(self):
@@ -74,6 +70,15 @@ class PRManager:
         )
 
         return setup_script, patch_script
+
+    def _get_context(self, modified_constructs: list) -> str:
+        context_str = ""
+        for f in modified_constructs:
+            fp, fn, parents = f
+            for p in parents:
+                context = get_context_by_name(self.repo_id, fp, p)
+                context_str += context.context
+        return context_str
 
 
 if __name__ == "__main__":

@@ -66,8 +66,6 @@ if __name__ == "__main__":
 
     repo_id = "google___jax"
     construct_name = "async_serialize"
-    func = [f for f in modified_functions if construct_name in f[2]][0]
-    parents = func[2]
 
     for f in modified_functions:
         fp, fn, parents = f
