@@ -9,6 +9,7 @@ dependencies = [
     "pygithub>=2.4.0",
     "r2e-test-server>=0.1.4",
     "r2e>=0.1.0",
+    "memory-profiler>=0.61.0",
 ]
 
 [build-system]

@@ -102,7 +102,7 @@ cd ~/buckets/local_repoeval_bucket/repos/{repo_name}
 git checkout $BASE_COMMIT
 
 # Build the repo
-pip install -e . 
+uv pip install -e . 
 """
 
 
