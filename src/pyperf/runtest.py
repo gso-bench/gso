@@ -12,7 +12,7 @@ from utils import *
 dict_to_str = lambda x: json.dumps(x, indent=4)
 
 repo_data = {
-    "repo_id": "jax",
+    "repo_id": None,
     "repo_path": "/home/manishs/buckets/local_repoeval_bucket/repos/jax",
 }
 

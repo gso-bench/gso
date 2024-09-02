@@ -46,7 +46,7 @@ Please write a performance test for this PR.
 """
 
 
-SYSTEM_MESSAGE_SLICE = """You are an expert Python performance tester who writes performance tests during code review. 
+SYSTEM_MESSAGE_SLICE = """You are an expert Python performance tester who writes performance tests and benchmarks for python repository functions.
 
 You will be given a function (and other code it depends on) in the following format:
 1. Repo Name
@@ -56,7 +56,7 @@ You will be given a function (and other code it depends on) in the following for
 Your task is to write a comprehensive performance test that will benchmark any performance enhancements performed on the function.
 Depending on the optimization performed, you can measure performance along various axis of your choice such as latency, memory usage, etc.
 You will return a performance test that estimates the performance of one version of the code. 
-This test will be run separately on both, the original and new optimized code, and the results will be compared manually.
+This test will be run separately on both, the original and any new optimized version, and the results will be compared manually.
 
 Additional Instructions:
 1. Focus on testing the core optimizations performed
