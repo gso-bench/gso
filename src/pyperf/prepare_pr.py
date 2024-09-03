@@ -43,6 +43,7 @@ class PRManager:
 
         elif self.mode == "slice":
             constructs = get_modified_constructs(self.repo_name, self.diff_file)
+            constructs = [c for c in constructs if c[1] == args.function_name]
             return PR_SUMMARY_SLICE.format(
                 function_name=args.function_name,
                 sliced_context=self._get_context(constructs),
