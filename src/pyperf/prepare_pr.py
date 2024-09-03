@@ -76,6 +76,8 @@ class PRManager:
         for f in modified_constructs:
             fp, fn, parents = f
             for p in parents:
+                if p == None:
+                    p = fn
                 context = get_context_by_name(self.repo_id, fp, p)
                 context_str += context.context
         return context_str
