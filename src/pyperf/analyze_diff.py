@@ -109,7 +109,6 @@ def get_modified_constructs(repo_name, diff_file_path):
                 if latest_function and file_name:
                     parents = function_parents_map.get(latest_function, latest_function)
                     modified_functions.append((file_name, latest_function, parents))
-                    latest_function = None
 
     return list(set(modified_functions))
 
