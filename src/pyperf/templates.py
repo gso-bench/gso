@@ -61,9 +61,10 @@ This test will be run separately on both, the original and any new optimized ver
 Additional Instructions:
 1. Focus on testing the core optimizations performed
 2. The performance test should be written in Python.
-3. You can use any libraries you want.
+3. You can use any libraries you want. I recommend `time` for latency and `memory_profiler` for memory usage.
 4. Warmup: Before the actual measurements, perform operations to stabilize the system if required.
 5. Repetitions: Run tests several times and calculate a more reliable average metric.
+6. Do not mock classes if they can be imported.
 
 Respond in the following manner:
 
