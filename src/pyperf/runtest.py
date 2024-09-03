@@ -9,6 +9,8 @@ import time
 
 from utils import *
 
+TEST_PR_PATCH = False
+
 dict_to_str = lambda x: json.dumps(x, indent=4)
 
 repo_data = {
@@ -17,8 +19,8 @@ repo_data = {
 }
 
 function_data = {
-    "funclass_names": ["async_serialize"],
-    "file_path": "jax/experimental/array_serialization/serialization.py",
+    "funclass_names": ["delete"],
+    "file_path": "jax/_src/numpy/lax_numpy.py",
 }
 
 tests = {"generated_tests": {}}
@@ -49,16 +51,14 @@ print("STDERR:\n", out["error"])
 print("STDOUT:\n", out["output"])
 
 
-# Apply the patch
-os.system("sh logs/google___jax_22114/apply_patch.sh")
-
-
 ####### Execute the performance test (AFTER PATCH) #######
 
-service.setup_codegen_mode()
-out = service.execute(perf_test)
+if TEST_PR_PATCH:
+    os.system("sh logs/google___jax_15890/apply_patch.sh")
+    service.setup_codegen_mode()
+    out = service.execute(perf_test)
 
-console.print()
-console.print(Text("After Optimization", style="bold green"))
-print("STDERR:\n", out["error"])
-print("STDOUT:\n", out["output"])
+    console.print()
+    console.print(Text("After Optimization", style="bold green"))
+    print("STDERR:\n", out["error"])
+    print("STDOUT:\n", out["output"])
