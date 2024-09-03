@@ -9,6 +9,7 @@ import time
 
 from utils import *
 
+PR_NUMBER = 22375
 TEST_PR_PATCH = False
 
 dict_to_str = lambda x: json.dumps(x, indent=4)
@@ -19,8 +20,8 @@ repo_data = {
 }
 
 function_data = {
-    "funclass_names": ["delete"],
-    "file_path": "jax/_src/numpy/lax_numpy.py",
+    "funclass_names": ["_in1d"],
+    "file_path": "jax/_src/numpy/setops.py",
 }
 
 tests = {"generated_tests": {}}
@@ -54,7 +55,7 @@ print("STDOUT:\n", out["output"])
 ####### Execute the performance test (AFTER PATCH) #######
 
 if TEST_PR_PATCH:
-    os.system("sh logs/google___jax_15890/apply_patch.sh")
+    os.system(f"sh logs/google___jax_{PR_NUMBER}/apply_patch.sh")
     service.setup_codegen_mode()
     out = service.execute(perf_test)
 
