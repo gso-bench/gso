@@ -1,16 +1,15 @@
 import fire
 
 from r2e.paths import EXTRACTED_DATA_DIR
-from r2e.models.fut import create_code_under_test
 from r2e.multiprocess import run_tasks_in_parallel_iter
 from r2e.llms.completions import LLMCompletions
 
 from pyperf.constants import TESTGEN_DIR
-from pyperf.generate.tests import Tests
 from pyperf.generate.task import TestGenTask
 from pyperf.generate.args import PerfTestGenArgs
 from pyperf.generate.context import get_context_wrapper
 from pyperf.generate.utils import get_generated_tests, timestamp
+from pyperf.models import Tests, create_code_under_test
 from pyperf.utils.data import load_functions, write_functions_under_test
 
 

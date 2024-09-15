@@ -1,6 +1,8 @@
 from typing import Any, Optional
 from pydantic import BaseModel
 
+from pyperf.models.tests import Tests
+
 
 class TestHistory(BaseModel):
     history: list[Tests] = []
