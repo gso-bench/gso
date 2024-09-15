@@ -62,3 +62,12 @@ def write_functions(
     data = [func.model_dump() for func in functions]
     with open(file_path, "w") as f:
         json.dump(data, f, indent=4)
+
+
+def write_functions_under_test(
+    functions: list[FunctionUnderTest | MethodUnderTest], file_path: str | Path
+) -> None:
+    """Write FUT data to disk."""
+    data = [func.model_dump() for func in functions]
+    with open(file_path, "w") as f:
+        json.dump(data, f, indent=4)

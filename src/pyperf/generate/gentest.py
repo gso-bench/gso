@@ -1,5 +1,7 @@
+import fire
+
 from r2e.paths import EXTRACTED_DATA_DIR
-from pyperf.paths import TESTGEN_DIR
+from pyperf.constants import TESTGEN_DIR
 
 
 from pyperf.generate.tests import Tests
@@ -40,7 +42,9 @@ class PerfTestGenerator:
         """Prepare tasks for generating tests"""
 
         # 1: generate context for each function
-        context_gen_tasks = [("sliced", func, 6000) for func in functions]
+        context_gen_tasks = [
+            (args.context_type, func, args.max_context_size) for func in functions
+        ]
         context_iter = run_tasks_in_parallel_iter(
             get_context_wrapper,
             context_gen_tasks,
