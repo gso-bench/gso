@@ -30,26 +30,14 @@ Performance Test:
 
 
 TASK_MESSAGE_FUNCTION = """
-Repo Name: google/jax
-
 Function Name: {function_name}
-
-Function Code:
-{sliced_context}
 
 Please write a performance test for the function `{function_name}`.
 """
 
 
 TASK_MESSAGE_METHOD = """
-Repo Name: google/jax
-
-Class Name: {class_name}
-
-Method Name: {method_name}
-
-Class Code:
-{sliced_context}
+Class Name: {class_name} | Method Name: {method_name}
 
 Please write a performance test for the method `{method_name}` in the class `{class_name}`.
 """
