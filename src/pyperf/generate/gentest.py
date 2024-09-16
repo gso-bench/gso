@@ -19,6 +19,7 @@ class PerfTestGenerator:
     def generate(args):
         """Generate performance tests for functions"""
         functions = load_functions(EXTRACTED_DATA_DIR / args.in_file)
+        functions = functions[:4]
         tasks = PerfTestGenerator.prepare_tasks(functions)
         payloads = [task.chat_messages for task in tasks]
         outputs = LLMCompletions.get_llm_completions(args, payloads)

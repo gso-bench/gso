@@ -1457,6 +1457,15 @@ wheels = [
 ]
 
 [[package]]
+name = "pip"
+version = "24.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/4d/87/fb90046e096a03aeab235e139436b3fe804cdd447ed2093b0d70eba3f7f8/pip-24.2.tar.gz", hash = "sha256:5b5e490b5e9cb275c879595064adce9ebd31b854e3e803740b72f9ccf34a45b8", size = 1922041 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d4/55/90db48d85f7689ec6f81c0db0622d704306c5284850383c090e6c7195a5c/pip-24.2-py3-none-any.whl", hash = "sha256:2cd581cf58ab7fcfca4ce8efa6dcacd0de5bf8d0a3eb9ec927e07405f4d9e2a2", size = 1815170 },
+]
+
+[[package]]
 name = "platformdirs"
 version = "4.2.2"
 source = { registry = "https://pypi.org/simple" }
@@ -1763,6 +1772,7 @@ dependencies = [
     { name = "fire" },
     { name = "flask" },
     { name = "memory-profiler" },
+    { name = "pip" },
     { name = "pygithub" },
     { name = "r2e" },
     { name = "r2e-test-server" },
@@ -1774,6 +1784,7 @@ requires-dist = [
     { name = "fire", specifier = ">=0.6.0" },
     { name = "flask", specifier = ">=3.0.3" },
     { name = "memory-profiler", specifier = ">=0.61.0" },
+    { name = "pip", specifier = ">=24.2" },
     { name = "pygithub", specifier = ">=2.4.0" },
     { name = "r2e", directory = "src/r2e" },
     { name = "r2e-test-server", directory = "src/r2e-test-server" },
