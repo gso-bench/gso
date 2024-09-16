@@ -1,4 +1,5 @@
 import fire
+from tqdm import tqdm
 import traceback
 
 from r2e.multiprocess import run_tasks_in_parallel_iter
@@ -28,7 +29,7 @@ class PerfTestRunner:
     @staticmethod
     def _run_futs_sequential(futs, args):
         new_futs = []
-        for fut in futs:
+        for i, fut in tqdm(enumerate(futs), desc="Running tests", total=len(futs)):
             port = args.port
             try:
                 output = run_fut_with_port(fut, port)
@@ -38,6 +39,12 @@ class PerfTestRunner:
                 print(tb)
                 continue
             new_futs.append(output[2])
+
+            if (i + 1) % 20 == 0:
+                write_functions_under_test(
+                    new_futs, TESTGEN_DIR / f"{args.exp_id}_out.json"
+                )
+
         return new_futs
 
     @staticmethod

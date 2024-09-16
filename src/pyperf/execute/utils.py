@@ -25,7 +25,13 @@ def get_fut_data(
     fut_files = {x[1] for x in fut_data}
     assert len(fut_files) == 1, "All functions must belong to the same file"
 
-    fut_data = json.dumps({"funclass_names": fut_names, "file_path": fut_files.pop()})
+    file_path = fut_files.pop()
+
+    # TODO: fix this in r2e if possible
+    if "lib/linux" in file_path:
+        file_path = file_path.replace("lib/linux", "lib.linux")
+
+    fut_data = json.dumps({"funclass_names": fut_names, "file_path": file_path})
 
     tests = dict(ChainMap(*[fut.tests for fut in futs]))
     test_data = json.dumps({"generated_tests": tests})
