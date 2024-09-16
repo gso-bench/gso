@@ -21,7 +21,7 @@ class PerfTestRunner:
         if args.multiprocess == 0:
             new_futs = PerfTestRunner._run_futs_sequential(futs, args)
         else:
-            new_futs = PerfTestRunner._run_futs_in_parallel(futs, args)
+            new_futs = PerfTestRunner._run_futs_parallel(futs, args)
 
         write_functions_under_test(new_futs, TESTGEN_DIR / f"{args.exp_id}_out.json")
 
@@ -41,7 +41,7 @@ class PerfTestRunner:
         return new_futs
 
     @staticmethod
-    def _run_futs_in_parallel(futs, args):
+    def _run_futs_parallel(futs, args):
         new_futs = []
         outputs = run_tasks_in_parallel_iter(
             run_fut_with_port_mp,
