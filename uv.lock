@@ -1761,6 +1761,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "fire" },
+    { name = "flask" },
     { name = "memory-profiler" },
     { name = "pygithub" },
     { name = "r2e" },
@@ -1771,6 +1772,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "fire", specifier = ">=0.6.0" },
+    { name = "flask", specifier = ">=3.0.3" },
     { name = "memory-profiler", specifier = ">=0.61.0" },
     { name = "pygithub", specifier = ">=2.4.0" },
     { name = "r2e", directory = "src/r2e" },

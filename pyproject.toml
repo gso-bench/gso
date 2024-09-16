@@ -11,6 +11,7 @@ dependencies = [
     "r2e>=0.1.0",
     "memory-profiler>=0.61.0",
     "fire>=0.6.0",
+    "flask>=3.0.3",
 ]
 
 [build-system]
