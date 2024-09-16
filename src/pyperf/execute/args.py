@@ -1,12 +1,7 @@
 from pydantic import BaseModel, Field
 
 
-class ExecutionArgs(BaseModel):
-    exp_id: str = Field(
-        "temp_generate",
-        description="The experiment ID used during test generation",
-    )
-
+class PerfTestRunArgs(BaseModel):
     multiprocess: int = Field(
         20,
         description="The number of processes to use for executing the functions and methods",
@@ -16,4 +11,14 @@ class ExecutionArgs(BaseModel):
 
     timeout_per_task: int = Field(
         180, description="The timeout for the execution service in seconds"
+    )
+
+    in_file: str = Field(
+        None,
+        description="The input file for the test runner. Usually {exp_id}_generate.json",
+    )
+
+    exp_id: str = Field(
+        "temp",
+        description="Experiment ID used for prefixing the generated test execution file.",
     )

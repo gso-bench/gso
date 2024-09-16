@@ -2,35 +2,33 @@ import rpyc
 
 
 class ServiceManager:
-    def __init__(self, repo_id: str, port: int, local: bool = False):
-        self.repo_id = repo_id
-        self.port = port
-        self.local = local
+    @staticmethod
+    def get_service(repo_id: str, port: int, local: bool = False):
+        if local:
+            return ServiceManager.get_service_local(port)
+        return ServiceManager.get_service_docker(repo_id, port)
 
-    def get_service(self):
-        if self.local:
-            return self.get_service_local()
-        return self.get_service_docker()
-
-    def get_service_local(self):
+    @staticmethod
+    def get_service_local(port: int):
         try:
-            conn = rpyc.connect("localhost", self.port)
+            conn = rpyc.connect("localhost", port)
         except Exception as e:
             print(f"Connection error -- {repr(e)}")
             raise e
         return conn
 
-    def get_service_docker(self):
-        # simulator = DockerSimulator(repo_id=self.repo_id, port=self.port)
+    @staticmethod
+    def get_service_docker(repo_id: str, port: int):
+        # simulator = DockerSimulator(repo_id=repo_id, port=port)
         # try:
         #     conn = rpyc.connect(
         #         "localhost",
-        #         self.port,
+        #         port,
         #         keepalive=True,
         #         config={"sync_request_timeout": 180},
         #     )
         # except Exception as e:
-        #     print(f"Connection error -- {self.repo_id} -- {repr(e)}")
+        #     print(f"Connection error -- {repo_id} -- {repr(e)}")
         #     simulator.stop_container()
         #     raise e
         # return simulator, conn
