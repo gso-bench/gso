@@ -15,7 +15,7 @@ class ServiceManager:
         except Exception as e:
             print(f"Connection error -- {repr(e)}")
             raise e
-        return conn
+        return None, conn
 
     @staticmethod
     def get_service_docker(repo_id: str, port: int):

@@ -31,7 +31,8 @@ def run_fut_with_port(
         tb = traceback.format_exc()
         pass
     finally:
-        simulator.stop_container()
+        if simulator:
+            simulator.stop_container()
         conn.close()
 
     fut.test_history.update_exec_stats({"error": tb})
@@ -55,7 +56,7 @@ def exec_perf_futs(
     service = conn.root
     assert service is not None, "Test service is None"
 
-    repo_data, fut_data, test_data = get_fut_data(futs)
+    repo_data, fut_data, test_data = get_fut_data(futs, local=True)
 
     ####### Setup the service #######
     service.setup_repo(repo_data)
@@ -63,24 +64,25 @@ def exec_perf_futs(
     service.setup_test(test_data)
 
     init_response = service.init()
-    init_output = str(init_response.get("output", None))
-    init_error = str(init_response.get("error", None))
+    init_output = str(init_response["output"])
+    init_error = str(init_response["error"])
     if init_error:
         futs[0].test_history.update_exec_stats(
             {"output": init_output, "error": init_error}
         )
+        print(f"Error@{futs[0].id}:\n{init_error}")
         return False, init_error, futs[0]
 
     ####### Execute the performance test #######
 
     submit_response = service.submit()  # TODO: should use execute instead??
-    submit_error = str(submit_response.get("error", None))
+    submit_error = str(submit_response["error"])
 
     if "logs" not in submit_response:
         futs[0].test_history.update_exec_stats({"error": submit_error})
         return False, submit_error, futs[0]
 
-    submit_logs = json.loads(submit_response.get("logs", {}))
+    submit_logs = json.loads(submit_response["logs"])
     futs[0].test_history.update_exec_stats(submit_logs)
 
     valids = [x["valid"] for x in submit_logs["run_tests_logs"].values()]

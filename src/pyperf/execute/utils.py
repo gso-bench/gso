@@ -1,18 +1,26 @@
 import json
 from collections import ChainMap
 
-
+from pyperf.constants import REPOS_DIR
 from pyperf.models import FunctionUnderTest, MethodUnderTest
 
 
 def get_fut_data(
-    futs: list[FunctionUnderTest | MethodUnderTest],
+    futs: list[FunctionUnderTest | MethodUnderTest], local: bool = False
 ) -> tuple[str, str, str]:
     repos = {fut.repo for fut in futs}
     assert len(repos) == 1, "All functions must belong to the same repo"
 
     repo = repos.pop()
-    repo_data = json.dumps(repo.execution_repo_data)
+    repo_data = repo.execution_repo_data
+
+    if local:
+        repo_path = str(REPOS_DIR / repo.repo_id)
+        repo_data = json.dumps({"repo_id": None, "repo_path": repo_path})
+    else:
+        repo_data = json.dumps(repo.execution_repo_data)
+
+    print(repo_data)
 
     fut_data = [fut.execution_fut_data for fut in futs]
     fut_names = [x[0] for x in fut_data]
