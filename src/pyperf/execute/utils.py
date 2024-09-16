@@ -20,8 +20,6 @@ def get_fut_data(
     else:
         repo_data = json.dumps(repo.execution_repo_data)
 
-    print(repo_data)
-
     fut_data = [fut.execution_fut_data for fut in futs]
     fut_names = [x[0] for x in fut_data]
     fut_files = {x[1] for x in fut_data}

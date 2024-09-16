@@ -70,19 +70,21 @@ def exec_perf_futs(
         futs[0].test_history.update_exec_stats(
             {"output": init_output, "error": init_error}
         )
-        print(f"Error@{futs[0].id}:\n{init_error}")
+        print(f"Init Error@{futs[0].id}:\n{init_error}")
         return False, init_error, futs[0]
 
     ####### Execute the performance test #######
 
-    submit_response = service.submit()  # TODO: should use execute instead??
+    submit_response = service.submit()
     submit_error = str(submit_response["error"])
 
     if "logs" not in submit_response:
         futs[0].test_history.update_exec_stats({"error": submit_error})
+        print(f"Submit Error@{futs[0].id}:\n{submit_error}")
         return False, submit_error, futs[0]
 
     submit_logs = json.loads(submit_response["logs"])
+    submit_logs["output"] = submit_response["output"]
     futs[0].test_history.update_exec_stats(submit_logs)
 
     valids = [x["valid"] for x in submit_logs["run_tests_logs"].values()]
