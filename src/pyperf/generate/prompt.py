@@ -8,12 +8,12 @@ This test will be run separately on both, the original and any new optimized ver
 Additional Instructions:
 1. Focus on testing the performance only, not the correctness.
 2. Write the performance test in the style of a unittest test case using the `unittest` library.
-3. You can use any libraries you want for measurement. I recommend `time` for latency and `memory_profiler` for memory usage.
-4. Warmup: Before the actual measurements, perform operations to stabilize the system if required.
-5. Repetitions: Run tests several times and calculate a more reliable average metric.
-6. Do not mock classes and functions as much as possible if they can be imported.
-7. Eventhough you are using the unittest library, you are not required to write any assertions.
-8. Eventhough you are using the unittest library, you must not forget key aspects of performance testing such as warmup, stability, scaling, etc.
+3. Do not mock classes and functions as much as possible if they can be imported.
+4. Eventhough you are using the unittest library, you are not required to write any assertions.
+5. Eventhough you are using the unittest library, you must not forget key aspects of performance testing such as warmup, repetitions, scaling, etc.
+6. You can use any libraries you want for measurement. I recommend `time` for latency and `memory_profiler` for memory usage.
+7. Warmup: Before the actual measurements, perform operations to stabilize the system if required.
+8. Repetitions: Run tests several times and calculate a more reliable average metric.
 
 
 Respond in the following manner:
