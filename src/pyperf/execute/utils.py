@@ -1,4 +1,3 @@
-import rpyc
 import json
 
 from rich.text import Text
@@ -7,31 +6,6 @@ from rich.panel import Panel
 
 
 console = Console()
-
-
-def get_service():
-    conn = rpyc.connect("localhost", 3006)
-    service = conn.root
-    return service
-
-
-def get_repo_data(repo):
-    return json.dumps(
-        {
-            "repo_id": repo.repo_id,
-            "repo_path": repo.repo_path,
-        }
-    )
-
-
-def get_function_data(func_meth):
-    name, file_path = func_meth.execution_fut_data
-    return json.dumps(
-        {
-            "funclass_names": [name],
-            "file_path": file_path,
-        }
-    )
 
 
 def get_generated_tests(fut):
