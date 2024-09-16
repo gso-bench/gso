@@ -20,3 +20,4 @@ build-backend = "hatchling.build"
 
 [tool.uv.sources]
 r2e = { path = "src/r2e" }
+r2e-test-server = { path = "src/r2e-test-server" }

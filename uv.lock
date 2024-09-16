@@ -1776,7 +1776,7 @@ requires-dist = [
     { name = "memory-profiler", specifier = ">=0.61.0" },
     { name = "pygithub", specifier = ">=2.4.0" },
     { name = "r2e", directory = "src/r2e" },
-    { name = "r2e-test-server", specifier = ">=0.1.4" },
+    { name = "r2e-test-server", directory = "src/r2e-test-server" },
     { name = "rich", specifier = ">=13.8.0" },
 ]
 
@@ -1993,7 +1993,7 @@ requires-dist = [
 [[package]]
 name = "r2e-test-server"
 version = "0.1.5"
-source = { registry = "https://pypi.org/simple" }
+source = { directory = "src/r2e-test-server" }
 dependencies = [
     { name = "astor" },
     { name = "coverage" },
@@ -2001,9 +2001,14 @@ dependencies = [
     { name = "rpyc" },
     { name = "typer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/34/75/c97e77c268a9b73089e07d14e7944d8e971ac552c538ab126ed7204bb12c/r2e_test_server-0.1.5.tar.gz", hash = "sha256:96272a4af6c9e0f3642b888398ff6e068713e154a3089acd2e1794b034e96f94", size = 13557 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/c6/40/39e1f5caa807fe3b30f043552445fb71504176c03b4708930247cf375278/r2e_test_server-0.1.5-py3-none-any.whl", hash = "sha256:6f00a33d82e38ab6d884bfbcaec224b4bd40238dc45d2be98e5700cafb665fbf", size = 17840 },
+
+[package.metadata]
+requires-dist = [
+    { name = "astor", specifier = ">=0.8.1,<0.9.0" },
+    { name = "coverage", specifier = ">=7,<8" },
+    { name = "pyright", specifier = ">=1.1.360,<2.0.0" },
+    { name = "rpyc", specifier = ">=6.0.0,<7.0.0" },
+    { name = "typer", specifier = ">=0.12.3,<0.13.0" },
 ]
 
 [[package]]
