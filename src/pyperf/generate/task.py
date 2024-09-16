@@ -45,18 +45,3 @@ class TestGenTask:
                 "content": task_message,
             },
         ]
-
-    def update(self, generated_test: str):
-        self.generated_test = generated_test
-        self.chat_messages.extend(
-            [
-                {
-                    "role": "assistant",
-                    "content": f"```python\n{generated_test}\n```",
-                },
-                {
-                    "role": "user",
-                    "content": OVERSAMPLE_MESSAGE,
-                },
-            ]
-        )

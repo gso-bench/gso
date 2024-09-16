@@ -1,8 +1,11 @@
+import json
+import rpyc
 import random
 import traceback
 
 from pyperf.models import FunctionUnderTest, MethodUnderTest
 from pyperf.execute.service import ServiceManager
+from pyperf.execute.utils import get_fut_data
 
 
 def run_fut_with_port_mp(args) -> tuple[bool, str, FunctionUnderTest | MethodUnderTest]:
@@ -23,7 +26,7 @@ def run_fut_with_port(
         return False, repr(e), fut
 
     try:
-        return self_equiv_futs([fut], conn)
+        return exec_perf_futs([fut], conn)
     except Exception as e:
         tb = traceback.format_exc()
         pass
@@ -35,3 +38,50 @@ def run_fut_with_port(
     print(f"Error@{fut.repo_id}:\n{tb}")
 
     return False, tb, fut
+
+
+def exec_perf_futs(
+    futs: list[FunctionUnderTest | MethodUnderTest], conn: rpyc.Connection
+) -> tuple[bool, str, FunctionUnderTest | MethodUnderTest]:
+    """Executes performance tests for given futs via the service client
+
+    Args:
+        futs (list[FunctionUnderTest | MethodUnderTest]): list of functions under test
+        conn (rpyc.Connection): connection to the service client
+
+    Returns:
+        tuple[bool, str, FunctionUnderTest | MethodUnderTest]: success, error, fut
+    """
+    service = conn.root
+    assert service is not None, "Test service is None"
+
+    repo_data, fut_data, test_data = get_fut_data(futs)
+
+    ####### Setup the service #######
+    service.setup_repo(repo_data)
+    service.setup_function(fut_data)
+    service.setup_test(test_data)
+
+    init_response = service.init()
+    init_output = str(init_response.get("output", None))
+    init_error = str(init_response.get("error", None))
+    if init_error:
+        futs[0].test_history.update_exec_stats(
+            {"output": init_output, "error": init_error}
+        )
+        return False, init_error, futs[0]
+
+    ####### Execute the performance test #######
+
+    submit_response = service.submit()  # TODO: should use execute instead??
+    submit_error = str(submit_response.get("error", None))
+
+    if "logs" not in submit_response:
+        futs[0].test_history.update_exec_stats({"error": submit_error})
+        return False, submit_error, futs[0]
+
+    submit_logs = json.loads(submit_response.get("logs", {}))
+    futs[0].test_history.update_exec_stats(submit_logs)
+
+    valids = [x["valid"] for x in submit_logs["run_tests_logs"].values()]
+    return all(valids), submit_error, futs[0]

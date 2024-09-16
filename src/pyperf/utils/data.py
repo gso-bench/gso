@@ -3,7 +3,8 @@
 import json
 from pathlib import Path
 
-from r2e.models import Function, Method, FunctionUnderTest, MethodUnderTest
+from r2e.models import Function, Method
+from pyperf.models import FunctionUnderTest, MethodUnderTest
 
 
 def load_json(file_path: str | Path) -> dict | list:
