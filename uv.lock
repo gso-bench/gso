@@ -1815,6 +1815,7 @@ dependencies = [
     { name = "r2e" },
     { name = "r2e-test-server" },
     { name = "rich" },
+    { name = "seaborn" },
 ]
 
 [package.metadata]
@@ -1829,6 +1830,7 @@ requires-dist = [
     { name = "r2e", directory = "src/r2e" },
     { name = "r2e-test-server", directory = "src/r2e-test-server" },
     { name = "rich", specifier = ">=13.8.0" },
+    { name = "seaborn", specifier = ">=0.13.2" },
 ]
 
 [[package]]
