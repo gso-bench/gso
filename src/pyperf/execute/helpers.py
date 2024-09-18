@@ -66,7 +66,10 @@ def exec_perf_futs(
     init_response = service.init()
     init_output = str(init_response["output"])
     init_error = str(init_response["error"])
-    if init_error:
+
+    # NOTE hack to ignore invalid escapes in docstrings
+    # TODO remove once python versions are set according to repo)
+    if init_error and not "SyntaxWarning: invalid escape sequence" in init_error:
         futs[0].test_history.update_exec_stats(
             {"output": init_output, "error": init_error}
         )

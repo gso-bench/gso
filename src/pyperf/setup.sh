@@ -30,5 +30,9 @@ python src/r2e/r2e/repo_builder/extract_func_methods.py --exp_id $EXP_ID --overw
 
 # cd to the repo and install it
 cd ~/buckets/local_repoeval_bucket/repos/$REPO_NAME
+uv pip install libpython
 uv pip install -r requirements_dev.txt
+uv run setup.py build_ext --inplace
 uv run setup.py install
+uv pip install xarray
+uv pip install sympl
