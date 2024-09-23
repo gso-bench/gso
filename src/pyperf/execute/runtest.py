@@ -9,6 +9,7 @@ from pyperf.models import FunctionUnderTest, MethodUnderTest
 from pyperf.utils.data import load_functions_under_test, write_functions_under_test
 from pyperf.execute.args import PerfTestRunArgs
 from pyperf.execute.helpers import run_fut_with_port, run_fut_with_port_mp
+from pyperf.execute.service import ServiceManager
 
 
 class PerfTestRunner:
@@ -24,6 +25,7 @@ class PerfTestRunner:
         else:
             new_futs = PerfTestRunner._run_futs_parallel(futs, args)
 
+        ServiceManager.shutdown()
         write_functions_under_test(new_futs, TESTGEN_DIR / f"{args.exp_id}_out.json")
 
     @staticmethod
