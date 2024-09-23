@@ -19,7 +19,6 @@ def run_fut_with_port(
     fut: FunctionUnderTest | MethodUnderTest, port: int
 ) -> tuple[bool, str, FunctionUnderTest | MethodUnderTest]:
     try:
-        print(f"Running {fut.id} | port {port}")
         simulator, conn = ServiceManager.get_service(fut.repo_id, port, local=True)
     except Exception as e:
         print("Service error@", fut.repo_id, repr(e))
