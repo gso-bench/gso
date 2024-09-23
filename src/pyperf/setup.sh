@@ -48,9 +48,10 @@ cd ~/buckets/local_repoeval_bucket/repos/$REPO_NAME
 
 ### pylint
 # uv pip install -e .
+# uv pip install sphinx
 
 
-# ### mpi4py
+### mpi4py
 export MPICC=/usr/bin/mpicc.mpich
 export MPICXX=/usr/bin/mpicxx.mpich
 export LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH
