@@ -42,6 +42,8 @@ class ServiceManager:
                 ServiceManager.server_threads[port] = t
                 time.sleep(3)
 
+            # TODO if port is used, retry with a new port
+
             # connect to the server
             _, conn = ServiceManager.connect_local(port)
 
