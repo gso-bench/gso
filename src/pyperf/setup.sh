@@ -42,5 +42,18 @@ cd ~/buckets/local_repoeval_bucket/repos/$REPO_NAME
 
 
 ### astropy
-uv pip install -e .
-uv pip install numpy==1.26.4
+# uv pip install -e .
+# uv pip install numpy==1.26.4
+
+
+### pylint
+# uv pip install -e .
+
+
+# ### mpi4py
+export MPICC=/usr/bin/mpicc.mpich
+export MPICXX=/usr/bin/mpicxx.mpich
+export LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH
+sudo apt-get install libmpich-dev libopenmpi-dev
+uv pip install -e . -v
+
