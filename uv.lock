@@ -1100,6 +1100,22 @@ wheels = [
 ]
 
 [[package]]
+name = "line-profiler"
+version = "4.1.3"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/0a/99/c6b30c61802238cfbb89d23dff4ddec6f6221e3e39c2483f49a089cdb6d8/line_profiler-4.1.3.tar.gz", hash = "sha256:e5f1123c3672c3218ba063c23bd64a51159e44649fed6780b993c781fb5ed318", size = 196850 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/1d/a1/0aee6ac8d3fd8e56c49561490c81ad91dbb173baf0f780a0bde397e9f5c6/line_profiler-4.1.3-cp312-cp312-macosx_10_9_universal2.whl", hash = "sha256:8ae10578f1325772ccfa2833288d826e4bc781214d74b87331a6b7e5793252ca", size = 219108 },
+    { url = "https://files.pythonhosted.org/packages/4e/72/5d1d79ef5c87d9db8388115c2ffa44d3d2571124ccc22b7dd6b39fde1991/line_profiler-4.1.3-cp312-cp312-macosx_10_9_x86_64.whl", hash = "sha256:b7c89c68379879d3a11c5e76499f0f7a08683436762af6bf51db126d3cb9cdd9", size = 139926 },
+    { url = "https://files.pythonhosted.org/packages/5a/1e/26b929aa28f5e2da8ad889e8c78262a4ea03ebb7940f66def8d45492665a/line_profiler-4.1.3-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:b9f4abf9ecb8b508d96420dde44d54a8484e73468132229bbba2229283a7e9fb", size = 132578 },
+    { url = "https://files.pythonhosted.org/packages/05/b7/1cf7cbcb05727cc3c1a55811531ca934550a8e3324a9d82c83f3239a20f3/line_profiler-4.1.3-cp312-cp312-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:d12bf40ed654ad1d5c132be172054b9ec5ae3ba138ca2099002075fb14396a64", size = 691966 },
+    { url = "https://files.pythonhosted.org/packages/c9/1b/dfc61634c1c1f3f966463db4af7d52046b0018290fd9205df8fd5127b477/line_profiler-4.1.3-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:56d17f3bf22b9c7d72b3cb2d283d71152f4cc98e8ba88e720c743b2e3d9be6ad", size = 720642 },
+    { url = "https://files.pythonhosted.org/packages/0a/ba/285c4e0c11d79cdec8c7178d46d4759b33d878e05aab5a671382c48aff14/line_profiler-4.1.3-cp312-cp312-musllinux_1_1_i686.whl", hash = "sha256:9d7c7593ae86215d99d1d32e4b92ed6ace2ac8388aab781b74bf97d44e72ff1f", size = 1289226 },
+    { url = "https://files.pythonhosted.org/packages/58/46/8b59689a7d523884633fcc73cdf480caeb7900b862c1f62fd2d19f74598c/line_profiler-4.1.3-cp312-cp312-musllinux_1_1_x86_64.whl", hash = "sha256:248f16ba356ac1e19be834b0bdaf29c95c1c9229beaa63e0e3aad9aa3edfc012", size = 1258523 },
+    { url = "https://files.pythonhosted.org/packages/85/b5/8564ce008e10e5206d3f6b6a28c750395f1bdb44bed9351d61acf3d3c8ba/line_profiler-4.1.3-cp312-cp312-win_amd64.whl", hash = "sha256:b85468d30ed16e362e8a044df0f331796c6ec5a76a55e88aae57078a2eec6afa", size = 126614 },
+]
+
+[[package]]
 name = "markdown-it-py"
 version = "3.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1788,6 +1804,7 @@ dependencies = [
     { name = "fire" },
     { name = "flask" },
     { name = "fuzzywuzzy" },
+    { name = "line-profiler" },
     { name = "memory-profiler" },
     { name = "pip" },
     { name = "pygithub" },
@@ -1803,6 +1820,7 @@ requires-dist = [
     { name = "fire", specifier = ">=0.6.0" },
     { name = "flask", specifier = ">=3.0.3" },
     { name = "fuzzywuzzy", specifier = ">=0.18.0" },
+    { name = "line-profiler", specifier = ">=4.1.3" },
     { name = "memory-profiler", specifier = ">=0.61.0" },
     { name = "pip", specifier = ">=24.2" },
     { name = "pygithub", specifier = ">=2.4.0" },
