@@ -52,19 +52,29 @@ class PerfTestRunner:
     @staticmethod
     def _run_futs_parallel(futs, args):
         new_futs = []
-        outputs = run_tasks_in_parallel_iter(
-            run_fut_with_port_mp,
-            futs,
-            num_workers=args.multiprocess,
-            timeout_per_task=args.timeout_per_task,
-            use_progress_bar=True,
-        )
 
-        for o in outputs:
-            if o.is_success():
-                new_futs.append(o.result[2])  # type: ignore
-            else:
-                print(f"Error: {o.exception_tb}")
+        for i in range(0, len(futs), args.batch_size):
+            batch = futs[i : i + args.batch_size]
+
+            outputs = run_tasks_in_parallel_iter(
+                run_fut_with_port_mp,
+                batch,
+                num_workers=args.multiprocess,
+                timeout_per_task=args.timeout_per_task,
+                use_progress_bar=True,
+            )
+
+            for o in outputs:
+                if o.is_success():
+                    new_futs.append(o.result[2])
+                else:
+                    print(f"Error: {o.exception_tb}")
+
+            ServiceManager.shutdown()
+            write_functions_under_test(
+                new_futs, TESTGEN_DIR / f"{args.exp_id}_out.json"
+            )
+
         return new_futs
 
 
