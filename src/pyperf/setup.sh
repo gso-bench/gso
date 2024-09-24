@@ -44,7 +44,7 @@ cd ~/buckets/local_repoeval_bucket/repos/$REPO_NAME
 ### astropy
 # uv pip install -e .
 # uv pip install numpy==1.26.4
-
+# uv pip install sphinx
 
 ### pylint
 # uv pip install -e .
