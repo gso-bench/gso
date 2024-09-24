@@ -164,5 +164,4 @@ cython_debug/
 # Project specific
 logs
 install_logs
-app.py
 analyze.ipynb
