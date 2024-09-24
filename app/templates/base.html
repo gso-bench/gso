@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Performance Test Results</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script>
+        function openTab(evt, tabName) {
+            var parent = evt.currentTarget.closest('.test-info');
+            var tabcontent = parent.getElementsByClassName("instrument-tabcontent");
+            for (var i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            var tablinks = parent.getElementsByClassName("tablinks");
+            for (var i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            parent.querySelector("#" + tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+        }
+
+        function openExecutionTab(evt, tabName) {
+            var parent = evt.currentTarget.closest('.test-info');
+            var tabcontent = parent.getElementsByClassName("execution-tabcontent");
+            for (var i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            var tablinks = parent.getElementsByClassName("execution-tablinks");
+            for (var i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            parent.querySelector("#" + tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+        }
+
+        // Open all tables and Summary tabs by default
+        window.onload = function() {
+            var allTableViews = document.querySelectorAll('[id^="TableView"]');
+            var allTableButtons = document.querySelectorAll('.tablinks:nth-child(1)');
+            var allSummaryTabs = document.querySelectorAll('[id^="Summary"]');
+            var allSummaryButtons = document.querySelectorAll('.execution-tablinks:nth-child(1)');
+            
+            allTableViews.forEach(function(tableView) {
+                tableView.style.display = "block";
+            });
+            
+            allTableButtons.forEach(function(button) {
+                button.classList.add("active");
+            });
+
+            allSummaryTabs.forEach(function(sumTab) {
+                sumTab.style.display = "block";
+            });
+
+            allSummaryButtons.forEach(function(button) {
+                button.classList.add("active");
+            });
+        };
+    </script>
+</head>
+<body>
+    <h1>Performance Test Results</h1>
+    <div class="summary">
+        <h2>Overall Summary</h2>
+        <div class="summary-item">Total Functions: <strong>{{ total_functions }}</strong></div>
+        <div class="summary-item">Successful Tests: <strong class="success">{{ successful_tests }}</strong></div>
+        <div class="summary-item">Failed Tests: <strong class="error">{{ failed_tests }}</strong></div>
+        <div class="summary-item">Errors: <strong class="warning">{{ errors }}</strong></div>
+    </div>
+    <div class="filter-search-container">
+        <div class="filter-buttons">
+            <a href="?filter=all&remove_tests={{ 'true' if remove_tests else 'false' }}" class="all {{ 'active' if filter_type == 'all' }}">All</a>
+            <a href="?filter=success&remove_tests={{ 'true' if remove_tests else 'false' }}" class="success {{ 'active' if filter_type == 'success' }}">Successful Tests</a>
+            <a href="?filter=failure&remove_tests={{ 'true' if remove_tests else 'false' }}" class="failure {{ 'active' if filter_type == 'failure' }}">Failed Tests</a>
+            <a href="?filter=error&remove_tests={{ 'true' if remove_tests else 'false' }}" class="error {{ 'active' if filter_type == 'error' }}">Errors</a>
+            <a href="?filter={{ filter_type }}&remove_tests={{ 'false' if remove_tests else 'true' }}" class="removetests {{ 'active' if remove_tests }}">{{ 'Include Tests' if remove_tests else 'Remove Tests' }}</a>
+        </div>
+        <div class="search-bar">
+            <form action="/" method="get">
+                <input type="hidden" name="filter" value="{{ filter_type }}">
+                <input type="hidden" name="remove_tests" value="{{ 'true' if remove_tests else 'false' }}">
+                <input type="text" name="search" placeholder="Search function name" value="{{ search_query }}">
+                <input type="submit" value="Search">
+            </form>
+        </div>
+    </div>
+    {% for item in data %}
+        {% set il = loop %}
+        <div class="function-info">
+            <h2>Function: {{ item.function_id.identifier if item.function_id else item.method_id.identifier }}</h2>
+            <h3 class="status">Status:
+                {% if item.test_history.history[0].exec_stats.error %}
+                    <span class="warning">Error</span>
+                {% elif item.test_history.history[0].exec_stats.run_tests_logs.test_0 %}
+                    {% if item.test_history.history[0].exec_stats.run_tests_logs.test_0.passed_count > 0 %}
+                        <span class="success">Test Success</span>
+                    {% else %}
+                        <span class="error">Test Failure</span>
+                    {% endif %}
+                {% else %}
+                    <span class="warning">❓ Unknown</span>
+                {% endif %}
+            </h3>
+            <h3>Function Code:</h3>
+            <pre>{{ item.function_code if item.function_code else item.method_code }}</pre>
+        </div>
+        <div class="test-info">
+            <h3>Test History:</h3>
+            {% for test in item.test_history.history %}
+                {% set tl = loop %}
+                <h4>Test:</h4>
+                <pre>{{ test.tests.test_0 }}</pre>
+                <h4>Execution Output:</h4>
+                    <div class="tab execution-tab">
+                        <button class="tablinks execution-tablinks" onclick="openExecutionTab(event, 'Summary{{ il.index }}_{{ tl.index }}')">Test Results</button>
+                        <button class="tablinks execution-tablinks" onclick="openExecutionTab(event, 'STDERR{{ il.index }}_{{ tl.index }}')">STDERR</button>
+                        <button class="tablinks execution-tablinks" onclick="openExecutionTab(event, 'STDOUT{{ il.index }}_{{ tl.index }}')">STDOUT</button>
+                    </div>
+
+                    <div id="Summary{{ il.index }}_{{ tl.index }}" class="tabcontent execution-tabcontent">
+                        <pre>
+Passed: {{ test.exec_stats.run_tests_logs.test_0.passed_count if test.exec_stats.run_tests_logs else 0 }}
+Failed: {{ test.exec_stats.run_tests_logs.test_0.failed_count if test.exec_stats.run_tests_logs else 0 }}
+Errors: {{ test.exec_stats.run_tests_logs.test_0.errored_count if test.exec_stats.run_tests_logs else 0 }}
+                        </pre>
+                    </div>
+
+                    <div id="STDERR{{ il.index }}_{{ tl.index }}" class="tabcontent execution-tabcontent">
+                        {% if test.exec_stats.error %}
+                            <pre class="error scrollable-output">{{ test.exec_stats.error }}</pre>
+                        {% elif test.exec_stats.run_test_errors.test_0 %}
+                            <pre class="error scrollable-output">{{ test.exec_stats.run_test_errors.test_0[0].message}}</pre>
+                        {% else %}
+                            <pre>No errors</pre>
+                        {% endif %}
+                    </div>
+
+                    <div id="STDOUT{{ il.index }}_{{ tl.index }}" class="tabcontent execution-tabcontent">
+                        <pre class="scrollable-output">{{ test.exec_stats.output if test.exec_stats.output else 'No output' }}</pre>
+                    </div>
+                    
+                    {% if test.exec_stats.instrumenter_logs %}
+                        <h5>Instrumenter Logs:</h5>
+                        <div class="tab">
+                            <button class="tablinks" onclick="openTab(event, 'TableView{{ il.index}}_{{ tl.index }}')">Table View</button>
+                            <button class="tablinks" onclick="openTab(event, 'PlotView{{ il.index}}_{{ tl.index }}')">Plot View</button>
+                        </div>
+                        <div id="TableView{{ il.index}}_{{ tl.index }}" class="tabcontent instrument-tabcontent">
+                            <div class="scrollable-output">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Function Name</th>
+                                            <th>Duration (s)</th>
+                                            <th>Caller Function</th>
+                                            <th>Caller Line</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for log in test.exec_stats.instrumenter_logs %}
+                                        <tr>
+                                            <td>{{ log.func_name }}</td>
+                                            <td>{{ "%.6f"|format(log.duration) }}</td>
+                                            <td>{{ log.caller_info.func_name }}</td>
+                                            <td>{{ log.caller_info.lineno }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div id="PlotView{{ il.index}}_{{ tl.index }}" class="tabcontent instrument-tabcontent">
+                            <canvas id="durationChart{{ il.index}}_{{ tl.index }}" width="300" height="100"></canvas>
+                        </div>
+                        <script>
+                            // Extract durations from instrumenter logs
+                            var durations = {{ test.exec_stats.instrumenter_logs | map(attribute='duration') | list | tojson }};
+                            
+                            // Calculate mean and standard deviation
+                            var mean = durations.reduce((a, b) => a + b, 0) / durations.length;
+                            var variance = durations.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / durations.length;
+                            var stdDev = Math.sqrt(variance);
+
+                            // Create data for the chart
+                            var chartData{{ il.index}}_{{ tl.index }} = {
+                                labels: durations.map((_, index) => 'Call ' + (index + 1)),
+                                datasets: [{
+                                    label: 'Duration',
+                                    data: durations,
+                                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                                    borderColor: 'rgba(75, 192, 192, 1)',
+                                    borderWidth: 1
+                                }, {
+                                    label: 'Mean',
+                                    data: durations.map(() => mean),
+                                    type: 'line',
+                                    fill: false,
+                                    borderColor: 'rgba(255, 99, 132, 1)',
+                                    borderWidth: 2,
+                                    pointRadius: 0
+                                }, {
+                                    label: 'Mean + StdDev',
+                                    data: durations.map(() => mean + stdDev),
+                                    type: 'line',
+                                    fill: false,
+                                    borderColor: 'rgba(255, 159, 64, 1)',
+                                    borderWidth: 1,
+                                    pointRadius: 0,
+                                    borderDash: [5, 5]
+                                }, {
+                                    label: 'Mean - StdDev',
+                                    data: durations.map(() => Math.max(0, mean - stdDev)),
+                                    type: 'line',
+                                    fill: false,
+                                    borderColor: 'rgba(255, 159, 64, 1)',
+                                    borderWidth: 1,
+                                    pointRadius: 0,
+                                    borderDash: [5, 5]
+                                }]
+                            };
+
+                            // Create the chart
+                            var ctx{{ il.index}}_{{ tl.index }} = document.getElementById('durationChart{{ il.index}}_{{ tl.index }}').getContext('2d');
+                            var myChart{{ il.index}}_{{ tl.index }} = new Chart(ctx{{ il.index}}_{{ tl.index }}, {
+                                type: 'bar',
+                                data: chartData{{ il.index}}_{{ tl.index }},
+                                options: {
+                                    scales: {
+                                        y: {
+                                            beginAtZero: true,
+                                            title: {
+                                                display: true,
+                                                text: 'Duration (s)'
+                                            }
+                                        },
+                                        x: {
+                                            title: {
+                                                display: true,
+                                                text: 'Function Calls'
+                                            }
+                                        }
+                                    },
+                                    plugins: {
+                                        tooltip: {
+                                            callbacks: {
+                                                afterBody: function(context) {
+                                                    return 'Mean: ' + mean.toFixed(6) + '\\n' + 'Std Dev: ' + stdDev.toFixed(6);
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            });
+                        </script>
+                    {% elif test.exec_stats.output %}
+                        <h5>STDOUT:</h5>
+                        <pre class="scrollable-output">{{ test.exec_stats.output }}</pre>
+                    {% endif %}
+                    
+            {% endfor %}
+        </div>
+        <hr>
+    {% endfor %}
+</body>
+</html>
