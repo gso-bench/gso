@@ -5,7 +5,7 @@ from fuzzywuzzy import fuzz
 
 from utils import load_data, get_test_status, get_function_name
 
-json_file_path = "/home/manishs/buckets/pyperf_bucket/testgen/mpi4py_out.json"
+json_file_path = "/home/manishs/buckets/pyperf_bucket/testgen/astropy_out.json"
 data = load_data(json_file_path)
 app = Flask(__name__)
 

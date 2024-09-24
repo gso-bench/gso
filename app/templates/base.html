@@ -60,17 +60,19 @@
             });
         };
 
-        // Keyboard navigation
+        // Keyboard navigation with Cmd + Arrow/A/D
         document.addEventListener('keydown', function (event) {
-            if (event.key === 'ArrowLeft' || event.key === 'a') {
-                var prevLink = document.querySelector('.navigation a:first-child');
-                if (!prevLink.classList.contains('disabled')) {
-                    window.location.href = prevLink.href;
-                }
-            } else if (event.key === 'ArrowRight' || event.key === 'd') {
-                var nextLink = document.querySelector('.navigation a:last-child');
-                if (!nextLink.classList.contains('disabled')) {
-                    window.location.href = nextLink.href;
+            if (event.metaKey) {
+                if (event.key === 'ArrowLeft' || event.key === 'a') {
+                    var prevLink = document.querySelector('.navigation a:first-child');
+                    if (!prevLink.classList.contains('disabled')) {
+                        window.location.href = prevLink.href;
+                    }
+                } else if (event.key === 'ArrowRight' || event.key === 'd') {
+                    var nextLink = document.querySelector('.navigation a:last-child');
+                    if (!nextLink.classList.contains('disabled')) {
+                        window.location.href = nextLink.href;
+                    }
                 }
             }
         });
