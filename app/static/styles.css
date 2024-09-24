@@ -35,6 +35,10 @@ pre {
     color: #f90;
 }
 
+.timeout {
+    color: #6f42c1;
+}
+
 .status {
     font-size: 1.2em;
 }
@@ -104,6 +108,11 @@ pre {
 .filter-buttons .error {
     background-color: #ffc107;
     color: #000;
+}
+
+.filter-buttons .timeout {
+    background-color: #6f42c1;
+    color: #fff;
 }
 
 .filter-buttons .removetests {

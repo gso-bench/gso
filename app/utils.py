@@ -30,7 +30,11 @@ def load_data(json_file_path):
 
 def get_test_status(item):
     if item["test_history"]["history"][0]["exec_stats"].get("error"):
+        error_msg = item["test_history"]["history"][0]["exec_stats"]["error"]
+        if "TimeoutError('result expired')" in error_msg:
+            return "timeout"
         return "error"
+
     elif item["test_history"]["history"][0]["exec_stats"]["run_tests_logs"].get(
         "test_0"
     ):

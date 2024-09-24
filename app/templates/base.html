@@ -85,17 +85,20 @@
         <div class="summary-item">Successful Tests: <strong class="success">{{ successful_tests }}</strong></div>
         <div class="summary-item">Failed Tests: <strong class="error">{{ failed_tests }}</strong></div>
         <div class="summary-item">Errors: <strong class="warning">{{ errors }}</strong></div>
+        <div class="summary-item">Timeouts: <strong class="timeout">{{ timeouts }}</strong></div>
     </div>
     <div class="filter-search-container">
         <div class="filter-buttons">
             <a href="?filter=all&remove_tests={{ 'true' if remove_tests else 'false' }}"
                 class="all {{ 'active' if filter_type == 'all' }}">All</a>
             <a href="?filter=success&remove_tests={{ 'true' if remove_tests else 'false' }}"
-                class="success {{ 'active' if filter_type == 'success' }}">Successful Tests</a>
+                class="success {{ 'active' if filter_type == 'success' }}">Success</a>
             <a href="?filter=failure&remove_tests={{ 'true' if remove_tests else 'false' }}"
-                class="failure {{ 'active' if filter_type == 'failure' }}">Failed Tests</a>
+                class="failure {{ 'active' if filter_type == 'failure' }}">Failed</a>
             <a href="?filter=error&remove_tests={{ 'true' if remove_tests else 'false' }}"
                 class="error {{ 'active' if filter_type == 'error' }}">Errors</a>
+            <a href="?filter=timeout&remove_tests={{ 'true' if remove_tests else 'false' }}"
+                class="timeout {{ 'active' if filter_type == 'timeout' }}">Timeout</a>
             <a href="?filter={{ filter_type }}&remove_tests={{ 'false' if remove_tests else 'true' }}"
                 class="removetests {{ 'active' if remove_tests }}">{{ 'Include Tests' if remove_tests else 'Remove
                 Tests' }}</a>
@@ -121,14 +124,14 @@
     <div class="function-info">
         <h2>Function: {{ item.function_id.identifier if item.function_id else item.method_id.identifier }}</h2>
         <h3 class="status">Status:
-            {% if item.test_history.history[0].exec_stats.error %}
+            {% if status == "error" %}
             <span class="warning">Error</span>
-            {% elif item.test_history.history[0].exec_stats.run_tests_logs.test_0 %}
-            {% if item.test_history.history[0].exec_stats.run_tests_logs.test_0.passed_count > 0 %}
+            {% elif status == "success" %}
             <span class="success">Test Success</span>
-            {% else %}
+            {% elif status == "failure" %}
             <span class="error">Test Failure</span>
-            {% endif %}
+            {% elif status == "timeout" %}
+            <span class="timeout">Timeout</span>
             {% else %}
             <span class="warning">❓ Unknown</span>
             {% endif %}

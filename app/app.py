@@ -5,7 +5,7 @@ from fuzzywuzzy import fuzz
 
 from utils import load_data, get_test_status, get_function_name
 
-json_file_path = "/home/manishs/buckets/pyperf_bucket/testgen/pylint_out.json"
+json_file_path = "/home/manishs/buckets/pyperf_bucket/testgen/mpi4py_out.json"
 data = load_data(json_file_path)
 app = Flask(__name__)
 
@@ -17,6 +17,7 @@ def index():
         total_functions = len(data)
         successful_tests = sum(1 for item in data if get_test_status(item) == "success")
         failed_tests = sum(1 for item in data if get_test_status(item) == "failure")
+        timeouts = sum(1 for item in data if get_test_status(item) == "timeout")
         errors = sum(1 for item in data if get_test_status(item) == "error")
 
         # Apply filters
@@ -59,10 +60,12 @@ def index():
         return render_template(
             "base.html",
             item=current_item,
+            status=get_test_status(current_item) if current_item else None,
             total_functions=total_functions,
             successful_tests=successful_tests,
             failed_tests=failed_tests,
             errors=errors,
+            timeouts=timeouts,
             search_query=search_query,
             filter_type=filter_type,
             remove_tests=remove_tests,
