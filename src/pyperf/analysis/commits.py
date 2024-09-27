@@ -68,7 +68,14 @@ class PerfCommitAnalyzer:
         )
 
         # filter out irrelevant commits if keyword not in message
-        perf_keywords = ["perf", "performance", "optimize", "speed up", "speedup"]
+        perf_keywords = [
+            "perf",
+            "performance",
+            "optimize",
+            "speed up",
+            "speedup",
+            "is slow",
+        ]
         if not any(
             re.search(r"\b" + keyword + r"\b", message, re.IGNORECASE)
             for keyword in perf_keywords
@@ -114,6 +121,7 @@ class PerfCommitAnalyzer:
                 "--grep=optimize",
                 "--grep=speed up",
                 "--grep=speedup",
+                "--grep=is slow",
                 "-i",
             ],
             cwd=repo_path,
