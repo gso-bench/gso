@@ -16,7 +16,7 @@ from pyperf.analysis.models import PerformanceCommit, RepositoryAnalysis
 GHAPI_TOKEN = os.environ.get("GHAPI_TOKEN")
 
 
-class RepoPerformanceAnalyzer:
+class PerfCommitAnalyzer:
     @staticmethod
     def run_git_command(cmd: List[str], cwd: str = None) -> str:
         return subprocess.check_output(cmd, cwd=cwd, universal_newlines=True).strip()
@@ -24,12 +24,12 @@ class RepoPerformanceAnalyzer:
     @staticmethod
     def process_commit(commit_hash: str, repo_path: str) -> PerformanceCommit:
         # commit subject
-        subject = RepoPerformanceAnalyzer.run_git_command(
+        subject = PerfCommitAnalyzer.run_git_command(
             ["git", "show", "--no-patch", "--format=%s", commit_hash], cwd=repo_path
         )
 
         # commit message
-        message = RepoPerformanceAnalyzer.run_git_command(
+        message = PerfCommitAnalyzer.run_git_command(
             ["git", "show", "--no-patch", "--format=%B", commit_hash], cwd=repo_path
         )
 
@@ -42,13 +42,13 @@ class RepoPerformanceAnalyzer:
             return None
 
         # commit date
-        date_str = RepoPerformanceAnalyzer.run_git_command(
+        date_str = PerfCommitAnalyzer.run_git_command(
             ["git", "show", "-s", "--format=%cd", commit_hash], cwd=repo_path
         )
         date = datetime.strptime(date_str, "%a %b %d %H:%M:%S %Y %z")
 
         # changed files
-        files_changed = RepoPerformanceAnalyzer.run_git_command(
+        files_changed = PerfCommitAnalyzer.run_git_command(
             ["git", "show", "--name-only", "--format=", commit_hash], cwd=repo_path
         ).split("\n")
 
@@ -63,7 +63,7 @@ class RepoPerformanceAnalyzer:
     @staticmethod
     def get_performance_commits(repo_path: str) -> List[PerformanceCommit]:
         # use grep to cut down commits to process
-        commit_hashes = RepoPerformanceAnalyzer.run_git_command(
+        commit_hashes = PerfCommitAnalyzer.run_git_command(
             [
                 "git",
                 "log",
@@ -85,7 +85,7 @@ class RepoPerformanceAnalyzer:
             performance_commits = list(
                 tqdm(
                     pool.starmap(
-                        RepoPerformanceAnalyzer.process_commit,
+                        PerfCommitAnalyzer.process_commit,
                         [(commit_hash, repo_path) for commit_hash in commit_hashes],
                     ),
                     total=len(commit_hashes),
@@ -98,10 +98,15 @@ class RepoPerformanceAnalyzer:
         return performance_commits
 
     @staticmethod
-    def analyze_repository(repo_name: str, repo_path: str) -> RepositoryAnalysis:
-        performance_commits = RepoPerformanceAnalyzer.get_performance_commits(repo_path)
+    def analyze_repository(
+        repo_url: str, repo_owner: str, repo_name: str, repo_path: str
+    ) -> RepositoryAnalysis:
+        performance_commits = PerfCommitAnalyzer.get_performance_commits(repo_path)
+
         return RepositoryAnalysis(
-            repo_name=repo_name, performance_commits=performance_commits
+            repo_name=repo_name,
+            repo_url=repo_url,
+            performance_commits=performance_commits,
         )
 
     @staticmethod
@@ -118,12 +123,19 @@ class RepoPerformanceAnalyzer:
 
 # Example usage
 if __name__ == "__main__":
-    repo_name = "numpy"
+    repo_url = "https://github.com/apache/arrow"
+    repo_owner, repo_name = repo_url.split("/")[-2:]
     repo_path = ANALYSIS_DIR / "repos" / repo_name
-    output_file = ANALYSIS_DIR / f"{repo_name}_commits.json"
+    output_file = ANALYSIS_DIR / "commits" / f"{repo_name}_commits.json"
 
-    analysis = RepoPerformanceAnalyzer.analyze_repository(repo_name, repo_path)
-    RepoPerformanceAnalyzer.save_analysis(analysis, output_file)
+    # Clone the repository if not alread in ANALYSIS_DIR / "repos"
+    if not os.path.exists(repo_path):
+        subprocess.run(["git", "clone", repo_url, repo_path])
+
+    analysis = PerfCommitAnalyzer.analyze_repository(
+        repo_url, repo_owner, repo_name, repo_path
+    )
+    PerfCommitAnalyzer.save_analysis(analysis, output_file)
 
     # To load the analysis later
-    # loaded_analysis = RepoPerformanceAnalyzer.load_analysis(output_file)
+    # loaded_analysis = PerfCommitAnalyzer.load_analysis(output_file)
