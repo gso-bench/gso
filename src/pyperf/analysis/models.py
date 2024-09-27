@@ -13,7 +13,7 @@ class PerformanceCommit(BaseModel):
 
 
 class RepositoryAnalysis(BaseModel):
+    repo_url: str
     repo_owner: str
     repo_name: str
-    repo_url: str
     performance_commits: List[PerformanceCommit] = Field(default_factory=list)

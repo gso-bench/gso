@@ -66,7 +66,7 @@ class PerfTestRunner:
 
             for o in outputs:
                 if o.is_success():
-                    new_futs.append(o.result[2])
+                    new_futs.append(o.result[2])  # type: ignore
                 else:
                     print(f"Error: {o.exception_tb}")
 

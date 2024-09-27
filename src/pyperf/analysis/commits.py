@@ -2,6 +2,7 @@ import os
 import re
 import json
 import subprocess
+from pathlib import Path
 
 from tqdm import tqdm
 from typing import List, Dict
@@ -18,11 +19,11 @@ GHAPI_TOKEN = os.environ.get("GHAPI_TOKEN")
 
 class PerfCommitAnalyzer:
     @staticmethod
-    def run_git_command(cmd: List[str], cwd: str = None) -> str:
+    def run_git_command(cmd: List[str], cwd: Path | None = None) -> str:
         return subprocess.check_output(cmd, cwd=cwd, universal_newlines=True).strip()
 
     @staticmethod
-    def process_commit(commit_hash: str, repo_path: str) -> PerformanceCommit:
+    def process_commit(commit_hash: str, repo_path: Path) -> PerformanceCommit | None:
         # commit subject
         subject = PerfCommitAnalyzer.run_git_command(
             ["git", "show", "--no-patch", "--format=%s", commit_hash], cwd=repo_path
@@ -61,7 +62,7 @@ class PerfCommitAnalyzer:
         )
 
     @staticmethod
-    def get_performance_commits(repo_path: str) -> List[PerformanceCommit]:
+    def get_performance_commits(repo_path: Path) -> List[PerformanceCommit]:
         # use grep to cut down commits to process
         commit_hashes = PerfCommitAnalyzer.run_git_command(
             [
@@ -99,23 +100,24 @@ class PerfCommitAnalyzer:
 
     @staticmethod
     def analyze_repository(
-        repo_url: str, repo_owner: str, repo_name: str, repo_path: str
+        repo_url: str, repo_owner: str, repo_name: str, repo_path: Path
     ) -> RepositoryAnalysis:
         performance_commits = PerfCommitAnalyzer.get_performance_commits(repo_path)
 
         return RepositoryAnalysis(
-            repo_name=repo_name,
             repo_url=repo_url,
+            repo_owner=repo_owner,
+            repo_name=repo_name,
             performance_commits=performance_commits,
         )
 
     @staticmethod
-    def save_analysis(analysis: RepositoryAnalysis, output_file: str):
+    def save_analysis(analysis: RepositoryAnalysis, output_file: Path):
         with open(output_file, "w") as f:
             f.write(analysis.model_dump_json(indent=2))
 
     @staticmethod
-    def load_analysis(input_file: str) -> RepositoryAnalysis:
+    def load_analysis(input_file: Path) -> RepositoryAnalysis:
         with open(input_file, "r") as f:
             data = json.load(f)
         return RepositoryAnalysis(**data)
