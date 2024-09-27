@@ -18,3 +18,5 @@ REPOS_DIR = HOME_DIR / "buckets" / "local_repoeval_bucket" / "repos"
 
 # the following directories are specific to pyperf:
 TESTGEN_DIR = PYPERF_BUCKET_DIR / "testgen"
+ANALYSIS_DIR = PYPERF_BUCKET_DIR / "analysis"
+ANALYSIS_REPOS_DIR = ANALYSIS_DIR / "repos"
