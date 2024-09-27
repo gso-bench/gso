@@ -52,7 +52,12 @@
                         const messagePreview = truncateMessage(commit.message);
                         commitElement.innerHTML = `
                             <h3><a href="${commitUrl}" class="commit-link" target="_blank"> ${commit.subject} </a></h3>
-                            <p>Date: ${commit.date}</p>
+                            <div>
+                                <span class="stat-item"><strong>Date:&nbsp;</strong> ${new Date(commit.date).toLocaleString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' })}</span>
+                                <span class="stat-item"><strong># Files (non-test):&nbsp;</strong> ${commit.stats.num_files} (${commit.stats.num_non_test_files})</span>
+                                <span class="stat-item"><strong># Lines (non-test):&nbsp;</strong> ${commit.stats.num_edited_lines} (${commit.stats.num_non_test_edited_lines})</span>
+                                <span class="stat-item"><strong># Hunks:&nbsp;</strong> ${commit.stats.num_hunks}</span>
+                            </div>
                             <div class="message">
                                 <pre class="message-preview">${messagePreview}</pre>
                             </div>

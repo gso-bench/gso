@@ -236,7 +236,7 @@ select {
     content: '▶';
     display: inline-block;
     margin-right: 5px;
-    transition: transform 0.3s ease;
+    transition: transform 0.1s ease;
 }
 
 .toggle-section.active::before {
@@ -244,14 +244,15 @@ select {
 }
 
 .collapsible {
+    display: flex;
     max-height: 0;
     overflow: hidden;
-    transition: max-height 0.3s ease-out;
+    transition: max-height 0.1s ease-out;
 }
 
 .collapsible.show {
     max-height: 500px;
-    transition: max-height 0.3s ease-in;
+    transition: max-height 0.1s ease-in;
 }
 
 .files-changed a {
@@ -278,4 +279,12 @@ select {
 
 .comment-form button:hover {
     background-color: #2980b9;
+}
+
+.stat-item {
+    display: flex;
+}
+
+.stat-item strong {
+    font-weight: 600;
 }
