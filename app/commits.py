@@ -40,6 +40,12 @@ def home():
 @app.route("/get_repo_data/<repo_name>")
 def get_repo_data(repo_name):
     data = load_repo_data(repo_name)
+
+    # drop the diff_text field to avoid sending too much data
+    if data:
+        for commit in data["performance_commits"]:
+            commit.pop("diff_text", None)
+
     if data:
         return jsonify(data)
     return jsonify({"error": "Repo not found"}), 404
