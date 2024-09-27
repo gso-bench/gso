@@ -3,6 +3,9 @@ from typing import List
 from pydantic import BaseModel, Field
 
 
+############# Models for Performance Commits #############
+
+
 class PerformanceCommit(BaseModel):
     commit_hash: str
     subject: str
@@ -10,15 +13,18 @@ class PerformanceCommit(BaseModel):
     date: datetime
     files_changed: List[str] = Field(default_factory=list)
     functions_changed: List[str] = Field(default_factory=list)
+    stats: dict[str, int] = Field(default_factory=dict)
+    diff_text: str = ""
 
-    # stats
-    num_files_changed: int = 0
-    num_lines_added: int = 0
-    num_lines_removed: int = 0
-    num_lines_changed: int = 0
-    num_hunks_added: int = 0
-    num_hunks_removed: int = 0
-    num_hunks_changed: int = 0
+    @property
+    def old_commit_hash(self) -> str:
+        return f"{self.commit_hash}^"
+
+    def add_stat(self, key: str, value: int):
+        self.stats[key] = value
+
+    def add_stats(self, stats: dict[str, int]):
+        self.stats.update(stats)
 
 
 class RepositoryAnalysis(BaseModel):
@@ -26,6 +32,9 @@ class RepositoryAnalysis(BaseModel):
     repo_owner: str
     repo_name: str
     performance_commits: List[PerformanceCommit] = Field(default_factory=list)
+
+
+############# Models for Diff Parsing #############
 
 
 class Range(BaseModel):

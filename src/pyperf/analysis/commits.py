@@ -13,7 +13,9 @@ from multiprocessing import Pool
 
 from ghapi.core import GhApi
 from pyperf.constants import ANALYSIS_DIR
-from pyperf.analysis.models import PerformanceCommit, RepositoryAnalysis
+
+from pyperf.analysis.data.models import PerformanceCommit, RepositoryAnalysis
+from pyperf.analysis.parser import DiffParser
 
 GHAPI_TOKEN = os.environ.get("GHAPI_TOKEN")
 
@@ -21,7 +23,37 @@ GHAPI_TOKEN = os.environ.get("GHAPI_TOKEN")
 class PerfCommitAnalyzer:
     @staticmethod
     def run_git_command(cmd: List[str], cwd: Path | None = None) -> str:
-        return subprocess.check_output(cmd, cwd=cwd, universal_newlines=True).strip()
+        return subprocess.check_output(
+            cmd, cwd=cwd, universal_newlines=True, errors="replace"
+        ).strip()
+
+    @staticmethod
+    def parse_diff_for_stats(commit: PerformanceCommit) -> dict[str, int]:
+        parser = DiffParser()
+        diff = parser.parse_diff(
+            commit.old_commit_hash,
+            commit.commit_hash,
+            commit.diff_text,
+            commit.message,
+            commit.date,
+        )
+
+        stats = {
+            "num_test_files": diff.num_test_files,
+            "num_non_test_files": diff.num_non_test_files,
+            "only_test_files": diff.num_files == diff.num_test_files,
+            "only_non_test_files": diff.num_files == diff.num_non_test_files,
+            "num_files": diff.num_files,
+            "num_hunks": diff.num_hunks,
+            "num_edited_lines": diff.num_edited_lines,
+            "num_non_test_edited_lines": diff.num_non_test_edited_lines,
+            "is_bugfix": diff.is_bugfix,
+            "is_feature": diff.is_feature,
+            "is_refactor": diff.is_refactor,
+            "commit_year": diff.commit_date.year,
+        }
+
+        return stats
 
     @staticmethod
     def process_commit(commit_hash: str, repo_path: Path) -> PerformanceCommit | None:
@@ -54,12 +86,19 @@ class PerfCommitAnalyzer:
             ["git", "show", "--name-only", "--format=", commit_hash], cwd=repo_path
         ).split("\n")
 
+        # commit diff
+        old_commit_hash = f"{commit_hash}^"
+        diff_text = PerfCommitAnalyzer.run_git_command(
+            ["git", "diff", "-p", old_commit_hash, commit_hash], cwd=repo_path
+        )
+
         return PerformanceCommit(
             commit_hash=commit_hash,
             subject=subject,
             message=message,
             date=date,
             files_changed=files_changed,
+            diff_text=diff_text,
         )
 
     @staticmethod
@@ -96,6 +135,10 @@ class PerfCommitAnalyzer:
 
         performance_commits = [commit for commit in performance_commits if commit]
         print("# Performance Commits:", len(performance_commits))
+
+        # get diff stats for each performance commit
+        for commit in performance_commits:
+            commit.add_stats(PerfCommitAnalyzer.parse_diff_for_stats(commit))
 
         return performance_commits
 

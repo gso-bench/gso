@@ -1,19 +1,7 @@
 import re
 from datetime import datetime
 
-from r2e_edits.commit_models.diff_classes import (
-    ParsedCommit,
-    FileDiff,
-    FileInfo,
-    UniHunk,
-    UnitHunkDescriptor,
-    Range,
-    LineGroup,
-    ContextLine,
-    LeftLine,
-    RightLine,
-    NoteLine,
-)
+from pyperf.analysis.data.models import *
 
 
 class DiffParser:
