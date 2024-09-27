@@ -125,7 +125,11 @@ class PerfCommitAnalyzer:
 
 # Example usage
 if __name__ == "__main__":
-    repo_url = "https://github.com/apache/arrow"
+    parser = argparse.ArgumentParser(description="Fetch commits from a repository URL.")
+    parser.add_argument("repo_url", type=str, help="The URL of the repository")
+    args = parser.parse_args()
+
+    repo_url = args.repo_url
     repo_owner, repo_name = repo_url.split("/")[-2:]
     repo_path = ANALYSIS_DIR / "repos" / repo_name
     output_file = ANALYSIS_DIR / "commits" / f"{repo_name}_commits.json"

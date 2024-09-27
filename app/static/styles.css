@@ -1,5 +1,7 @@
+@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&display=swap');
+
 body {
-    font-family: Arial, sans-serif;
+    font-family: "Lexend", sans-serif;
     line-height: 1.6;
     padding: 20px;
     max-width: 1100px;
@@ -196,4 +198,84 @@ tr:nth-child(even) {
 
 .execution-tabcontent {
     font-size: 0.8em;
+}
+
+
+/* ############# COMMIT ANALYSIS ############# */
+
+select {
+    font-size: 20px;
+    padding: 5px;
+    margin-bottom: 20px;
+}
+
+.commit {
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.commit-link {
+    color: #1049d9;
+    text-decoration: none;
+}
+
+.commit-link:hover {
+    text-decoration: underline;
+}
+
+.toggle-section {
+    cursor: pointer;
+    user-select: none;
+    margin-bottom: -10px;
+}
+
+.toggle-section::before {
+    content: '▶';
+    display: inline-block;
+    margin-right: 5px;
+    transition: transform 0.3s ease;
+}
+
+.toggle-section.active::before {
+    transform: rotate(90deg);
+}
+
+.collapsible {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+}
+
+.collapsible.show {
+    max-height: 500px;
+    transition: max-height 0.3s ease-in;
+}
+
+.files-changed a {
+    color: #2980b9;
+    text-decoration: none;
+}
+
+.files-changed a:hover {
+    text-decoration: underline;
+}
+
+.comment-form input[type="text"] {
+    width: 70%;
+    padding: 5px;
+}
+
+.comment-form button {
+    padding: 5px 10px;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+.comment-form button:hover {
+    background-color: #2980b9;
 }
