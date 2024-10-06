@@ -9,11 +9,11 @@ from tqdm import tqdm
 from typing import List, Dict
 from datetime import datetime
 from multiprocessing import Pool
+from ghapi.core import GhApi
 
 
 from ghapi.core import GhApi
 from pyperf.constants import ANALYSIS_DIR
-
 from pyperf.analysis.data.models import PerformanceCommit, RepositoryAnalysis
 from pyperf.analysis.parser import DiffParser
 
