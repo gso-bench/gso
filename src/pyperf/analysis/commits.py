@@ -20,7 +20,7 @@ from pyperf.analysis.prompt import PERF_ANALYSIS_MESSAGE
 from pyperf.analysis.utils import *
 
 GHAPI_TOKEN = os.environ.get("GHAPI_TOKEN")
-MAX_COMMIT_TOKENS = 90000
+MAX_COMMIT_TOKENS = 30000
 
 
 class PerfCommitAnalyzer:

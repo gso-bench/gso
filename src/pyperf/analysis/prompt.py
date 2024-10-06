@@ -5,7 +5,7 @@ You will be given a GitHub commit patch content. Your goal is to identify whethe
 2. The commit should modify source code in a non-trivial manner and not just fix comments or documentation.
 3. The changes need not directly mention performance or optimization in the commit message but should be related to performance optimization.
 4. The changes should not be related to bug fixes or simple refactoring.
-5. The changes should preferably affect the performance of high-level or top-level APIs in the repo. This can be directly or indirectly via changes to internal APIs.
+5. The changes should preferably affect the performance of existing high-level or top-level APIs in the repo. This can be directly or indirectly via changes to internal APIs.
 
 Analyze the commit using natural language reasoning enclosed in [REASON] [/REASON] tags.
 Then write YES or NO based on the conditions mentioned above enclosed in [ANSWER] [/ANSWER] tags.
@@ -25,7 +25,7 @@ PERF_CANDIDATE_API_MESSAGE = """You are an expert python programmer who is annot
 
 You will be given a performance or optimization related GitHub commit patch content. Your goal is to identify a list of APIs (functions or methods of a class) that are affected by the changes in the commit. Some additional instructions:
 1. The APIs should be high-level or top-level APIs in the repo. E.g., pd.read_csv (pandas), requests.get (requests), model.generate (transformers), etc.
-2. By high/top-level, we mean those APIs that are directly or indirectly exposed to the end-user and are not internal helper functions.
+2. By high/top-level, we mean APIs that are not internal helper functions.
 3. If the commit affects multiple APIs, list them all separated by commas.
 4. For methods, use the format "ClassName.method_name" (e.g., DataFrame.dropna).
 5. If the commit does not affect any high-level or top-level APIs, write "None".

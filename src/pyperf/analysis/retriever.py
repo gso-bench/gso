@@ -1,62 +1,140 @@
 import os
-from typing import List
 from pathlib import Path
+from collections import deque
+
 
 from pyperf.analysis.data.models import PerformanceCommit
 from r2e.llms.llm_args import LLMArgs
 from r2e.llms.completions import LLMCompletions
 from pyperf.analysis.utils import *
 
-MAX_COMMIT_TOKENS = 90000
+MAX_COMMIT_TOKENS = 30000
+IGNORE_DIRECTORY_SIZE = 500
+MAX_FILE_TOKENS = 15000
 
 
 class Retriever:
-    def __init__(self, repo_path: Path, n_files: int = 5):
+    def __init__(self, repo_path: Path, n_files: int = 3):
         self.repo_path = repo_path
         self.n_files = n_files
+        self.file_structure, self.file_content_map = self.collect_files(self.repo_path)
+        self.indented_file_structure = self.indent_file_structure(self.file_structure)
 
-    def get_file_structure(self, commit_hash: str) -> str:
-        def build_structure(path: Path, prefix="") -> List[str]:
-            result = []
-            entries = sorted(path.iterdir(), key=lambda e: e.name.lower())
-            for i, entry in enumerate(entries):
-                is_last = i == len(entries) - 1
-                if entry.is_dir():
-                    if entry.name.startswith(".") or entry.name.startswith("doc"):
+    def collect_files(self, clone_dir: str) -> tuple[dict, dict[str, str]]:
+        def add_to_structure(structure, path_parts, is_file):
+            current = structure
+            for part in path_parts[:-1]:
+                if part not in current:
+                    current[part] = {}
+                current = current[part]
+            if is_file:
+                current[path_parts[-1]] = None
+            elif path_parts[-1] not in current:
+                current[path_parts[-1]] = {}
+
+        file_structure = {}
+        file_content_map = {}
+        dir_queue = deque([clone_dir])
+
+        while dir_queue:
+            current_dir = dir_queue.popleft()
+            try:
+                with os.scandir(current_dir) as entries:
+                    entries = list(entries)
+                    if len(entries) > IGNORE_DIRECTORY_SIZE:
                         continue
-                    if entry.name.lower() in ["test", "tests"]:
-                        continue
-                    result.append(
-                        f"{prefix}{'└── ' if is_last else '├── '}{entry.name}/"
-                    )
-                    result.extend(
-                        build_structure(entry, prefix + ("    " if is_last else "│   "))
-                    )
-                elif entry.suffix == ".py":
-                    if entry.name.startswith("__"):
-                        continue
-                    result.append(
-                        f"{prefix}{'└── ' if is_last else '├── '}{entry.name}"
-                    )
-            return result
+                    for entry in entries:
+                        relative_path = os.path.relpath(entry.path, clone_dir)
+                        path_parts = relative_path.split(os.sep)
 
-        # Checkout the specific commit
-        os.system(f"git -C {self.repo_path} checkout {commit_hash} --quiet")
+                        if entry.is_file():
+                            if entry.name.endswith(".py"):
+                                content = self.read_file(entry.path)
+                                if (
+                                    len(content) > 10
+                                    and count_tokens(content) < MAX_FILE_TOKENS
+                                ):
+                                    add_to_structure(file_structure, path_parts, True)
+                                    file_content_map[entry.path] = content
 
-        structure = build_structure(self.repo_path)
+                        elif entry.is_dir():
 
-        # Return to the original branch
-        os.system(f"git -C {self.repo_path} checkout - --quiet")
+                            if entry.name.startswith(".") or entry.name.startswith(
+                                "doc"
+                            ):
+                                continue
 
-        return "\n".join(structure)
+                            if entry.name.lower() in ["tests", "test"]:
+                                continue
 
-    def build_prompt(
-        self, commit: PerformanceCommit, file_structure: str
-    ) -> List[dict]:
+                            add_to_structure(file_structure, path_parts, False)
+                            dir_queue.append(entry.path)
+
+            except PermissionError:
+                print(f"Permission denied: {current_dir}")
+
+        return file_structure, file_content_map
+
+    def indent_file_structure(self, structure, indent=""):
+        result = ""
+        for key, value in sorted(structure.items()):
+            if value is None:
+                result += f"{indent}{key}\n"
+            else:
+                result += f"{indent}{key}/\n"
+                result += self.indent_file_structure(value, indent + "  ")
+        return result
+
+    def read_file(self, file_path: str) -> str:
+        try:
+            with open(file_path, "r") as file:
+                content = file.read().strip()
+        except UnicodeDecodeError:
+            try:
+                with open(file_path, "r", encoding="ISO-8859-1") as file:
+                    content = file.read().strip()
+            except UnicodeDecodeError:
+                try:
+                    with open(file_path, "r", encoding="utf-16") as file:
+                        content = file.read().strip()
+                except UnicodeDecodeError:
+                    print(f"UnicodeDecodeError: {file_path}")
+                    content = ""
+
+        return content
+
+    def extract_match_file_names(self, model_response: str) -> list[str]:
+        file_names = []
+        lines = model_response.split("\n")
+        markdown_indices = [i for i, line in enumerate(lines) if line.startswith("```")]
+        if len(markdown_indices) < 2:
+            return file_names
+
+        start_index = markdown_indices[0]
+        end_index = markdown_indices[1]
+        for line in lines[start_index + 1 : end_index]:
+            if line.strip():
+                if "." in line:
+                    line = ".".join(line.split(".")[1:])
+                line = os.path.basename(line)
+                file_names.append(line.strip())
+
+        matched_files = []
+        for file_name in file_names:
+            for file_path in self.file_content_map.keys():
+                if file_path.endswith(f"/{file_name}"):
+                    if file_path not in matched_files:
+                        matched_files.append(file_path)
+
+        return matched_files
+
+    def build_prompt(self, commit: PerformanceCommit) -> list[dict]:
         system_prompt = (
             f"You are an expert software engineer analyzing a performance-related commit "
             f"in a Python repository. Your task is to identify the most likely files "
-            f"that contain high-level APIs (functions or methods) affected by this performance optimization."
+            f"that contain high-level APIs (functions or methods) affected by this performance optimization. "
+            f"By high/top-level, we mean APIs that are not internal helper functions. "
+            f"E.g., pd.read_csv (pandas), requests.get (requests), model.generate (transformers), etc."
         )
 
         if count_tokens(commit.diff_text) > MAX_COMMIT_TOKENS:
@@ -68,13 +146,12 @@ class Retriever:
             f"Commit message: {commit.message}\n\n"
             f"Commit diff:\n: {diff_text}\n\n"
             f"File structure of the repository at this commit:\n"
-            f"{file_structure}\n\n"
-            f"Please list the {self.n_files} most likely files that contain high-level APIs "
-            f"affected by this performance optimization. Provide your answer as a numbered list "
-            f"in a markdown code block, like this:\n"
+            f"{self.indented_file_structure}\n\n"
+            f"Please list the top {self.n_files} most likely files that contain high-level APIs affected by this optimization. "
+            f"Enclose the file names in a list in a markdown code block as shown below:\n"
             f"```\n"
-            f"1. path/to/file1.py\n"
-            f"2. path/to/file2.py\n"
+            f"1. file1.py\n"
+            f"2. file2.py\n"
             f"```\n"
             f"Think step-by-step about which files are most likely to contain the affected APIs "
             f"based on the commit and file structure."
@@ -85,30 +162,10 @@ class Retriever:
             {"role": "user", "content": user_prompt},
         ]
 
-    def extract_file_paths(self, llm_response: str) -> List[str]:
-        file_paths = []
-        in_code_block = False
-        for line in llm_response.split("\n"):
-            if line.strip() == "```":
-                in_code_block = not in_code_block
-                continue
-            if in_code_block:
-                parts = line.split(".", 1)
-                if len(parts) > 1:
-                    file_path = parts[1].strip()
-                    file_paths.append(file_path)
-        return file_paths
-
-    def retrieve_affected_files(
-        self, commits: List[PerformanceCommit], llm_args: LLMArgs
-    ) -> None:
-        prompts = []
-        for commit in commits:
-            file_structure = self.get_file_structure(commit.commit_hash)
-            prompts.append(self.build_prompt(commit, file_structure))
-
+    def retrieve_affected_files(self, commits, llm_args) -> None:
+        prompts = [self.build_prompt(commit) for commit in commits]
         responses = LLMCompletions.get_llm_completions(llm_args, prompts)
 
         for commit, response in zip(commits, responses):
-            affected_files = self.extract_file_paths(response[0])
+            affected_files = self.extract_match_file_names(response[0])
             commit.add_affected_paths(affected_files)
