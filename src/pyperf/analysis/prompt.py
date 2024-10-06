@@ -18,25 +18,22 @@ Commit Message:
 {message}
 """
 
-PERF_FILES_AFFECTED_MESSAGE = """..."""
 
+PERF_IDENTIFY_API_SYSTEM = """You are an expert python programmer who is annotating data for training and testing code language models.
 
-PERF_CANDIDATE_API_MESSAGE = """You are an expert python programmer who is annotating data for training and testing code language models.
-
-You will be given a performance or optimization related GitHub commit patch content. Your goal is to identify a list of APIs (functions or methods of a class) that are affected by the changes in the commit. Some additional instructions:
+You will be given a performance or optimization related GitHub commit patch content. You will also be provided with some files that are potentially affected by the changes.
+Your goal is to identify a list of APIs (functions or methods of a class) that are affected by the changes in the commit. Some additional instructions:
 1. The APIs should be high-level or top-level APIs in the repo. E.g., pd.read_csv (pandas), requests.get (requests), model.generate (transformers), etc.
 2. By high/top-level, we mean APIs that are not internal helper functions.
 3. If the commit affects multiple APIs, list them all separated by commas.
 4. For methods, use the format "ClassName.method_name" (e.g., DataFrame.dropna).
-5. If the commit does not affect any high-level or top-level APIs, write "None".
+5. If the commit does not affect any high-level or top-level APIs, write "None"."""
 
-Analyze the commit using natural language reasoning enclosed in [REASON] [/REASON] tags.
-Then list the affected APIs enclosed in [API] [/API] tags.
+PERF_IDENTIFY_API_TASK = """Analyze the commit and list the affected APIs enclosed in [API] [/API] tags.
 Remember to close all tags properly.
 
 Commit Information:
 {diff_text}
 
 Commit Message:
-{message}
-"""
+{message}"""
