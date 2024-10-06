@@ -223,7 +223,7 @@ class PerfCommitAnalyzer:
         for commit, response in zip(commits, responses):
             response = response[0]
             apis = response.split("[/APIS]")[0].split("[APIS]")[1].strip()
-            apis = apis.split(",")
+            apis = [api.strip() for api in apis.split(",")]
             commit.add_apis(apis)
 
     ######################### Main Analysis #########################
