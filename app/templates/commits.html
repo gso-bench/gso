@@ -60,6 +60,7 @@
                             </div>
                             <div class="message">
                                 <pre class="message-preview">${messagePreview}</pre>
+                                <pre class="message-preview"><b>LLM Analysis:</b> ${commit.llm_reason}</pre>
                             </div>
                             <h4 class="toggle-section" onclick="toggleSection(this)">Files changed</h4>
                             <div class="collapsible files-changed">
@@ -81,6 +82,7 @@
 
         function truncateMessage(message, maxLength = 300) {
             let lines = message.split('\n');
+            lines = lines.filter(line => line.trim() !== '');
             let truncated = lines.slice(0, 5).join('\n');  // Take first 5 lines
             truncated = truncated.substr(0, maxLength);    // Limit to maxLength characters
             if (truncated.length < message.length) {

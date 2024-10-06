@@ -6,23 +6,26 @@ import argparse
 from pathlib import Path
 
 from tqdm import tqdm
-from typing import List, Dict
 from datetime import datetime
 from multiprocessing import Pool
 from ghapi.core import GhApi
 
+from r2e.llms.llm_args import LLMArgs
+from r2e.llms.completions import LLMCompletions
 
-from ghapi.core import GhApi
 from pyperf.constants import ANALYSIS_DIR
 from pyperf.analysis.data.models import PerformanceCommit, RepositoryAnalysis
 from pyperf.analysis.parser import DiffParser
+from pyperf.analysis.prompt import PERF_ANALYSIS_MESSAGE
+from pyperf.analysis.utils import count_tokens
 
 GHAPI_TOKEN = os.environ.get("GHAPI_TOKEN")
+MAX_COMMIT_TOKENS = 90000
 
 
 class PerfCommitAnalyzer:
     @staticmethod
-    def run_git_command(cmd: List[str], cwd: Path | None = None) -> str:
+    def run_git_command(cmd: list[str], cwd: Path | None = None) -> str:
         return subprocess.check_output(
             cmd, cwd=cwd, universal_newlines=True, errors="replace"
         ).strip()
@@ -109,7 +112,58 @@ class PerfCommitAnalyzer:
         )
 
     @staticmethod
-    def get_performance_commits(repo_path: Path) -> List[PerformanceCommit]:
+    def build_prompt(commit: PerformanceCommit) -> str:
+        prompt = PERF_ANALYSIS_MESSAGE.format(
+            diff_text=commit.diff_text, message=commit.message
+        )
+
+        if count_tokens(prompt) > MAX_COMMIT_TOKENS:
+            diff_text = commit.diff_text[:MAX_COMMIT_TOKENS] + "...(truncated)..."
+            prompt = PERF_ANALYSIS_MESSAGE.format(
+                diff_text=diff_text, message=commit.message
+            )
+
+        return [
+            {
+                "role": "user",
+                "content": prompt,
+            }
+        ]
+
+    @staticmethod
+    def run_llm_filtering(commits: list[PerformanceCommit], verbose: bool = False):
+        prompts = [PerfCommitAnalyzer.build_prompt(commit) for commit in commits]
+
+        args = LLMArgs(
+            model_name="gpt-4o-mini",
+            cache_batch_size=100,
+            multiprocess=30,
+            use_cache=True,
+        )
+
+        responses = LLMCompletions.get_llm_completions(args, prompts)
+
+        filtered_commits = []
+        for commit, response in zip(commits, responses):
+            response = response[0]
+            reasoning = response.split("[/REASON]")[0].split("[REASON]")[1].strip()
+            answer = response.split("[/ANSWER]")[0].split("[ANSWER]")[1].strip()
+
+            if answer.lower() == "yes":
+                commit.add_llm_reason(reasoning)
+                filtered_commits.append(commit)
+
+            if verbose:
+                print(f"Commit Hash: {commit.commit_hash}")
+                print(f"Commit Message: {commit.message}")
+                print(f"Reasoning: {reasoning}")
+                print(f"Answer: {answer}")
+                print("\n")
+
+        return filtered_commits
+
+    @staticmethod
+    def get_performance_commits(repo_path: Path) -> list[PerformanceCommit]:
         # use grep to cut down commits to process
         commit_hashes = PerfCommitAnalyzer.run_git_command(
             [
@@ -127,7 +181,7 @@ class PerfCommitAnalyzer:
             cwd=repo_path,
         ).splitlines()
 
-        print("# Candidates:", len(commit_hashes))
+        print("# Candidate Commits:", len(commit_hashes))
 
         performance_commits = []
         with Pool() as pool:
@@ -141,14 +195,19 @@ class PerfCommitAnalyzer:
                 )
             )
 
+        # HEURISTIC BASED FILTERING
         performance_commits = [commit for commit in performance_commits if commit]
-        print("# Performance Commits:", len(performance_commits))
+        print("# Initial Performance Commits:", len(performance_commits))
+
+        # LLM FILTERING
+        llm_filtered_commits = PerfCommitAnalyzer.run_llm_filtering(performance_commits)
+        print("# LLM Filtered Performance Commits:", len(llm_filtered_commits))
 
         # get diff stats for each performance commit
-        for commit in performance_commits:
+        for commit in llm_filtered_commits:
             commit.add_stats(PerfCommitAnalyzer.parse_diff_for_stats(commit))
 
-        return performance_commits
+        return llm_filtered_commits
 
     @staticmethod
     def analyze_repository(
