@@ -178,7 +178,7 @@ class PerfCommitAnalyzer:
 
         tokens_so_far = count_tokens(prompt)
 
-        file_content_prompt = ""
+        file_content_prompt = "Some repo files:\n\n"
         for file_name in commit.affected_paths:
             content = retriever.file_content_map[file_name]
             new_content = f"File: {file_name}\n\n```{file_name.split('.')[-1]}\n{content}\n```\n\n"
@@ -222,7 +222,7 @@ class PerfCommitAnalyzer:
 
         for commit, response in zip(commits, responses):
             response = response[0]
-            apis = response.split("[/API]")[0].split("[API]")[1].strip()
+            apis = response.split("[/APIS]")[0].split("[APIS]")[1].strip()
             apis = apis.split(",")
             commit.add_apis(apis)
 
