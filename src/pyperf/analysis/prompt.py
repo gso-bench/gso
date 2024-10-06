@@ -17,3 +17,26 @@ Commit Information:
 Commit Message:
 {message}
 """
+
+PERF_FILES_AFFECTED_MESSAGE = """..."""
+
+
+PERF_CANDIDATE_API_MESSAGE = """You are an expert python programmer who is annotating data for training and testing code language models.
+
+You will be given a performance or optimization related GitHub commit patch content. Your goal is to identify a list of APIs (functions or methods of a class) that are affected by the changes in the commit. Some additional instructions:
+1. The APIs should be high-level or top-level APIs in the repo. E.g., pd.read_csv (pandas), requests.get (requests), model.generate (transformers), etc.
+2. By high/top-level, we mean those APIs that are directly or indirectly exposed to the end-user and are not internal helper functions.
+3. If the commit affects multiple APIs, list them all separated by commas.
+4. For methods, use the format "ClassName.method_name" (e.g., DataFrame.dropna).
+5. If the commit does not affect any high-level or top-level APIs, write "None".
+
+Analyze the commit using natural language reasoning enclosed in [REASON] [/REASON] tags.
+Then list the affected APIs enclosed in [API] [/API] tags.
+Remember to close all tags properly.
+
+Commit Information:
+{diff_text}
+
+Commit Message:
+{message}
+"""

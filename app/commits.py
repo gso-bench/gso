@@ -75,4 +75,5 @@ def add_comment():
 if __name__ == "__main__":
     host = "0.0.0.0"
     port = 5700
-    app.run(debug=True, host=host, port=port)
+    # app.run(debug=True, host=host, port=port)
+    app.run(debug=True, port=port)

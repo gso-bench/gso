@@ -1,7 +1,6 @@
 import os
 import re
 import json
-import subprocess
 import argparse
 from pathlib import Path
 
@@ -16,20 +15,15 @@ from r2e.llms.completions import LLMCompletions
 from pyperf.constants import ANALYSIS_DIR
 from pyperf.analysis.data.models import PerformanceCommit, RepositoryAnalysis
 from pyperf.analysis.parser import DiffParser
+from pyperf.analysis.retriever import Retriever
 from pyperf.analysis.prompt import PERF_ANALYSIS_MESSAGE
-from pyperf.analysis.utils import count_tokens
+from pyperf.analysis.utils import *
 
 GHAPI_TOKEN = os.environ.get("GHAPI_TOKEN")
 MAX_COMMIT_TOKENS = 90000
 
 
 class PerfCommitAnalyzer:
-    @staticmethod
-    def run_git_command(cmd: list[str], cwd: Path | None = None) -> str:
-        return subprocess.check_output(
-            cmd, cwd=cwd, universal_newlines=True, errors="replace"
-        ).strip()
-
     @staticmethod
     def parse_diff_for_stats(commit: PerformanceCommit) -> dict[str, int]:
         parser = DiffParser()
@@ -61,44 +55,29 @@ class PerfCommitAnalyzer:
     @staticmethod
     def process_commit(commit_hash: str, repo_path: Path) -> PerformanceCommit | None:
         # commit subject
-        subject = PerfCommitAnalyzer.run_git_command(
+        subject = run_git_command(
             ["git", "show", "--no-patch", "--format=%s", commit_hash], cwd=repo_path
         )
 
         # commit message
-        message = PerfCommitAnalyzer.run_git_command(
+        message = run_git_command(
             ["git", "show", "--no-patch", "--format=%B", commit_hash], cwd=repo_path
         )
 
-        # filter out irrelevant commits if keyword not in message
-        perf_keywords = [
-            "perf",
-            "performance",
-            "optimize",
-            "speed up",
-            "speedup",
-            "is slow",
-        ]
-        if not any(
-            re.search(r"\b" + keyword + r"\b", message, re.IGNORECASE)
-            for keyword in perf_keywords
-        ):
-            return None
-
         # commit date
-        date_str = PerfCommitAnalyzer.run_git_command(
+        date_str = run_git_command(
             ["git", "show", "-s", "--format=%cd", commit_hash], cwd=repo_path
         )
         date = datetime.strptime(date_str, "%a %b %d %H:%M:%S %Y %z")
 
         # changed files
-        files_changed = PerfCommitAnalyzer.run_git_command(
+        files_changed = run_git_command(
             ["git", "show", "--name-only", "--format=", commit_hash], cwd=repo_path
         ).split("\n")
 
         # commit diff
         old_commit_hash = f"{commit_hash}^"
-        diff_text = PerfCommitAnalyzer.run_git_command(
+        diff_text = run_git_command(
             ["git", "diff", "-p", old_commit_hash, commit_hash], cwd=repo_path
         )
 
@@ -131,7 +110,7 @@ class PerfCommitAnalyzer:
         ]
 
     @staticmethod
-    def run_llm_filtering(commits: list[PerformanceCommit], verbose: bool = False):
+    def llm_analysis(commits: list[PerformanceCommit], verbose: bool = False):
         prompts = [PerfCommitAnalyzer.build_prompt(commit) for commit in commits]
 
         args = LLMArgs(
@@ -160,12 +139,26 @@ class PerfCommitAnalyzer:
                 print(f"Answer: {answer}")
                 print("\n")
 
+        # run retrieval to get affected files
+        PerfCommitAnalyzer.retrieve_affected_files(filtered_commits, repo_path)
+
         return filtered_commits
+
+    @staticmethod
+    def retrieve_affected_files(commits: list[PerformanceCommit], repo_path: Path):
+        retriever = Retriever(repo_path)
+        llm_args = LLMArgs(
+            model_name="gpt-4o-mini",
+            cache_batch_size=100,
+            multiprocess=30,
+            use_cache=True,
+        )
+        retriever.retrieve_affected_files(commits, llm_args)
 
     @staticmethod
     def get_performance_commits(repo_path: Path) -> list[PerformanceCommit]:
         # use grep to cut down commits to process
-        commit_hashes = PerfCommitAnalyzer.run_git_command(
+        commit_hashes = run_git_command(
             [
                 "git",
                 "log",
@@ -183,6 +176,7 @@ class PerfCommitAnalyzer:
 
         print("# Candidate Commits:", len(commit_hashes))
 
+        # Parse and process commits
         performance_commits = []
         with Pool() as pool:
             performance_commits = list(
@@ -195,13 +189,15 @@ class PerfCommitAnalyzer:
                 )
             )
 
-        # HEURISTIC BASED FILTERING
         performance_commits = [commit for commit in performance_commits if commit]
         print("# Initial Performance Commits:", len(performance_commits))
 
-        # LLM FILTERING
-        llm_filtered_commits = PerfCommitAnalyzer.run_llm_filtering(performance_commits)
+        # LLM Analysis
+        llm_filtered_commits = PerfCommitAnalyzer.llm_analysis(performance_commits)
         print("# LLM Filtered Performance Commits:", len(llm_filtered_commits))
+
+        # GET affected APIs
+        # TODO: Implement this
 
         # get diff stats for each performance commit
         for commit in llm_filtered_commits:

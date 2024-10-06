@@ -16,6 +16,7 @@ class PerformanceCommit(BaseModel):
     stats: dict[str, int] = Field(default_factory=dict)
     diff_text: str = ""
     llm_reason: str = ""
+    apis: str = ""
 
     @property
     def old_commit_hash(self) -> str:
@@ -29,6 +30,9 @@ class PerformanceCommit(BaseModel):
 
     def add_llm_reason(self, reason: str):
         self.llm_reason = reason
+
+    def add_apis(self, apis: str):
+        self.apis = apis
 
 
 class RepositoryAnalysis(BaseModel):
