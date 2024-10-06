@@ -14,6 +14,7 @@ class PerformanceCommit(BaseModel):
     files_changed: List[str] = Field(default_factory=list)
     functions_changed: List[str] = Field(default_factory=list)
     stats: dict[str, int] = Field(default_factory=dict)
+    affected_paths: List[str] = Field(default_factory=list)
     diff_text: str = ""
     llm_reason: str = ""
     apis: str = ""
@@ -33,6 +34,9 @@ class PerformanceCommit(BaseModel):
 
     def add_apis(self, apis: str):
         self.apis = apis
+
+    def add_affected_paths(self, paths: List[str]):
+        self.affected_paths.extend(paths)
 
 
 class RepositoryAnalysis(BaseModel):

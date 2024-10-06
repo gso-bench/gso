@@ -192,6 +192,8 @@ class PerfCommitAnalyzer:
         performance_commits = [commit for commit in performance_commits if commit]
         print("# Initial Performance Commits:", len(performance_commits))
 
+        performance_commits = performance_commits[:3]
+
         # LLM Analysis
         llm_filtered_commits = PerfCommitAnalyzer.llm_analysis(performance_commits)
         print("# LLM Filtered Performance Commits:", len(llm_filtered_commits))

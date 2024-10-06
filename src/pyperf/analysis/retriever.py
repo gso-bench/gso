@@ -5,6 +5,7 @@ from pathlib import Path
 from pyperf.analysis.data.models import PerformanceCommit
 from r2e.llms.llm_args import LLMArgs
 from r2e.llms.completions import LLMCompletions
+from pyperf.analysis.utils import *
 
 MAX_COMMIT_TOKENS = 90000
 
@@ -15,22 +16,28 @@ class Retriever:
         self.n_files = n_files
 
     def get_file_structure(self, commit_hash: str) -> str:
-        def build_structure(path, prefix=""):
+        def build_structure(path: Path, prefix="") -> List[str]:
             result = []
-            entries = os.listdir(path)
-            entries.sort()
+            entries = sorted(path.iterdir(), key=lambda e: e.name.lower())
             for i, entry in enumerate(entries):
                 is_last = i == len(entries) - 1
-                current = os.path.join(path, entry)
-                if os.path.isdir(current):
-                    result.append(f"{prefix}{'└── ' if is_last else '├── '}{entry}/")
-                    result.extend(
-                        build_structure(
-                            current, prefix + ("    " if is_last else "│   ")
-                        )
+                if entry.is_dir():
+                    if entry.name.startswith(".") or entry.name.startswith("doc"):
+                        continue
+                    if entry.name.lower() in ["test", "tests"]:
+                        continue
+                    result.append(
+                        f"{prefix}{'└── ' if is_last else '├── '}{entry.name}/"
                     )
-                else:
-                    result.append(f"{prefix}{'└── ' if is_last else '├── '}{entry}")
+                    result.extend(
+                        build_structure(entry, prefix + ("    " if is_last else "│   "))
+                    )
+                elif entry.suffix == ".py":
+                    if entry.name.startswith("__"):
+                        continue
+                    result.append(
+                        f"{prefix}{'└── ' if is_last else '├── '}{entry.name}"
+                    )
             return result
 
         # Checkout the specific commit
