@@ -10,7 +10,7 @@ from pyperf.analysis.utils import *
 
 MAX_COMMIT_TOKENS = 30000
 IGNORE_DIRECTORY_SIZE = 500
-MAX_FILE_TOKENS = 15000
+MAX_FILE_TOKENS = 30000
 
 
 class Retriever:
@@ -49,6 +49,9 @@ class Retriever:
 
                         if entry.is_file():
                             if entry.name.endswith(".py"):
+                                if entry.name.endswith("__init__.py"):
+                                    continue
+
                                 content = self.read_file(entry.path)
                                 if (
                                     len(content) > 10
@@ -116,8 +119,8 @@ class Retriever:
             if line.strip():
                 if "." in line:
                     line = ".".join(line.split(".")[1:])
-                line = os.path.basename(line)
-                file_names.append(line.strip())
+                file_name = os.path.basename(line)
+                file_names.append(file_name.strip())
 
         matched_files = []
         for file_name in file_names:
