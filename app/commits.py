@@ -66,6 +66,7 @@ def api_commit_map(repo_name):
     )
 
     html = "<h1>API Summary</h1>"
+    html += f"<p>Number of APIs: {len(sorted_apis)}</p>"
     for api, commits in sorted_apis:
         html += f"<h2>API: {api}</h2>"
         html += f"<p>Number of affecting commits: {len(commits)}</p>"

@@ -1,9 +1,9 @@
 PERF_ANALYSIS_MESSAGE = """You are an expert python programmer who is annotating data for training and testing code language models.
 
 You will be given a GitHub commit patch content. Your goal is to identify whether the commit is performance or optimization related. The commit should satisfy the following conditions:
-1. The commit should modify at least one non-test file.
-2. The commit should modify source code in a non-trivial manner and not just fix comments or documentation.
-3. The changes need not directly mention performance or optimization in the commit message but should be related to performance optimization.
+1. The commit should modify at least one non-test file. It modify source code in a non-trivial manner and not just fix comments or documentation.
+2. The changes need not directly mention performance or optimization in the commit message but should be related to performance optimization.
+3. Be critical in your analysis. Just keywords like optimize or perf in the commit does not mean the commit is performance related. E.g., "add optimize flag", "fix get_optimize function", etc.
 4. The changes should not be related to bug fixes, simple refactoring, or adding new features.
 5. The changes should preferably affect the performance of existing high-level or top-level APIs in the repo. This can be directly or indirectly via changes to internal APIs.
 

@@ -247,8 +247,6 @@ class PerfCommitAnalyzer:
             cwd=repo_path,
         ).splitlines()
 
-        print("# Candidate Commits:", len(commit_hashes))
-
         # Parse and process commits
         commits = []
         with Pool() as pool:
@@ -262,8 +260,7 @@ class PerfCommitAnalyzer:
                 )
             )
 
-        commits = [commit for commit in commits if commit]
-        print("# Initial Performance Commits:", len(commits))
+        print("# Candidate Commits:", len(commits))
 
         # LLM Analysis
         filtered, retriever = PerfCommitAnalyzer.llm_analysis(commits, repo_path)
