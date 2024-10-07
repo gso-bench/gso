@@ -27,7 +27,8 @@
         <h2 id="repo-name"></h2>
         <div class="summary-item">URL: <strong><a id="repo-url" target="_blank"></a></strong></div>
         <div class="summary-item" id="commit-count">#Commits: </div>
-        <div class="summary-item"><a href="/api_commit_map/{{ default_repo }}">API Commit Map</a></div>
+        <div class="summary-item" id="api-commit-map"></div>
+    </div>
     </div>
 
     <h3>Performance Commits</h3>
@@ -42,6 +43,10 @@
                     document.getElementById('repo-url').textContent = data.repo_url;
                     document.getElementById('repo-url').href = data.repo_url;
                     document.getElementById('commit-count').textContent = `#Commits: ${data.performance_commits.length}`;
+
+                    <!-- update the link for api commit map using repo_name -->
+                    document.getElementById('api-commit-map').innerHTML = `<a href="/api_commit_map/${data.repo_name}">API Commit Map</a>`;
+
 
                     const commitsContainer = document.getElementById('commits-container');
                     commitsContainer.innerHTML = '';
