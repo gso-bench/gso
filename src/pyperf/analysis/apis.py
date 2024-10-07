@@ -16,6 +16,7 @@ class APIAnalyzer:
         return RepositoryAnalysis(**data)
 
     def create_api_to_commits_map(self, analysis: RepositoryAnalysis) -> None:
+        self.commit_analysis = analysis
         for commit in analysis.performance_commits:
             for api in commit.apis:
                 if api == "None":
@@ -25,16 +26,27 @@ class APIAnalyzer:
     def get_commits_for_api(self, api: str) -> list[PerformanceCommit]:
         return self.api_to_commits.get(api, [])
 
-    def print_api_summary(self) -> None:
+    def api_commit_map(self) -> str:
         sorted_apis = sorted(
             self.api_to_commits.items(), key=lambda item: len(item[1]), reverse=True
         )
+
+        summary = defaultdict(list)
         for api, commits in sorted_apis:
+            for c in commits:
+                summary[api].append(
+                    {"commit_hash": c.commit_hash, "subject": c.subject}
+                )
+        return summary
+
+    def print_api_summary(self) -> None:
+        sorted_apis = self.api_commit_map()
+        for api, commits in sorted_apis.items():
             print(f"API: {api}")
             print(f"Number of affecting commits: {len(commits)}")
             print("Affecting commits:")
             for commit in commits:
-                print(f"  - {commit.commit_hash[:8]}: {commit.subject}")
+                print(f"  - {commit['commit_hash'][:8]}: {commit['subject']}")
             print()
 
 
@@ -43,8 +55,8 @@ if __name__ == "__main__":
     output_file = ANALYSIS_DIR / "commits" / f"{repo_name}_commits.json"
 
     analyzer = APIAnalyzer()
-    loaded_analysis = analyzer.load_analysis(output_file)
-    analyzer.create_api_to_commits_map(loaded_analysis)
+    commit_analysis = analyzer.load_analysis(output_file)
+    analyzer.create_api_to_commits_map(commit_analysis)
 
     # Example usage
     analyzer.print_api_summary()

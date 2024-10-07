@@ -4,6 +4,7 @@ import json
 from datetime import datetime
 
 from pyperf.constants import ANALYSIS_COMMITS_DIR
+from pyperf.analysis.apis import APIAnalyzer
 
 app = Flask(__name__)
 
@@ -49,6 +50,30 @@ def get_repo_data(repo_name):
     if data:
         return jsonify(data)
     return jsonify({"error": "Repo not found"}), 404
+
+
+@app.route("/api_commit_map/<repo_name>")
+def api_commit_map(repo_name):
+    analyzer = APIAnalyzer()
+    commit_analysis = analyzer.load_analysis(
+        ANALYSIS_COMMITS_DIR / f"{repo_name}_commits.json"
+    )
+    repo_url = commit_analysis.repo_url
+    analyzer.create_api_to_commits_map(commit_analysis)
+    api_summary = analyzer.api_commit_map()
+    sorted_apis = sorted(
+        api_summary.items(), key=lambda item: len(item[1]), reverse=True
+    )
+
+    html = "<h1>API Summary</h1>"
+    for api, commits in sorted_apis:
+        html += f"<h2>API: {api}</h2>"
+        html += f"<p>Number of affecting commits: {len(commits)}</p>"
+        html += "<p>Affecting commits:</p>"
+        for commit in commits:
+            html += f"<p><a href='{repo_url}/commit/{commit['commit_hash']}'>{commit['commit_hash'][:8]}: {commit['subject']}</a></p>"
+        html += "<br>"
+    return html
 
 
 @app.route("/add_comment", methods=["POST"])
