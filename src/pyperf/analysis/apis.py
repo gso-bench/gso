@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 from collections import defaultdict
 
-from pyperf.analysis.data.models import PerformanceCommit, RepositoryAnalysis
+from pyperf.data.models import PerformanceCommit, RepositoryAnalysis
 from pyperf.constants import ANALYSIS_DIR
 
 

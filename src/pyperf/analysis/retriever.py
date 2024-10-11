@@ -3,7 +3,7 @@ from pathlib import Path
 from collections import deque
 
 
-from pyperf.analysis.data.models import PerformanceCommit
+from pyperf.data.models import PerformanceCommit
 from r2e.llms.llm_args import LLMArgs
 from r2e.llms.completions import LLMCompletions
 from pyperf.analysis.utils import *

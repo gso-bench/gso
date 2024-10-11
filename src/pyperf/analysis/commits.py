@@ -13,7 +13,7 @@ from r2e.llms.llm_args import LLMArgs
 from r2e.llms.completions import LLMCompletions
 
 from pyperf.constants import ANALYSIS_DIR
-from pyperf.analysis.data.models import PerformanceCommit, RepositoryAnalysis
+from pyperf.data.models import PerformanceCommit, RepositoryAnalysis
 from pyperf.analysis.parser import DiffParser
 from pyperf.analysis.retriever import Retriever
 from pyperf.analysis.prompt import *
