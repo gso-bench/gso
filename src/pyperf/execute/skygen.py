@@ -1,5 +1,6 @@
 import json
 import os
+import shutil
 import tempfile
 from pathlib import Path
 from string import Template
@@ -37,12 +38,11 @@ class SkyGen:
             install_commands_before=install_commands,
             install_commands_after=install_commands,
         )
-        print(result)
         return result
 
     @staticmethod
-    def create_temp_directory_with_files(data, yaml_template):
-        with tempfile.TemporaryDirectory() as temp_dir:
+    def create_temp_directory_with_files(data, yaml_template_path="template.yaml"):
+        with tempfile.TemporaryDirectory(delete=False) as temp_dir:
             # Create and write the YAML file
             yaml_content = SkyGen.create_yaml_content(yaml_template, data)
             yaml_path = os.path.join(temp_dir, f"{data['name']}_task.yaml")
@@ -54,23 +54,17 @@ class SkyGen:
             with open(test_script_path, "w") as test_file:
                 test_file.write(data["test_code"])
 
-            print(f"Created temporary directory: {temp_dir}")
-            print(f"YAML file: {yaml_path}")
-            print(f"Test script: {test_script_path}")
-
-            print("\nDirectory contents:")
-            for file in os.listdir(temp_dir):
-                print(f"- {file}")
-
-    @staticmethod
-    def process_json_input(json_file_path, yaml_template_path="template.yaml"):
-        data = SkyGen.load_json(json_file_path)
-        data = data[0]
-        yaml_template = SkyGen.load_yaml_template(yaml_template_path)
-        SkyGen.create_temp_directory_with_files(data, yaml_template)
+        return temp_dir
 
 
 # Example usage
 if __name__ == "__main__":
     json_file_path = "input.json"
     SkyGen.process_json_input(json_file_path)
+
+    data = SkyGen.load_json(json_file_path)
+    data = data[0]
+    yaml_template = SkyGen.load_yaml_template(yaml_template_path)
+    temp_dir = SkyGen.create_temp_directory_with_files(data, yaml_template)
+
+    shutil.rmtree(temp_dir)
