@@ -1,0 +1,35 @@
+name: $name
+
+resources:
+  cloud: $cloud
+  region: $region
+  instance_type: $instance_type
+
+workdir: .
+
+setup: |
+  sudo apt-get update
+  sudo apt-get install -y python3-pip git build-essential python3-dev python3-setuptools
+  $setup_commands
+  git clone $repo_url
+
+run: |
+  cd $repo_name
+  git checkout $before_commit
+  $install_commands_before
+  
+  cd ..
+  echo "Running test.py with version before the commit..."
+  python3 test.py > results_before.txt
+
+  cd $repo_name
+  git checkout $after_commit
+  $install_commands_after
+  
+  cd ..
+  echo "Running test.py with version after the commit..."
+  python3 test.py > results_after.txt
+
+  echo "Task complete on $(hostname)"
+  cat results_before.txt
+  cat results_after.txt

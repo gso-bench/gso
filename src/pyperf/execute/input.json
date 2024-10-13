@@ -1,0 +1,20 @@
+[
+    {
+        "name": "pillow-timing-test",
+        "cloud": "gcp",
+        "region": "us-central1",
+        "instance_type": "n2-standard-16",
+        "repo_url": "https://github.com/python-pillow/Pillow",
+        "before_commit": "b56d8f3f1f42daf9a96df90f9495b4d12f580869^1",
+        "after_commit": "b56d8f3f1f42daf9a96df90f9495b4d12f580869",
+        "setup_commands": [
+            "sudo apt-get install -y libtiff5-dev libjpeg8-dev libopenjp2-7-dev zlib1g-dev",
+            "sudo apt-get install -y libfreetype6-dev liblcms2-dev libwebp-dev tcl8.6-dev tk8.6-dev python3-tk",
+            "sudo apt-get install -y libharfbuzz-dev libfribidi-dev libxcb1-dev libx11-dev"
+        ],
+        "install_commands": [
+            "pip install -e ."
+        ],
+        "test_code": "import time\nfrom PIL import Image\n\ndef test_image_operations():\n    # Create a test image\n    img = Image.new('RGB', (1000, 1000), color='red')\n    \n    start_time = time.time()\n    \n    # Perform some operations\n    img_resized = img.resize((500, 500))\n    img_rotated = img.rotate(45)\n    img_filtered = img.filter(Image.BLUR)\n    \n    end_time = time.time()\n    \n    print(f'Time taken: {end_time - start_time:.4f} seconds')\n\nif __name__ == '__main__':\n    test_image_operations()\n"
+    }
+]

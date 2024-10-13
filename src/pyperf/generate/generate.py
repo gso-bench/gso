@@ -7,7 +7,3 @@ class PerfExpGenerator:
     def generate():
         """Propose performance test experiments for APIs"""
         pass
-
-    def execute():
-        """Execute proposed test against a set of test commits"""
-        pass

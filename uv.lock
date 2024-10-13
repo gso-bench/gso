@@ -1839,6 +1839,7 @@ dependencies = [
     { name = "r2e-test-server" },
     { name = "rich" },
     { name = "seaborn" },
+    { name = "skypilot" },
 ]
 
 [package.metadata]
@@ -1856,6 +1857,7 @@ requires-dist = [
     { name = "r2e-test-server", directory = "src/r2e-test-server" },
     { name = "rich", specifier = ">=13.8.0" },
     { name = "seaborn", specifier = ">=0.13.2" },
+    { name = "skypilot", specifier = ">=0.5.0" },
 ]
 
 [[package]]
