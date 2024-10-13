@@ -41,7 +41,7 @@ class SkyGen:
         return result
 
     @staticmethod
-    def create_temp_directory_with_files(data, yaml_template_path="template.yaml"):
+    def create_temp_directory_with_files(data, yaml_template):
         with tempfile.TemporaryDirectory(delete=False) as temp_dir:
             # Create and write the YAML file
             yaml_content = SkyGen.create_yaml_content(yaml_template, data)
@@ -60,11 +60,9 @@ class SkyGen:
 # Example usage
 if __name__ == "__main__":
     json_file_path = "input.json"
-    SkyGen.process_json_input(json_file_path)
-
     data = SkyGen.load_json(json_file_path)
     data = data[0]
-    yaml_template = SkyGen.load_yaml_template(yaml_template_path)
+    yaml_template = SkyGen.load_yaml_template("template.yaml")
     temp_dir = SkyGen.create_temp_directory_with_files(data, yaml_template)
 
     shutil.rmtree(temp_dir)

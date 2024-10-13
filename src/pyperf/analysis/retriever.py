@@ -3,7 +3,7 @@ from pathlib import Path
 from collections import deque
 
 
-from pyperf.data.models import PerformanceCommit
+from pyperf.data import PerformanceCommit
 from r2e.llms.llm_args import LLMArgs
 from r2e.llms.completions import LLMCompletions
 from pyperf.analysis.utils import *
@@ -20,7 +20,7 @@ class Retriever:
         self.file_structure, self.file_content_map = self.collect_files(self.repo_path)
         self.indented_file_structure = self.indent_file_structure(self.file_structure)
 
-    def collect_files(self, clone_dir: str) -> tuple[dict, dict[str, str]]:
+    def collect_files(self, clone_dir: Path) -> tuple[dict, dict[str, str]]:
         def add_to_structure(structure, path_parts, is_file):
             current = structure
             for part in path_parts[:-1]:
@@ -71,7 +71,7 @@ class Retriever:
                                 continue
 
                             add_to_structure(file_structure, path_parts, False)
-                            dir_queue.append(entry.path)
+                            dir_queue.append(entry.path)  # type: ignore
 
             except PermissionError:
                 print(f"Permission denied: {current_dir}")

@@ -4,6 +4,6 @@ class PerfExpGenerator:
     def __init__(self, repo, base_commit, test_commits, mode):
         pass
 
-    def generate():
+    def generate(self):
         """Propose performance test experiments for APIs"""
         pass

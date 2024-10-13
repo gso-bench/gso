@@ -2,13 +2,13 @@ import json
 from pathlib import Path
 from collections import defaultdict
 
-from pyperf.data.models import PerformanceCommit, RepositoryAnalysis
+from pyperf.data import PerformanceCommit, RepositoryAnalysis
 from pyperf.constants import ANALYSIS_DIR
 
 
 class APIAnalyzer:
     def __init__(self):
-        self.api_to_commits: Dict[str, list[PerformanceCommit]] = defaultdict(list)
+        self.api_to_commits: dict[str, list[PerformanceCommit]] = defaultdict(list)
 
     def load_analysis(self, input_file: Path) -> RepositoryAnalysis:
         with open(input_file, "r") as f:
@@ -26,7 +26,7 @@ class APIAnalyzer:
     def get_commits_for_api(self, api: str) -> list[PerformanceCommit]:
         return self.api_to_commits.get(api, [])
 
-    def api_commit_map(self) -> str:
+    def api_commit_map(self) -> dict[str, list[dict]]:
         sorted_apis = sorted(
             self.api_to_commits.items(), key=lambda item: len(item[1]), reverse=True
         )

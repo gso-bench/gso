@@ -13,7 +13,7 @@ from r2e.llms.llm_args import LLMArgs
 from r2e.llms.completions import LLMCompletions
 
 from pyperf.constants import ANALYSIS_DIR
-from pyperf.data.models import PerformanceCommit, RepositoryAnalysis
+from pyperf.data import PerformanceCommit, RepositoryAnalysis
 from pyperf.analysis.parser import DiffParser
 from pyperf.analysis.retriever import Retriever
 from pyperf.analysis.prompt import *
@@ -55,7 +55,7 @@ class PerfCommitAnalyzer:
         return stats
 
     @staticmethod
-    def process_commit(commit_hash: str, repo_path: Path) -> PerformanceCommit | None:
+    def process_commit(commit_hash: str, repo_path: Path) -> PerformanceCommit:
         # commit subject
         subject = run_git_command(
             ["git", "show", "--no-patch", "--format=%s", commit_hash], cwd=repo_path
@@ -95,7 +95,7 @@ class PerfCommitAnalyzer:
     ######################### LLM-based Commit Filtering #########################
 
     @staticmethod
-    def analysis_prompt(commit: PerformanceCommit) -> str:
+    def analysis_prompt(commit: PerformanceCommit):
         prompt = PERF_ANALYSIS_MESSAGE.format(
             diff_text=commit.diff_text, message=commit.message
         )
@@ -124,7 +124,7 @@ class PerfCommitAnalyzer:
             cache_batch_size=100,
             multiprocess=30,
             use_cache=True,
-        )
+        )  # type: ignore
 
         responses = LLMCompletions.get_llm_completions(args, prompts)
 
@@ -158,14 +158,14 @@ class PerfCommitAnalyzer:
             cache_batch_size=100,
             multiprocess=30,
             use_cache=True,
-        )
+        )  # type: ignore
         retriever.retrieve_affected_files(commits, llm_args)
         return retriever
 
     ######################### LLM-based API Identification #########################
 
     @staticmethod
-    def identify_api_prompt(commit: PerformanceCommit, retriever: Retriever) -> str:
+    def identify_api_prompt(commit: PerformanceCommit, retriever: Retriever):
         prompt = PERF_IDENTIFY_API_TASK.format(
             diff_text=commit.diff_text, message=commit.message
         )
@@ -216,7 +216,7 @@ class PerfCommitAnalyzer:
             cache_batch_size=100,
             multiprocess=30,
             use_cache=True,
-        )
+        )  # type: ignore
 
         responses = LLMCompletions.get_llm_completions(args, prompts)
 
