@@ -1,18 +1,17 @@
-import json
 import os
 import shutil
 import tempfile
 from pathlib import Path
 from string import Template
 
-from pyperf.utils.io import load_problems
+from pyperf.logger import logger
 
 
 class SkyGen:
     """Generate a skypilot YAML file for a given problem"""
 
     @staticmethod
-    def load_yaml_template(template_path):
+    def load_template(template_path):
         with open(template_path, "r") as f:
             return Template(f.read())
 
@@ -37,7 +36,7 @@ class SkyGen:
         return result
 
     @staticmethod
-    def create_temp_directory_with_files(problem, yaml_template):
+    def create_workspace(problem, yaml_template):
         with tempfile.TemporaryDirectory(delete=False) as temp_dir:
             # Create and write the YAML file
             yaml_content = SkyGen.create_yaml_content(yaml_template, problem)
@@ -50,15 +49,11 @@ class SkyGen:
             with open(test_script_path, "w") as test_file:
                 test_file.write(problem.test)
 
+            logger.info(f"Created workspace: {temp_dir}")
+
         return temp_dir
 
-
-# Example usage
-if __name__ == "__main__":
-    data = load_problems("input.json")
-    problem = data[0]
-
-    yaml_template = SkyGen.load_yaml_template("template.yaml")
-    temp_dir = SkyGen.create_temp_directory_with_files(problem, yaml_template)
-
-    shutil.rmtree(temp_dir)
+    @staticmethod
+    def cleanup_workspace(workspace):
+        shutil.rmtree(workspace)
+        logger.info(f"Deleted workspace: {workspace}")

@@ -17,7 +17,10 @@ PYPERF_BUCKET_DIR = HOME_DIR / config["pyperf_bucket_dir"]
 REPOS_DIR = HOME_DIR / "buckets" / "local_repoeval_bucket" / "repos"
 
 # the following directories are specific to pyperf:
-TESTGEN_DIR = PYPERF_BUCKET_DIR / "testgen"
 ANALYSIS_DIR = PYPERF_BUCKET_DIR / "analysis"
 ANALYSIS_REPOS_DIR = ANALYSIS_DIR / "repos"
 ANALYSIS_COMMITS_DIR = ANALYSIS_DIR / "commits"
+
+TESTGEN_DIR = PYPERF_BUCKET_DIR / "testgen"
+
+SKYGEN_TEMPLATE = current_dir / "execute" / "template.yaml"
