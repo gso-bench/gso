@@ -1,4 +1,4 @@
-name: $name
+name: $id
 
 resources:
   cloud: $cloud

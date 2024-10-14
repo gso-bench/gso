@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field, HttpUrl
 
 
 class Problem(BaseModel):
-    name: str = Field(..., description="Name of the problem")
+    pid: str = Field(default="test", description="ID of the problem")
 
     # vm info
     cloud: str = Field(default="gcp", description="Cloud provider")
@@ -11,6 +11,7 @@ class Problem(BaseModel):
 
     # repo info # TODO: eventually replace with the repo model
     repo_url: HttpUrl = Field(..., description="Repository URL")
+    repo_name: str = Field(..., description="Repository name")
 
     # commit info
     before_commit: str = Field(..., description="Commit hash for before test")
