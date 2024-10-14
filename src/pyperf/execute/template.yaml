@@ -10,6 +10,8 @@ workdir: .
 setup: |
   sudo apt-get update
   sudo apt-get install -y python3-pip git build-essential python3-dev python3-setuptools
+  curl -LsSf https://astral.sh/uv/install.sh | sh
+  source $HOME/.cargo/env
   $setup_commands
   git clone $repo_url
 
@@ -20,7 +22,7 @@ run: |
   
   cd ..
   echo "Running test.py with version before the commit..."
-  python3 test.py > results_before.txt
+  python test.py > results_before.txt
 
   cd $repo_name
   git checkout $after_commit
@@ -28,7 +30,7 @@ run: |
   
   cd ..
   echo "Running test.py with version after the commit..."
-  python3 test.py > results_after.txt
+  python test.py > results_after.txt
 
   echo "Task complete on $(hostname)"
   cat results_before.txt

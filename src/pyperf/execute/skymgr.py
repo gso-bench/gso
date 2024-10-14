@@ -1,14 +1,15 @@
 import os
 import shutil
 import tempfile
+import subprocess
 from pathlib import Path
 from string import Template
 
 from pyperf.logger import logger
 
 
-class SkyGen:
-    """Generate a skypilot YAML file for a given problem"""
+class SkyManager:
+    """Generate and manage skypilot tasks for perf testing"""
 
     @staticmethod
     def load_template(template_path):
@@ -18,7 +19,7 @@ class SkyGen:
     @staticmethod
     def create_yaml_content(template, problem):
         setup_commands = "\n  ".join(problem.setup_commands)
-        install_commands = " && ".join(problem.install_commands)
+        install_commands = "\n  ".join(problem.install_commands)
 
         result = template.safe_substitute(
             id=problem.pid,
@@ -39,7 +40,7 @@ class SkyGen:
     def create_workspace(problem, yaml_template):
         with tempfile.TemporaryDirectory(delete=False) as temp_dir:
             # Create and write the YAML file
-            yaml_content = SkyGen.create_yaml_content(yaml_template, problem)
+            yaml_content = SkyManager.create_yaml_content(yaml_template, problem)
             yaml_path = os.path.join(temp_dir, f"{problem.pid}_task.yaml")
             with open(yaml_path, "w") as yaml_file:
                 yaml_file.write(yaml_content)
@@ -50,6 +51,7 @@ class SkyGen:
                 test_file.write(problem.test)
 
             logger.info(f"Created workspace: {temp_dir}")
+            print(yaml_content)
 
         return temp_dir
 
@@ -57,3 +59,10 @@ class SkyGen:
     def cleanup_workspace(workspace):
         shutil.rmtree(workspace)
         logger.info(f"Deleted workspace: {workspace}")
+
+    @staticmethod
+    def launch_task(task_yaml, workspace):
+        # TODO: use --down to autotear the cluster after task is done
+        # TODO: use --detach-setup/--detach-run to run w/ interactive setup --> can get logs from sky logs
+        subprocess.run(["sky", "launch", task_yaml], cwd=workspace)
+        logger.info(f"Launched task: {task_yaml}")
