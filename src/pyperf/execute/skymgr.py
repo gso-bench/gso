@@ -6,6 +6,7 @@ from pathlib import Path
 from string import Template
 
 from pyperf.logger import logger
+from pyperf.execute.temp import TEST_HARNESS
 
 
 class SkyManager:
@@ -33,6 +34,8 @@ class SkyManager:
             after_commit=problem.after_commit,
             install_commands_before=install_commands,
             install_commands_after=install_commands,
+            file_before="results_a.txt",
+            file_after="results_b.txt",
         )
         return result
 
@@ -48,7 +51,11 @@ class SkyManager:
             # Create and write the test.py file
             test_script_path = os.path.join(temp_dir, "test.py")
             with open(test_script_path, "w") as test_file:
-                test_file.write(problem.test)
+                # TODO: use this once tests are saved
+                # test_file.write(problem.test)
+
+                # using a hardcoded test for now
+                test_file.write(TEST_HARNESS)
 
             logger.info(f"Created workspace: {temp_dir}")
             print(yaml_content)

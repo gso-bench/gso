@@ -22,7 +22,9 @@ run: |
   
   cd ..
   echo "Running test.py with version before the commit..."
-  python test.py > results_before.txt
+  for i in {1..5}; do
+    python test.py -f $file_before
+  done
 
   cd $repo_name
   git checkout $after_commit
@@ -30,8 +32,8 @@ run: |
   
   cd ..
   echo "Running test.py with version after the commit..."
-  python test.py > results_after.txt
+  for i in {1..5}; do
+    python test.py -f $file_after
+  done
 
   echo "Task complete on $(hostname)"
-  cat results_before.txt
-  cat results_after.txt
