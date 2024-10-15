@@ -33,3 +33,10 @@ class PerformanceCommit(BaseModel):
 
     def add_affected_paths(self, paths: list[str]):
         self.affected_paths.extend(paths)
+
+
+class PerfAnalysis(BaseModel):
+    repo_url: str
+    repo_owner: str
+    repo_name: str
+    performance_commits: list[PerformanceCommit]

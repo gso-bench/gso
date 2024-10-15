@@ -13,7 +13,7 @@ from r2e.llms.llm_args import LLMArgs
 from r2e.llms.completions import LLMCompletions
 
 from pyperf.constants import ANALYSIS_DIR
-from pyperf.data import PerformanceCommit, RepositoryAnalysis
+from pyperf.data import PerformanceCommit, PerfAnalysis
 from pyperf.analysis.parser import DiffParser
 from pyperf.analysis.retriever import Retriever
 from pyperf.analysis.prompt import *
@@ -274,7 +274,7 @@ class PerfCommitAnalyzer:
         return filtered
 
     @staticmethod
-    def analyze_repository(args) -> RepositoryAnalysis:
+    def analyze_repository(args) -> PerfAnalysis:
         repo_url = args.repo_url
         repo_owner, repo_name = repo_url.split("/")[-2:]
         repo_path = ANALYSIS_DIR / "repos" / repo_name
@@ -285,7 +285,7 @@ class PerfCommitAnalyzer:
 
         performance_commits = PerfCommitAnalyzer.get_performance_commits(repo_path)
 
-        return RepositoryAnalysis(
+        return PerfAnalysis(
             repo_url=repo_url,
             repo_owner=repo_owner,
             repo_name=repo_name,
@@ -293,15 +293,15 @@ class PerfCommitAnalyzer:
         )
 
     @staticmethod
-    def save_analysis(analysis: RepositoryAnalysis, output_file: Path):
+    def save_analysis(analysis: PerfAnalysis, output_file: Path):
         with open(output_file, "w") as f:
             f.write(analysis.model_dump_json(indent=2))
 
     @staticmethod
-    def load_analysis(input_file: Path) -> RepositoryAnalysis:
+    def load_analysis(input_file: Path) -> PerfAnalysis:
         with open(input_file, "r") as f:
             data = json.load(f)
-        return RepositoryAnalysis(**data)
+        return PerfAnalysis(**data)
 
 
 # Example usage

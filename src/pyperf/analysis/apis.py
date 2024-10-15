@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 from collections import defaultdict
 
-from pyperf.data import PerformanceCommit, RepositoryAnalysis
+from pyperf.data import PerformanceCommit, PerfAnalysis
 from pyperf.constants import ANALYSIS_DIR
 
 
@@ -10,12 +10,12 @@ class APIAnalyzer:
     def __init__(self):
         self.api_to_commits: dict[str, list[PerformanceCommit]] = defaultdict(list)
 
-    def load_analysis(self, input_file: Path) -> RepositoryAnalysis:
+    def load_analysis(self, input_file: Path) -> PerfAnalysis:
         with open(input_file, "r") as f:
             data = json.load(f)
-        return RepositoryAnalysis(**data)
+        return PerfAnalysis(**data)
 
-    def create_api_to_commits_map(self, analysis: RepositoryAnalysis) -> None:
+    def create_api_to_commits_map(self, analysis: PerfAnalysis) -> None:
         self.commit_analysis = analysis
         for commit in analysis.performance_commits:
             for api in commit.apis:
