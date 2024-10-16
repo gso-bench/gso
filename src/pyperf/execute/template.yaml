@@ -23,7 +23,7 @@ run: |
   cd ..
   echo "Running test.py with version before the commit..."
   for i in {1..5}; do
-    python test.py -f $file_before
+    python test.py $file_before
   done
 
   cd $repo_name
@@ -33,7 +33,7 @@ run: |
   cd ..
   echo "Running test.py with version after the commit..."
   for i in {1..5}; do
-    python test.py -f $file_after
+    python test.py $file_after
   done
 
   echo "Task complete on $(hostname)"

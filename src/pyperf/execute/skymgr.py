@@ -6,7 +6,6 @@ from pathlib import Path
 from string import Template
 
 from pyperf.logger import logger
-from pyperf.execute.temp import TEST_HARNESS
 
 
 class SkyManager:
@@ -51,16 +50,39 @@ class SkyManager:
             # Create and write the test.py file
             test_script_path = os.path.join(temp_dir, "test.py")
             with open(test_script_path, "w") as test_file:
-                # TODO: use this once tests are saved
-                # test_file.write(problem.test)
-
-                # using a hardcoded test for now
-                test_file.write(TEST_HARNESS)
+                test_file.write(problem.test)
 
             logger.info(f"Created workspace: {temp_dir}")
-            print(yaml_content)
 
         return temp_dir
+
+    @staticmethod
+    def launch_task(task_yaml, workspace, cluster="sky-pyperf"):
+        # TODO: use --down to autotear the cluster after task is done
+        # TODO: use --detach-setup/--detach-run to run w/ interactive setup --> can get logs from sky logs
+        subprocess.run(["sky", "launch", "-c", cluster, task_yaml], cwd=workspace)
+        logger.info(f"Launched task: {task_yaml}")
+
+    @staticmethod
+    def exec_task(task_yaml, workspace, cluster="sky-pyperf"):
+        subprocess.run(["sky", "exec", cluster, task_yaml], cwd=workspace)
+        logger.info(f"Execed task: {task_yaml}")
+
+    @staticmethod
+    def get_results(workspace, cluster="sky-pyperf"):
+        subprocess.run(
+            ["rsync", "-Pavz", f"{cluster}:~/sky_workdir/results_*", "."], cwd=workspace
+        )
+
+        with open(os.path.join(workspace, "results_a.txt"), "r") as f:
+            results_a = f.read()
+
+        with open(os.path.join(workspace, "results_b.txt"), "r") as f:
+            results_b = f.read()
+
+        result = f"Cluster: {cluster}\n\nA:\n{results_a}\nB:\n{results_b}"
+        logger.info(f"{result}")
+        return result
 
     @staticmethod
     def cleanup_workspace(workspace):
@@ -68,8 +90,11 @@ class SkyManager:
         logger.info(f"Deleted workspace: {workspace}")
 
     @staticmethod
-    def launch_task(task_yaml, workspace):
-        # TODO: use --down to autotear the cluster after task is done
-        # TODO: use --detach-setup/--detach-run to run w/ interactive setup --> can get logs from sky logs
-        subprocess.run(["sky", "launch", task_yaml], cwd=workspace)
-        logger.info(f"Launched task: {task_yaml}")
+    def cleanup_cluster(cluster):
+        subprocess.run(["sky", "down", cluster])
+        logger.info(f"Deleted cluster: {cluster}")
+
+    @staticmethod
+    def cleanup_all_clusters():
+        subprocess.run(["sky", "down", "-a"])
+        logger.info(f"Deleted all clusters")
