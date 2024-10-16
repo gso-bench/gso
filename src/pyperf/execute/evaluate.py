@@ -10,82 +10,82 @@ os.makedirs("plots", exist_ok=True)
 # Time data
 time1 = """
 A:
-Execution time: 1.221978s
-Execution time: 1.223573s
-Execution time: 1.229537s
-Execution time: 1.226904s
-Execution time: 1.221121s
+Execution time: 0.069344s
+Execution time: 0.069804s
+Execution time: 0.069631s
+Execution time: 0.068870s
+Execution time: 0.069320s
 
 B:
-Execution time: 0.327327s
-Execution time: 0.320638s
-Execution time: 0.322170s
-Execution time: 0.320899s
-Execution time: 0.320943s
+Execution time: 0.039947s
+Execution time: 0.039547s
+Execution time: 0.039773s
+Execution time: 0.039381s
+Execution time: 0.039780s
 """
 
 time2 = """
 A:
-Execution time: 1.220351s
-Execution time: 1.219238s
-Execution time: 1.220931s
-Execution time: 1.220074s
-Execution time: 1.219655s
+Execution time: 0.069008s
+Execution time: 0.069606s
+Execution time: 0.068624s
+Execution time: 0.068363s
+Execution time: 0.068424s
 
 B:
-Execution time: 0.320117s
-Execution time: 0.320298s
-Execution time: 0.319342s
-Execution time: 0.320814s
-Execution time: 0.318563s
+Execution time: 0.039349s
+Execution time: 0.039508s
+Execution time: 0.039402s
+Execution time: 0.039965s
+Execution time: 0.039193s
 """
 
 time3 = """
 A:
-Execution time: 1.221927s
-Execution time: 1.218764s
-Execution time: 1.218391s
-Execution time: 1.223180s
-Execution time: 1.221958s
+Execution time: 0.068250s
+Execution time: 0.077995s
+Execution time: 0.068198s
+Execution time: 0.068924s
+Execution time: 0.068143s
 
 B:
-Execution time: 0.321857s
-Execution time: 0.322010s
-Execution time: 0.320563s
-Execution time: 0.319733s
-Execution time: 0.320940s
+Execution time: 0.040682s
+Execution time: 0.039870s
+Execution time: 0.040070s
+Execution time: 0.039426s
+Execution time: 0.039625s
 """
 
 time4 = """
 A:
-Execution time: 1.220482s
-Execution time: 1.221598s
-Execution time: 1.218370s
-Execution time: 1.219456s
-Execution time: 1.219255s
+Execution time: 0.070970s
+Execution time: 0.070201s
+Execution time: 0.070294s
+Execution time: 0.070288s
+Execution time: 0.070029s
 
 B:
-Execution time: 0.320460s
-Execution time: 0.321360s
-Execution time: 0.321159s
-Execution time: 0.320035s
-Execution time: 0.321044s
+Execution time: 0.042627s
+Execution time: 0.043225s
+Execution time: 0.042317s
+Execution time: 0.043334s
+Execution time: 0.042902s
 """
 
 time5 = """
 A:
-Execution time: 1.220473s
-Execution time: 1.218909s
-Execution time: 1.218363s
-Execution time: 1.221730s
-Execution time: 1.219167s
+Execution time: 0.068420s
+Execution time: 0.068770s
+Execution time: 0.068316s
+Execution time: 0.068573s
+Execution time: 0.068540s
 
 B:
-Execution time: 0.320573s
-Execution time: 0.320627s
-Execution time: 0.319581s
-Execution time: 0.319577s
-Execution time: 0.320530s
+Execution time: 0.039939s
+Execution time: 0.039528s
+Execution time: 0.039493s
+Execution time: 0.039988s
+Execution time: 0.039688s
 """
 
 
@@ -283,10 +283,10 @@ for i, (v1, v2) in enumerate(zip(commit_a_combined, commit_b_combined), 1):
 
 print("Summary:")
 print(
-    f"Commit A: {np.mean(commit_a_combined):.2f}s ({np.std(commit_a_combined, ddof=1):.2f})"
+    f"Commit A: {np.mean(commit_a_combined):.3f}s ({np.std(commit_a_combined, ddof=1):.2f})"
 )
 print(
-    f"Commit B: {np.mean(commit_b_combined):.2f}s ({np.std(commit_b_combined, ddof=1):.2f})"
+    f"Commit B: {np.mean(commit_b_combined):.3f}s ({np.std(commit_b_combined, ddof=1):.2f})"
 )
 
 print(f"Opt: {np.mean(opts):.2f}% ({np.std(opts, ddof=1):.2f})")

@@ -1,39 +1,33 @@
 TEST = """
 import timeit
 from PIL import Image
-import requests
 from io import BytesIO
 
-def download_image(url):
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
-    }
-    response = requests.get(url, headers=headers)
-    response.raise_for_status()
-    return Image.open(BytesIO(response.content))
+def create_test_image():
+    # Create a large image with a palette that requires optimization
+    # Using a 9500x4000 image with ~135 colors as per the commit message
+    width, height = 9500, 4000
+    colors = 135
+    # Create an image with a gradient to simulate real-world data
+    im = Image.new("P", (width, height))
+    palette = [i % 256 for i in range(3 * 256)]
+    im.putpalette(palette)
+    for x in range(width):
+        for y in range(height):
+            im.putpixel((x, y), (x * y) % colors)
+    return im
 
-def setup_images():
-    # Download a sample image with alpha channel
-    url1 = "https://upload.wikimedia.org/wikipedia/commons/4/47/PNG_transparency_demonstration_1.png"
-    image1 = download_image(url1).convert("RGBA")
-    
-    # Create a simple RGBA image programmatically
-    image2 = Image.new("RGBA", image1.size, (255, 0, 0, 128))  # Semi-transparent red
-
-    return image1, image2
-
-def experiment(image1, image2):
-    # Perform alpha compositing
-    result = Image.alpha_composite(image1, image2)
-    return result
+def experiment(im):    
+    # Save the image to a BytesIO object to simulate file saving
+    output = BytesIO()
+    im.save(output, format='GIF', optimize=True)
 
 def run_test():
-    # Setup the images
-    image1, image2 = setup_images()
-
-    # Measure the execution time of the experiment
-    execution_time = timeit.timeit(lambda: experiment(image1, image2), number=100)
+    # Create the test image
+    im = create_test_image()
     
+    # Measure the execution time of the experiment
+    execution_time = timeit.timeit(lambda: experiment(im), number=1)
     return execution_time
 """
 
