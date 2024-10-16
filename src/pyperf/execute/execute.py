@@ -14,8 +14,8 @@ problems = [
         "instance_type": "n2-standard-16",
         "repo_url": "https://github.com/python-pillow/Pillow",
         "repo_name": "Pillow",
-        "before_commit": "bab068a337a1dc7d556870a5514807637c1896e7^1",
-        "after_commit": "HEAD",
+        "before_commit": "a51d3bcdba4c0893df0f8c934c96cf5be1639568^1",
+        "after_commit": "main",
         "setup_commands": [
             "sudo apt-get install -y libtiff5-dev libjpeg8-dev libopenjp2-7-dev zlib1g-dev",
             "sudo apt-get install -y libfreetype6-dev liblcms2-dev libwebp-dev tcl8.6-dev tk8.6-dev python3-tk",
@@ -28,6 +28,7 @@ problems = [
             "python --version",
             "uv pip install -e .",
             "uv pip install requests",
+            "uv pip show pillow",
         ],
         "test": TEST_HARNESS,
     }
@@ -43,7 +44,6 @@ if __name__ == "__main__":
 
     # single cluster run:
     SkyManager.launch_task(f"{problem.pid}_task.yaml", wspace, cluster="sky-pyperf")
-    # SkyManager.exec_task(f"{problem.pid}_task.yaml", wspace, cluster="sky-pyperf")
     results = SkyManager.get_results(wspace, cluster="sky-pyperf")
     print(results)
 
