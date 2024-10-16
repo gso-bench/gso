@@ -80,6 +80,11 @@ class SkyManager:
         with open(os.path.join(workspace, "results_b.txt"), "r") as f:
             results_b = f.read()
 
+        # NOTE(@manish): cleaning up so on subsequent launches,
+        # we don't move previous results to the workspace; simplifies result logging
+        os.remove(os.path.join(workspace, "results_a.txt"))
+        os.remove(os.path.join(workspace, "results_b.txt"))
+
         result = f"Cluster: {cluster}\n\nA:\n{results_a}\nB:\n{results_b}"
         logger.info(f"{result}")
         return result

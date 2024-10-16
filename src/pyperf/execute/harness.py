@@ -1,33 +1,29 @@
 TEST = """
 import timeit
 from PIL import Image
+import requests
 from io import BytesIO
 
-def create_test_image():
-    # Create a large image with a palette that requires optimization
-    # Using a 9500x4000 image with ~135 colors as per the commit message
-    width, height = 9500, 4000
-    colors = 135
-    # Create an image with a gradient to simulate real-world data
-    im = Image.new("P", (width, height))
-    palette = [i % 256 for i in range(3 * 256)]
-    im.putpalette(palette)
-    for x in range(width):
-        for y in range(height):
-            im.putpixel((x, y), (x * y) % colors)
-    return im
+def download_image(url):
+    response = requests.get(url)
+    response.raise_for_status()
+    return Image.open(BytesIO(response.content))
 
-def experiment(im):    
-    # Save the image to a BytesIO object to simulate file saving
-    output = BytesIO()
-    im.save(output, format='GIF', optimize=True)
+def experiment(image):
+    # Convert to a format that supports transparency (RGBA)
+    image = image.convert("RGBA")
+
+    # Use the getbbox function to find the bounding box of the non-transparent part
+    bbox = image.getbbox()
+    return bbox
 
 def run_test():
-    # Create the test image
-    im = create_test_image()
+    # Download a real-world image
+    url = "https://upload.wikimedia.org/wikipedia/commons/4/47/PNG_transparency_demonstration_1.png"
+    image = download_image(url)
     
-    # Measure the execution time of the experiment
-    execution_time = timeit.timeit(lambda: experiment(im), number=1)
+    # Measure the execution time using timeit
+    execution_time = timeit.timeit(lambda: experiment(image), number=100)
     return execution_time
 """
 

@@ -14,7 +14,7 @@ problems = [
         "instance_type": "n2-standard-16",
         "repo_url": "https://github.com/python-pillow/Pillow",
         "repo_name": "Pillow",
-        "before_commit": "a51d3bcdba4c0893df0f8c934c96cf5be1639568^1",
+        "before_commit": "4cf5688cfd42caed6f25db2d5ea29271ea8c1c9f^1",
         "after_commit": "main",
         "setup_commands": [
             "sudo apt-get install -y libtiff5-dev libjpeg8-dev libopenjp2-7-dev zlib1g-dev",
