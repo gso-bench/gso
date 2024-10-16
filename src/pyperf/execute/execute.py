@@ -1,4 +1,5 @@
 import shutil
+import argparse
 
 from pyperf.execute.skymgr import SkyManager
 from pyperf.utils.io import load_problems
@@ -14,7 +15,7 @@ problems = [
         "instance_type": "n2-standard-16",
         "repo_url": "https://github.com/python-pillow/Pillow",
         "repo_name": "Pillow",
-        "before_commit": "4cf5688cfd42caed6f25db2d5ea29271ea8c1c9f^1",
+        "before_commit": "4554bcb4e425fac461c39e84919bacd0c5a0dbae^1",
         "after_commit": "main",
         "setup_commands": [
             "sudo apt-get install -y libtiff5-dev libjpeg8-dev libopenjp2-7-dev zlib1g-dev",
@@ -35,6 +36,12 @@ problems = [
 ]
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Execute tasks with SkyManager")
+    parser.add_argument(
+        "-m", "--machines", type=int, default=1, help="Number of machines to use"
+    )
+    args = parser.parse_args()
+
     # TODO: load problems from a file
     # problems = load_problems(TESTGEN_DIR / "test.json")
     problem = Problem(**problems[0])
@@ -42,19 +49,12 @@ if __name__ == "__main__":
     yaml_template = SkyManager.load_template(SKYGEN_TEMPLATE)
     wspace = SkyManager.create_workspace(problem, yaml_template)
 
-    # single cluster run:
-    SkyManager.launch_task(f"{problem.pid}_task.yaml", wspace, cluster="sky-pyperf")
-    results = SkyManager.get_results(wspace, cluster="sky-pyperf")
-    print(results)
+    for i in range(args.machines):
+        SkyManager.launch_task(
+            f"{problem.pid}_task.yaml", wspace, cluster=f"sky-pyperf-{i}"
+        )
+        results = SkyManager.get_results(wspace, cluster=f"sky-pyperf-{i}")
+        print(results)
 
-    # multi-cluster run:
-    # vm_count = 5
-    # for i in range(vm_count):
-    #     SkyManager.launch_task(
-    #         f"{problem.pid}_task.yaml", wspace, cluster=f"sky-pyperf-{i}"
-    #     )
-    #     results = SkyManager.get_results(wspace, cluster=f"sky-pyperf-{i}")
-    #     print(results)
-
-    # SkyManager.cleanup_workspace(wspace)
-    # SkyManager.cleanup_all_clusters()
+    SkyManager.cleanup_workspace(wspace)
+    SkyManager.cleanup_all_clusters()

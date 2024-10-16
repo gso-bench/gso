@@ -5,25 +5,35 @@ import requests
 from io import BytesIO
 
 def download_image(url):
-    response = requests.get(url)
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
+    }
+    response = requests.get(url, headers=headers)
     response.raise_for_status()
     return Image.open(BytesIO(response.content))
 
-def experiment(image):
-    # Convert to a format that supports transparency (RGBA)
-    image = image.convert("RGBA")
+def setup_images():
+    # Download a sample image with alpha channel
+    url1 = "https://upload.wikimedia.org/wikipedia/commons/4/47/PNG_transparency_demonstration_1.png"
+    image1 = download_image(url1).convert("RGBA")
+    
+    # Create a simple RGBA image programmatically
+    image2 = Image.new("RGBA", image1.size, (255, 0, 0, 128))  # Semi-transparent red
 
-    # Use the getbbox function to find the bounding box of the non-transparent part
-    bbox = image.getbbox()
-    return bbox
+    return image1, image2
+
+def experiment(image1, image2):
+    # Perform alpha compositing
+    result = Image.alpha_composite(image1, image2)
+    return result
 
 def run_test():
-    # Download a real-world image
-    url = "https://upload.wikimedia.org/wikipedia/commons/4/47/PNG_transparency_demonstration_1.png"
-    image = download_image(url)
+    # Setup the images
+    image1, image2 = setup_images()
+
+    # Measure the execution time of the experiment
+    execution_time = timeit.timeit(lambda: experiment(image1, image2), number=100)
     
-    # Measure the execution time using timeit
-    execution_time = timeit.timeit(lambda: experiment(image), number=100)
     return execution_time
 """
 
