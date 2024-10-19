@@ -10,82 +10,82 @@ os.makedirs("plots", exist_ok=True)
 # Time data
 time1 = """
 A:
-Execution time: 0.069344s
-Execution time: 0.069804s
-Execution time: 0.069631s
-Execution time: 0.068870s
-Execution time: 0.069320s
+Execution time: 37.984788s
+Execution time: 40.687607s
+Execution time: 41.018296s
+Execution time: 41.022566s
+Execution time: 41.050218s
 
 B:
-Execution time: 0.039947s
-Execution time: 0.039547s
-Execution time: 0.039773s
-Execution time: 0.039381s
-Execution time: 0.039780s
+Execution time: 16.697317s
+Execution time: 16.902597s
+Execution time: 16.809093s
+Execution time: 17.044638s
+Execution time: 16.756229s
 """
 
 time2 = """
 A:
-Execution time: 0.069008s
-Execution time: 0.069606s
-Execution time: 0.068624s
-Execution time: 0.068363s
-Execution time: 0.068424s
+Execution time: 38.902812s
+Execution time: 40.313502s
+Execution time: 40.852903s
+Execution time: 40.902300s
+Execution time: 40.640170s
 
 B:
-Execution time: 0.039349s
-Execution time: 0.039508s
-Execution time: 0.039402s
-Execution time: 0.039965s
-Execution time: 0.039193s
+Execution time: 16.827364s
+Execution time: 17.130921s
+Execution time: 16.823344s
+Execution time: 16.869891s
+Execution time: 16.986722s
 """
 
 time3 = """
 A:
-Execution time: 0.068250s
-Execution time: 0.077995s
-Execution time: 0.068198s
-Execution time: 0.068924s
-Execution time: 0.068143s
+Execution time: 42.779238s
+Execution time: 45.291514s
+Execution time: 46.060925s
+Execution time: 45.661816s
+Execution time: 46.078142s
 
 B:
-Execution time: 0.040682s
-Execution time: 0.039870s
-Execution time: 0.040070s
-Execution time: 0.039426s
-Execution time: 0.039625s
+Execution time: 16.759270s
+Execution time: 17.141903s
+Execution time: 17.116510s
+Execution time: 17.102350s
+Execution time: 17.843965s
 """
 
 time4 = """
 A:
-Execution time: 0.070970s
-Execution time: 0.070201s
-Execution time: 0.070294s
-Execution time: 0.070288s
-Execution time: 0.070029s
+Execution time: 37.933844s
+Execution time: 39.456719s
+Execution time: 40.261126s
+Execution time: 40.690294s
+Execution time: 40.787419s
 
 B:
-Execution time: 0.042627s
-Execution time: 0.043225s
-Execution time: 0.042317s
-Execution time: 0.043334s
-Execution time: 0.042902s
+Execution time: 17.096757s
+Execution time: 16.813326s
+Execution time: 16.778093s
+Execution time: 16.864957s
+Execution time: 16.878521s
 """
 
 time5 = """
 A:
-Execution time: 0.068420s
-Execution time: 0.068770s
-Execution time: 0.068316s
-Execution time: 0.068573s
-Execution time: 0.068540s
+Execution time: 38.663875s
+Execution time: 42.212477s
+Execution time: 41.282796s
+Execution time: 42.058232s
+Execution time: 41.813132s
 
 B:
-Execution time: 0.039939s
-Execution time: 0.039528s
-Execution time: 0.039493s
-Execution time: 0.039988s
-Execution time: 0.039688s
+Execution time: 16.740452s
+Execution time: 17.049965s
+Execution time: 16.979335s
+Execution time: 16.548218s
+Execution time: 16.949227s
 """
 
 

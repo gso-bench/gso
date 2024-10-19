@@ -1,33 +1,40 @@
 TEST = """
+import os
 import timeit
-from PIL import Image
-from io import BytesIO
+from datasets import Dataset
+import numpy as np
+from tqdm.auto import tqdm
 
-def create_test_image():
-    # Create a large image with a palette that requires optimization
-    # Using a 9500x4000 image with ~135 colors as per the commit message
-    width, height = 9500, 4000
-    colors = 135
-    # Create an image with a gradient to simulate real-world data
-    im = Image.new("P", (width, height))
-    palette = [i % 256 for i in range(3 * 256)]
-    im.putpalette(palette)
-    for x in range(width):
-        for y in range(height):
-            im.putpixel((x, y), (x * y) % colors)
-    return im
-
-def experiment(im):    
-    # Save the image to a BytesIO object to simulate file saving
-    output = BytesIO()
-    im.save(output, format='GIF', optimize=True)
-
+def setup():
+    # Create a large synthetic dataset
+    size = 10_000_000
+    ds = Dataset.from_dict({
+        "id": range(size),
+        "text": [f"This is sample text number {i}" for i in range(size)],
+        "value": np.random.rand(size).tolist()
+    })
+    
+    # Ensure the temporary directory exists
+    os.makedirs("tmp", exist_ok=True)
+    
+    return ds
+    
+def experiment(ds):
+    num_shards = 5
+    size = len(ds) // num_shards
+    
+    for index in tqdm(range(num_shards), desc="Sharding"):
+        start = size * index
+        end = start + size
+        shard = ds.select(range(start, end))
+        shard.to_json(f"tmp/data_{index}.jsonl")
+        
 def run_test():
-    # Create the test image
-    im = create_test_image()
+    # Setup the experiment
+    ds = setup()
     
     # Measure the execution time of the experiment
-    execution_time = timeit.timeit(lambda: experiment(im), number=1)
+    execution_time = timeit.timeit(lambda: experiment(ds), number=1)
     return execution_time
 """
 

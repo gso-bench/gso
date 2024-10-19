@@ -9,13 +9,13 @@ from pyperf.execute.harness import TEST_HARNESS
 
 problems = [
     {
-        "pid": "pillow-timing-test",
+        "pid": "datasets-timing-test",
         "cloud": "gcp",
         "region": "us-central1",
         "instance_type": "n2-standard-16",
-        "repo_url": "https://github.com/python-pillow/Pillow",
-        "repo_name": "Pillow",
-        "before_commit": "a51d3bcdba4c0893df0f8c934c96cf5be1639568^1",
+        "repo_url": "https://github.com/huggingface/datasets",
+        "repo_name": "datasets",
+        "before_commit": "599403601739e7a73e8ebbc8653d246e07207265^1",
         "after_commit": "main",
         "setup_commands": [
             "sudo apt-get install -y libtiff5-dev libjpeg8-dev libopenjp2-7-dev zlib1g-dev",
@@ -29,7 +29,7 @@ problems = [
             "python --version",
             "uv pip install -e .",
             "uv pip install requests",
-            "uv pip show pillow",
+            "uv pip show datasets",
         ],
         "test": TEST_HARNESS,
     }
