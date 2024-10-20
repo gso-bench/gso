@@ -3,7 +3,8 @@
 import re
 from datetime import datetime
 
-from pyperf.data.models import *
+from pyperf.data import *
+from pyperf.data.parsing import *
 
 
 class DiffParser:
