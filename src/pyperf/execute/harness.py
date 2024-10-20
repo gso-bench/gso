@@ -21,13 +21,11 @@ def setup():
     
 def experiment(ds):
     num_shards = 5
-    size = len(ds) // num_shards
-    
+
     for index in tqdm(range(num_shards), desc="Sharding"):
-        start = size * index
-        end = start + size
-        shard = ds.select(range(start, end))
-        shard.to_json(f"tmp/data_{index}.jsonl")
+        shard = ds.shard(num_shards=num_shards, index=index, contiguous=True)
+        shard.to_json(f"tmp/data_original_{index}.jsonl")
+
         
 def run_test():
     # Setup the experiment
