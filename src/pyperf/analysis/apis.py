@@ -35,7 +35,11 @@ class APIAnalyzer:
         for api, commits in sorted_apis:
             for c in commits:
                 summary[api].append(
-                    {"commit_hash": c.commit_hash, "subject": c.subject}
+                    {
+                        "commit_hash": c.commit_hash,
+                        "subject": c.subject,
+                        "date": c.date.date(),
+                    }
                 )
         return summary
 

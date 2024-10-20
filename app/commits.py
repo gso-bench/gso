@@ -72,7 +72,7 @@ def api_commit_map(repo_name):
         html += f"<p>Number of affecting commits: {len(commits)}</p>"
         html += "<p>Affecting commits:</p>"
         for commit in commits:
-            html += f"<p><a href='{repo_url}/commit/{commit['commit_hash']}'>{commit['commit_hash'][:8]}: {commit['subject']}</a></p>"
+            html += f"<p>{commit['date']} <a href='{repo_url}/commit/{commit['commit_hash']}'>{commit['commit_hash'][:8]}: {commit['subject']}</a></p>"
         html += "<br>"
     return html
 
