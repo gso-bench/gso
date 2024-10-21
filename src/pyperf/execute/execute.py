@@ -53,6 +53,9 @@ if __name__ == "__main__":
         SkyManager.launch_task(
             f"{problem.pid}_task.yaml", wspace, cluster=f"sky-pyperf-{i}"
         )
+
+        # TODO: use sky logs --status cluster_id to get whether the job succeeded;
+        # then pull results; this way the job can be run detached + parallelized
         results = SkyManager.get_results(wspace, cluster=f"sky-pyperf-{i}")
         print(results)
 
