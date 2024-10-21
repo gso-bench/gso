@@ -1,25 +1,30 @@
 TEST = """
-import timeit
 import networkx as nx
+import timeit
 
-def setup_graph():
-    # Set up a directed graph with a large number of nodes.
-    g = nx.DiGraph()
-    for i in range(10_000):
-        g.add_node(i)
-    return nx.subgraph_view(g, filter_node=lambda n: True, filter_edge=lambda u, v: True)
+def setup_graph(num_nodes):
+    # Set up a graph with a specified number of nodes.
+    # Create a random graph with a specified number of nodes and a probability for edge creation
+    G = nx.erdos_renyi_graph(num_nodes, 0.1, seed=42)
+    return G
 
-def experiment(graph):
-    # Run the weakly_connected_components function on the graph.
-    for _ in nx.weakly_connected_components(graph):
-        pass
+def experiment(G):
+    # Experiment to measure the execution time of common neighbor centrality.
+    # Compute common neighbor centrality for all pairs of nodes
+    centrality = nx.common_neighbor_centrality(G)
+    # Consume the generator to ensure the computation is complete
+    list(centrality)
 
 def run_test():
-    # Measure the execution time of the weakly_connected_components function.
-    graph = setup_graph()
-    # Measure the execution time using timeit
-    execution_time = timeit.timeit(lambda: experiment(graph), number=1)
-    return execution_time
+    # Set up the graph (do not time this part)
+    num_nodes = 1000
+    G = setup_graph(num_nodes)
+
+    # Use timeit to measure the performance of the experiment
+    time_taken = timeit.timeit(lambda: experiment(G), number=1)
+    
+    # Return the time taken for the experiment
+    return time_taken
 """
 
 TEST_HARNESS = TEST
