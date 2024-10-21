@@ -1,25 +1,25 @@
 TEST = """
 import timeit
 import networkx as nx
-import random
 
 def setup_graph():
-    N = 2000
-    random.seed(42)
-    G = nx.complete_graph(N)
-    for (u,v,w) in G.edges(data=True):
-        w['weight'] = random.random()
-    return G
+    # Set up a directed graph with a large number of nodes.
+    g = nx.DiGraph()
+    for i in range(10_000):
+        g.add_node(i)
+    return nx.subgraph_view(g, filter_node=lambda n: True, filter_edge=lambda u, v: True)
 
-def experiment(G):
-    list(nx.minimum_spanning_edges(G, algorithm="prim", weight='weight', data=True))
+def experiment(graph):
+    # Run the weakly_connected_components function on the graph.
+    for _ in nx.weakly_connected_components(graph):
+        pass
 
 def run_test():
-    G = setup_graph()
-
+    # Measure the execution time of the weakly_connected_components function.
+    graph = setup_graph()
     # Measure the execution time using timeit
-    time_taken = timeit.timeit(lambda: experiment(G), number=1)
-    return time_taken
+    execution_time = timeit.timeit(lambda: experiment(graph), number=1)
+    return execution_time
 """
 
 TEST_HARNESS = TEST
