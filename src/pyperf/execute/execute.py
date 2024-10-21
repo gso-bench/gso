@@ -15,7 +15,7 @@ problems = [
         "instance_type": "n2-standard-16",
         "repo_url": "https://github.com/huggingface/datasets",
         "repo_name": "datasets",
-        "before_commit": "32b206d47f582380f9c64578dcfa6c48252db3b8^1",
+        "before_commit": "d9a08aafc21ad0b8d70e6d149353e380ed01ca12^1",
         "after_commit": "main",
         "setup_commands": [
             "sudo apt-get install -y libtiff5-dev libjpeg8-dev libopenjp2-7-dev zlib1g-dev",
@@ -23,7 +23,7 @@ problems = [
             "sudo apt-get install -y libharfbuzz-dev libfribidi-dev libxcb1-dev libx11-dev",
         ],
         "install_commands": [
-            "uv venv --python 3.10",
+            "uv venv --python 3.9",
             "source .venv/bin/activate",
             "which python",
             "python --version",

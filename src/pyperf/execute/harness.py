@@ -1,27 +1,23 @@
 TEST = """
 import timeit
-import numpy as np
-import pandas as pd
-from datasets import Dataset
+from datasets import load_dataset
 
-def generate_large_dataset(num_rows=1000, num_features=6000):
-    # Generate a large dataset with specified number of rows and features.
-    data = {f'feature_{i}': np.random.rand(num_rows) for i in range(num_features)}
-    return Dataset.from_pandas(pd.DataFrame(data))
-
-def map_function(batch):
-    return batch
+def setup():
+    # Load the dataset outside the experiment function to avoid timing the setup
+    dataset = load_dataset('stanfordnlp/imdb', split='train')
+    return dataset
 
 def experiment(ds):
-    # Perform the experiment by applying the map function to the dataset.
-    # Apply the map function
-    ds.map(map_function, batched=True)
+    # Define a filter function that simulates a real-world use case
+    def filter_function(example):
+        return len(example['text']) > 100
+
+    # Apply the filter function to the dataset
+    filtered_dataset = ds.filter(filter_function)
 
 def run_test():
-    # Generate a large dataset
-    ds = generate_large_dataset()
+    ds = setup()
     
-    # Run the performance test and return the execution time.
     # Measure the execution time of the experiment
     execution_time = timeit.timeit(lambda: experiment(ds), number=1)
     return execution_time
