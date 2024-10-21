@@ -15,7 +15,7 @@ problems = [
         "instance_type": "n2-standard-16",
         "repo_url": "https://github.com/networkx/networkx",
         "repo_name": "networkx_proj",
-        "before_commit": "7307c73b62237a6cec3e9b2a24d7bfbfb1111c11^1",
+        "before_commit": "83cc6cd2811dbc6d20cfb3de809f21153b30e14e^1",
         "after_commit": "main",
         "setup_commands": [
             "sudo apt-get install -y libtiff5-dev libjpeg8-dev libopenjp2-7-dev zlib1g-dev",

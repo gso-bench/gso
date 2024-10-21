@@ -1,34 +1,25 @@
 TEST = """
-import networkx as nx
 import timeit
-from itertools import combinations
+import networkx as nx
+import random
 
 def setup_graph():
-    # Create an Erdős-Rényi graph with 100 nodes and a probability of 0.1 for edge creation
-    G = nx.erdos_renyi_graph(100, 0.1)
+    N = 2000
+    random.seed(42)
+    G = nx.complete_graph(N)
+    for (u,v,w) in G.edges(data=True):
+        w['weight'] = random.random()
     return G
 
-def experiment_kirchhoff(G):
-    try:
-        rd = nx.resistance_distance(G)
-        ki = sum(rd[i][j] for i in rd for j in rd[i]) / 2
-    except TypeError:
-        nodes = list(G.nodes)
-        node_pairs = combinations(nodes, 2)
-        ki = 0
-        for nodeA, nodeB in node_pairs:
-            rd = nx.resistance_distance(G, nodeA, nodeB)
-            ki += rd
-    return ki
+def experiment(G):
+    list(nx.minimum_spanning_edges(G, algorithm="prim", weight='weight', data=True))
 
 def run_test():
-    # Set up the graph
     G = setup_graph()
-    
-    # Measure the execution time of the resistance distance computation
-    execution_time = timeit.timeit(lambda: experiment_kirchhoff(G), number=1)
-    
-    return execution_time
+
+    # Measure the execution time using timeit
+    time_taken = timeit.timeit(lambda: experiment(G), number=1)
+    return time_taken
 """
 
 TEST_HARNESS = TEST
