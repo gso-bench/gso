@@ -1,30 +1,30 @@
 TEST = """
-import networkx as nx
 import timeit
+import numpy as np
+import pandas as pd
+from datasets import Dataset
 
-def setup_graph(num_nodes):
-    # Set up a graph with a specified number of nodes.
-    # Create a random graph with a specified number of nodes and a probability for edge creation
-    G = nx.erdos_renyi_graph(num_nodes, 0.1, seed=42)
-    return G
+def generate_large_dataset(num_rows=1000, num_features=6000):
+    # Generate a large dataset with specified number of rows and features.
+    data = {f'feature_{i}': np.random.rand(num_rows) for i in range(num_features)}
+    return Dataset.from_pandas(pd.DataFrame(data))
 
-def experiment(G):
-    # Experiment to measure the execution time of common neighbor centrality.
-    # Compute common neighbor centrality for all pairs of nodes
-    centrality = nx.common_neighbor_centrality(G)
-    # Consume the generator to ensure the computation is complete
-    list(centrality)
+def map_function(batch):
+    return batch
+
+def experiment(ds):
+    # Perform the experiment by applying the map function to the dataset.
+    # Apply the map function
+    ds.map(map_function, batched=True)
 
 def run_test():
-    # Set up the graph (do not time this part)
-    num_nodes = 1000
-    G = setup_graph(num_nodes)
-
-    # Use timeit to measure the performance of the experiment
-    time_taken = timeit.timeit(lambda: experiment(G), number=1)
+    # Generate a large dataset
+    ds = generate_large_dataset()
     
-    # Return the time taken for the experiment
-    return time_taken
+    # Run the performance test and return the execution time.
+    # Measure the execution time of the experiment
+    execution_time = timeit.timeit(lambda: experiment(ds), number=1)
+    return execution_time
 """
 
 TEST_HARNESS = TEST

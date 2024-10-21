@@ -13,9 +13,9 @@ problems = [
         "cloud": "gcp",
         "region": "us-central1",
         "instance_type": "n2-standard-16",
-        "repo_url": "https://github.com/networkx/networkx",
-        "repo_name": "networkx_proj",
-        "before_commit": "72d1f680f60213102df1ab07c5eef82605944594^1",
+        "repo_url": "https://github.com/huggingface/datasets",
+        "repo_name": "datasets",
+        "before_commit": "32b206d47f582380f9c64578dcfa6c48252db3b8^1",
         "after_commit": "main",
         "setup_commands": [
             "sudo apt-get install -y libtiff5-dev libjpeg8-dev libopenjp2-7-dev zlib1g-dev",
@@ -29,8 +29,7 @@ problems = [
             "python --version",
             "uv pip install -e .",
             "uv pip install requests",
-            "uv pip install numpy scipy",
-            "uv pip show networkx",
+            "uv pip show datasets",
         ],
         "test": TEST_HARNESS,
     }
