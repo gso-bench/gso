@@ -9,13 +9,13 @@ from pyperf.execute.harness import TEST_HARNESS
 
 problems = [
     {
-        "pid": "datasets-timing-test",
+        "pid": "networkx-timing-test",
         "cloud": "gcp",
         "region": "us-central1",
         "instance_type": "n2-standard-16",
-        "repo_url": "https://github.com/huggingface/datasets",
-        "repo_name": "datasets",
-        "before_commit": "599403601739e7a73e8ebbc8653d246e07207265^1",
+        "repo_url": "https://github.com/networkx/networkx",
+        "repo_name": "networkx_proj",
+        "before_commit": "8acb5d18a02132074d98d0cc5dd1ef131ce310aa^1",
         "after_commit": "main",
         "setup_commands": [
             "sudo apt-get install -y libtiff5-dev libjpeg8-dev libopenjp2-7-dev zlib1g-dev",
@@ -23,13 +23,13 @@ problems = [
             "sudo apt-get install -y libharfbuzz-dev libfribidi-dev libxcb1-dev libx11-dev",
         ],
         "install_commands": [
-            "uv venv --python 3.9",
+            "uv venv --python 3.10",
             "source .venv/bin/activate",
             "which python",
             "python --version",
             "uv pip install -e .",
             "uv pip install requests",
-            "uv pip show datasets",
+            "uv pip show networkx",
         ],
         "test": TEST_HARNESS,
     }

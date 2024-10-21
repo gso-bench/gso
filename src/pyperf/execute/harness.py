@@ -1,39 +1,58 @@
 TEST = """
-import os
 import timeit
-from datasets import Dataset
-import numpy as np
-from tqdm.auto import tqdm
+import networkx as nx
+import urllib.request
+import os
+import gzip
 
-def setup():
-    # Create a large synthetic dataset
-    size = 10_000_000
-    ds = Dataset.from_dict({
-        "id": range(size),
-        "text": [f"This is sample text number {i}" for i in range(size)],
-        "value": np.random.rand(size).tolist()
-    })
-    
-    # Ensure the temporary directory exists
-    os.makedirs("tmp", exist_ok=True)
-    
-    return ds
-    
-def experiment(ds):
-    num_shards = 5
+def download_and_extract_dataset():
+    url = "https://snap.stanford.edu/data/bigdata/communities/com-youtube.ungraph.txt.gz"
+    filename = "com-youtube.ungraph.txt.gz"
+    extracted_filename = "com-youtube.ungraph.txt"
 
-    for index in tqdm(range(num_shards), desc="Sharding"):
-        shard = ds.shard(num_shards=num_shards, index=index, contiguous=True)
-        shard.to_json(f"tmp/data_original_{index}.jsonl")
+    # Download the dataset if it doesn't exist
+    if not os.path.exists(filename):
+        print("Downloading dataset...")
+        urllib.request.urlretrieve(url, filename)
+    
+    # Extract the dataset if it hasn't been extracted
+    if not os.path.exists(extracted_filename):
+        print("Extracting dataset...")
+        with gzip.open(filename, 'rb') as f_in:
+            with open(extracted_filename, 'wb') as f_out:
+                f_out.write(f_in.read())
+    
+    return extracted_filename
 
-        
+def setup_real_world_graph():
+    # Download and extract the dataset
+    dataset_file = download_and_extract_dataset()
+
+    # Load the graph from the dataset
+    print("Loading graph...")
+    G = nx.Graph()
+    with open(dataset_file, 'r') as f:
+        for line in f:
+            if line.startswith('#'):
+                continue
+            u, v = map(int, line.split())
+            G.add_edge(u, v)
+    
+    return G
+
+def experiment(graph):
+    # Measure the time taken to find all connected components in the graph
+    components = list(nx.connected_components(graph))
+    return components
+
 def run_test():
-    # Setup the experiment
-    ds = setup()
+    # Setup the graph outside of the timing function to focus on the API call
+    graph = setup_real_world_graph()
+
+    # Use timeit to measure the execution time of the experiment
+    time_taken = timeit.timeit(lambda: experiment(graph), number=20)
     
-    # Measure the execution time of the experiment
-    execution_time = timeit.timeit(lambda: experiment(ds), number=1)
-    return execution_time
+    return time_taken
 """
 
 TEST_HARNESS = TEST
