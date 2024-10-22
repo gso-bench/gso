@@ -1,4 +1,4 @@
-SYSTEM_PROMPT = """You are a performance testing expert. 
+SYSTEM_MSG = """You are a performance testing expert. 
 You will generate a Python performance test that uses the `timeit` library to measure the execution time of an API function in a specified repository.
 
 # Steps
@@ -32,21 +32,19 @@ if __name__ == '__main__':
 - Do not write the main function as your code will be automatically appended with the harness
 """
 
-TASK_PROMPT = """Write a test for the {api} API in the {repo_name} repository. 
-Here's a commit and it's information that does some optimization for this API that might be relevant to writing the test:
-
+CONTEXT_MSG = """Here's a commit and it's information that does some optimization for the {api} API in the {repo_name} repository that might be relevant to writing the test:
 ## Commit Message: {commit_message}
 
 ## Commit Diff:
 {commit_diff}
 """
 
-ISSUE_MESSAGES = """
+ISSUE_INFO = """
 ## Related Issue Messages:
 {issue_messages}
 """
 
-PR_MESSAGES = """
+PR_INFO = """
 ## Related PR Messages:
 {pr_messages}
 """

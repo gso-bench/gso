@@ -32,14 +32,19 @@ class PerfExpGenerator:
         commit = PerfCommitAnalyzer.process_commit(
             prob.base_commit, self.repo.local_repo_path
         )
-        messages = get_github_convo(self.repo, commit.linked_pr)
-        TASK_PROMPT.format(
+        context_msg = CONTEXT_MSG.format(
             api=prob.api,
             repo_name=self.repo.repo_name,
             commit_message=strip_empty_lines(commit.message),
             commit_diff=commit.diff_text,
         )
-        PR_MESSAGES.format(pr_messages=messages)
+        context_msg += PR_INFO.format(
+            pr_messages=get_github_convo(self.repo, commit.linked_pr)
+        )
+
+        task_msg = f"Write a test for the {prob.api} API in the {self.repo.repo_name} repository"
+        prob.init_chat(SYSTEM_MSG, context_msg, task_msg)
+
         return prob
 
 

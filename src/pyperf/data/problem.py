@@ -24,16 +24,25 @@ class Problem(BaseModel):
         default_factory=list, description="Install commands to run"
     )
 
-    # test code #TODO: eventually replace with the test model
+    chat_messages: list[dict[str, str]] = Field(default=[], description="Chat messages")
     test: str = Field(
         default="if __name__ == '__main__': pass", description="Test code to run"
     )
 
-    # helpers to add a test
+    # helpers to generate test
+
+    def init_chat(self, sys_msg: str, context_msg: str, task_msg: str):
+        self.chat_messages = [
+            {"role": "system", "content": sys_msg},
+            {"role": "context", "content": context_msg},
+            {"role": "user", "content": task_msg},
+        ]
+
     def add_test(self, test: str):
         self.test = test
 
     # helper to create a problem from a dict
+
     @classmethod
     def create_prob(cls, repo: Repo, data: dict):
         api = data["api"]
