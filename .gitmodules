@@ -2,6 +2,3 @@
 	path = src/r2e
 	url = https://github.com/r2e-project/r2e.git
 	branch = main
-[submodule "src/r2e-test-server"]
-	path = src/r2e-test-server
-	url = https://github.com/r2e-project/r2e-test-server.git
