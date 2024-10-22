@@ -1,0 +1,5 @@
+repo_url: "https://github.com/huggingface/datasets"
+
+apis:
+  - api: "ds.map"
+    base_commit: "32b206d47f582380f9c64578dcfa6c48252db3b8"

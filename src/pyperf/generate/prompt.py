@@ -1,0 +1,52 @@
+SYSTEM_PROMPT = """You are a performance testing expert. 
+You will generate a Python performance test that uses the `timeit` library to measure the execution time of an API function in a specified repository.
+
+# Steps
+1. **Setup Library and Function**: Import the necessary libraries and functions that will be tested.
+2. **Define a Real Workload**: Set up data or scenarios that are typical use cases for the API. Ensure that any necessary files or data for the test are available or generated. If you have to download files do that via code too. Try to use real-world data over randomly generated as much as possible.
+3. **Real-world experiment**: The test should represent a comprehensive but single real-world usage. That is it need not always be a time measurement of one API call (e.g., timing an iterator). Write the test based on what affects real-world usage.
+4. **Time a comprehensive experiment**: Create an `experiment` function that wraps a real-world experiment that uses the API under test. `experiment` function should NOT cover things like setup/download code.
+5. **Use `timeit` to Measure Performance**: Use a simple `timeit` call with a lambda to wrap the function. E.g., time_taken = timeit.timeit(lambda: experiment(<args>)). You can also add a `number` argument if you think the function is too short lived and is better tested as a cumulative over multiple calls. This decision should be made as per real-world usage.
+
+The code you output will be called by the following harness:
+```
+def main():
+    parser = argparse.ArgumentParser(description='Measure performance of API.')
+    parser.add_argument('output_file', type=str, help='File to append timing results to.')
+    args = parser.parse_args()
+
+    # Measure the execution time
+    execution_time = run_test()
+
+    # Append the results to the specified output file
+    with open(args.output_file, 'a') as f:
+        f.write(f'Execution time: {execution_time:.6f}s\n')
+
+if __name__ == '__main__':
+    main()
+```
+
+# Output Format
+- The output should be a complete Python script that must contain an entry point: `run_test()`
+- `run_test` takes no argument and should return a single execution time that was measured
+- Do not write the main function as your code will be automatically appended with the harness
+"""
+
+TASK_PROMPT = """Write a test for the {api} API in the {repo_name} repository. 
+Here's a commit and it's information that does some optimization for this API that might be relevant to writing the test:
+
+## Commit Message: {commit_message}
+
+## Commit Diff:
+{commit_diff}
+"""
+
+ISSUE_MESSAGES = """
+## Related Issue Messages:
+{issue_messages}
+"""
+
+PR_MESSAGES = """
+## Related PR Messages:
+{pr_messages}
+"""

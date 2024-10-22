@@ -1,0 +1,57 @@
+import os
+import re
+from ghapi.core import GhApi
+
+from pyperf.data import Repo
+
+GHAPI_TOKEN = os.environ.get("GHAPI_TOKEN")
+
+
+def get_github_convo(repo: Repo, pr_num: str, max_count=5) -> str:
+    """Get the conversation for a pull request.
+
+    Goal: capture any information that might be related to testing the PR's performance.
+
+    Note: this is not PR reviews, but regular comments on the PR.
+    PR reviews usually don't have interesting testing information and also
+    contain older code edits that are not relevant to the state after PR merge.
+    """
+
+    def format_comments(comments, max_count=5, min_lines=5):
+        """Formats the comments for a pull request."""
+        formatted_comments = []
+        for comment in comments:
+            if comment.user.type != "User":
+                continue
+
+            if len(comment.body.split("\n")) < min_lines:
+                continue
+
+            body = re.sub("![.*](.*)", "", comment.body)
+            body = re.sub("<img.*>", "", body).strip()
+            formatted_comment = f"{comment.user.login}: {body}"
+            formatted_comment = strip_empty_lines(formatted_comment)
+            formatted_comments.append(f"\n{formatted_comment.strip()}")
+
+        return "".join(formatted_comments[:max_count])
+
+    repo_owner = repo.repo_owner
+    repo_name = repo.repo_name
+
+    # use ghapi to get the PR discussion messages
+    api = GhApi(token=GHAPI_TOKEN)
+    pr = api.pulls.get(repo_owner, repo_name, int(pr_num))
+    comments = api.issues.list_comments(repo_owner, repo_name, int(pr_num))
+    comments_str = format_comments(comments)
+
+    resp = ""
+    if pr.body != "":
+        resp += f"Description: {pr.body.strip()}"
+    if comments_str != "":
+        resp += f"\n\nComments:\n{comments_str.strip()}"
+
+    return resp
+
+
+def strip_empty_lines(text: str):
+    return "\n".join([line for line in text.splitlines() if line.strip()])

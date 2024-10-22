@@ -1,3 +1,4 @@
+import re
 from datetime import datetime
 from pydantic import BaseModel, Field
 
@@ -18,6 +19,18 @@ class PerformanceCommit(BaseModel):
     @property
     def old_commit_hash(self) -> str:
         return f"{self.commit_hash}^"
+
+    @property
+    def linked_pr(self) -> str:
+        # TODO(@manish): expand this to other patterns if necessary
+        pr_pattern = r"\(#(\d+)\)"
+        match = re.search(pr_pattern, self.subject)
+        return match.group(1) if match else None
+
+    # TODO: add a linked_issue property
+    # @property
+    # def linked_issue(self) -> str:
+    #     pass
 
     def add_stat(self, key: str, value: int):
         self.stats[key] = value
