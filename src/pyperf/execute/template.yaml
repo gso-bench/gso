@@ -17,7 +17,7 @@ setup: |
 
 run: |
   cd $repo_name
-  git checkout $before_commit
+  git checkout $base_commit^
   $install_commands_before
   
   cd ..
@@ -27,7 +27,7 @@ run: |
   done
 
   cd $repo_name
-  git checkout $after_commit
+  git checkout $target_commit
   $install_commands_after
   
   cd ..

@@ -1,61 +1,48 @@
+import time
 import shutil
 import argparse
 
 from pyperf.execute.skymgr import SkyManager
 from pyperf.utils.io import load_problems
-from pyperf.constants import SKYGEN_TEMPLATE, TESTGEN_DIR
+from pyperf.constants import SKYGEN_TEMPLATE, EXPS_DIR
 from pyperf.data import Problem
-from pyperf.execute.harness import TEST_HARNESS
-
-problems = [
-    {
-        "pid": "networkx-timing-test",
-        "cloud": "gcp",
-        "region": "us-central1",
-        "instance_type": "n2-standard-16",
-        "repo_url": "https://github.com/huggingface/datasets",
-        "repo_name": "datasets",
-        "before_commit": "32b206d47f582380f9c64578dcfa6c48252db3b8^1",
-        "after_commit": "main",
-        "setup_commands": [
-            "sudo apt-get install -y libtiff5-dev libjpeg8-dev libopenjp2-7-dev zlib1g-dev",
-            "sudo apt-get install -y libfreetype6-dev liblcms2-dev libwebp-dev tcl8.6-dev tk8.6-dev python3-tk",
-            "sudo apt-get install -y libharfbuzz-dev libfribidi-dev libxcb1-dev libx11-dev",
-        ],
-        "install_commands": [
-            "uv venv --python 3.10",
-            "source .venv/bin/activate",
-            "which python",
-            "python --version",
-            "uv pip install -e .",
-            "uv pip install requests",
-            "uv pip show datasets",
-        ],
-        "test": TEST_HARNESS,
-    }
-]
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Execute tasks with SkyManager")
+    parser.add_argument(
+        "-e", "--exp_id", type=str, help="Experiment ID to run", required=True
+    )
+    parser.add_argument("--api", type=str, help="Specific API", required=True)
     parser.add_argument(
         "-m", "--machines", type=int, default=1, help="Number of machines to use"
     )
     args = parser.parse_args()
 
-    # TODO: load problems from a file
-    # problems = load_problems(TESTGEN_DIR / "test.json")
-    problem = Problem(**problems[0])
+    problems = load_problems(
+        EXPS_DIR / f"{args.exp_id}" / f"{args.exp_id}_problems.json"
+    )
+
+    if args.api:
+        problem = [p for p in problems if p.api == args.api][0]
 
     yaml_template = SkyManager.load_template(SKYGEN_TEMPLATE)
     wspace = SkyManager.create_workspace(problem, yaml_template)
+    queue = [f"sky-pyperf-{i}" for i in range(args.machines)]
 
+    # Launch tasks (use interactive=True for interactive mode)
+    for c in queue:
+        SkyManager.launch_task(f"{problem.pid}_task.yaml", wspace, cluster=c)
+
+    # Poll for completion
+    while queue:
+        for c in queue:
+            if SkyManager.is_complete(workspace=wspace, cluster=c):
+                queue.remove(c)
+        print(f"Waiting for {len(queue)} tasks to complete...")
+        time.sleep(10)
+
+    # Get results
     for i in range(args.machines):
-        SkyManager.launch_task(
-            f"{problem.pid}_task.yaml", wspace, cluster=f"sky-pyperf-{i}"
-        )
-
-        # TODO: use sky logs --status cluster_id to get whether the job succeeded;
-        # then pull results; this way the job can be run detached + parallelized
         results = SkyManager.get_results(wspace, cluster=f"sky-pyperf-{i}")
         print(results)
 

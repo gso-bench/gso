@@ -27,10 +27,10 @@ class SkyManager:
             region=problem.region,
             instance_type=problem.instance_type,
             setup_commands=setup_commands,
-            repo_url=problem.repo_url,
-            repo_name=problem.repo_name,
-            before_commit=problem.before_commit,
-            after_commit=problem.after_commit,
+            repo_url=problem.repo.repo_url,
+            repo_name=problem.repo.repo_name,
+            base_commit=problem.base_commit,
+            target_commit=problem.target_commit,
             install_commands_before=install_commands,
             install_commands_after=install_commands,
             file_before="results_a.txt",
@@ -57,16 +57,28 @@ class SkyManager:
         return temp_dir
 
     @staticmethod
-    def launch_task(task_yaml, workspace, cluster="sky-pyperf"):
-        # TODO: use --down to autotear the cluster after task is done
-        # TODO: use --detach-setup/--detach-run to run w/ interactive setup --> can get logs from sky logs
-        subprocess.run(["sky", "launch", "-c", cluster, task_yaml], cwd=workspace)
+    def launch_task(task_yaml, workspace, cluster="sky-pyperf", interactive=False):
+        cmd = ["sky", "launch", "-c", cluster, task_yaml]
+        if not interactive:
+            cmd.append("--detach-setup")
+            cmd.append("--detach-run")
+
+        subprocess.run(
+            cmd, cwd=workspace, input="Y\n" if not interactive else None, text=True
+        )
         logger.info(f"Launched task: {task_yaml}")
 
     @staticmethod
     def exec_task(task_yaml, workspace, cluster="sky-pyperf"):
         subprocess.run(["sky", "exec", cluster, task_yaml], cwd=workspace)
         logger.info(f"Execed task: {task_yaml}")
+
+    @staticmethod
+    def is_complete(workspace, cluster="sky-pyperf"):
+        result = subprocess.run(
+            ["sky", "logs", "--status", cluster], cwd=workspace, capture_output=True
+        )
+        return "SUCCEEDED" in result.stdout.decode("utf-8")
 
     @staticmethod
     def get_results(workspace, cluster="sky-pyperf"):
