@@ -34,7 +34,7 @@ class Problem(BaseModel):
     def init_chat(self, sys_msg: str, context_msg: str, task_msg: str):
         self.chat_messages = [
             {"role": "system", "content": sys_msg},
-            {"role": "context", "content": context_msg},
+            {"role": "user", "content": context_msg},
             {"role": "user", "content": task_msg},
         ]
 

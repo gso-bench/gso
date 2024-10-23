@@ -17,7 +17,7 @@ def get_github_convo(repo: Repo, pr_num: str, max_count=5) -> str:
     contain older code edits that are not relevant to the state after PR merge.
     """
 
-    def format_comments(comments, max_count=5, min_lines=5):
+    def format_comments(comments, max_count=5, min_lines=2):
         """Formats the comments for a pull request."""
         formatted_comments = []
         for comment in comments:
@@ -55,3 +55,22 @@ def get_github_convo(repo: Repo, pr_num: str, max_count=5) -> str:
 
 def strip_empty_lines(text: str):
     return "\n".join([line for line in text.splitlines() if line.strip()])
+
+
+def extract_codeblock(output) -> str:
+    outputlines = output.split("\n")
+    indexlines = [i for i, line in enumerate(outputlines) if "```" in line]
+    if len(indexlines) < 2:
+        return ""
+    return "\n".join(outputlines[indexlines[0] + 1 : indexlines[1]])
+
+
+def get_generated_tests(outputs) -> list[str]:
+    # NOTE: only a single sampled output from the model
+    outputs = [output[0] for output in outputs]
+
+    code_blocks = []
+    for output in outputs:
+        code = extract_codeblock(output)
+        code_blocks.append(code)
+    return code_blocks

@@ -7,7 +7,7 @@ from pyperf.constants import ANALYSIS_REPOS_DIR
 
 
 class Repo(BaseModel):
-    repo_url: HttpUrl = Field(..., description="Repository URL")
+    repo_url: str
     repo_owner: str
     repo_name: str
 

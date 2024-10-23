@@ -4,8 +4,8 @@ You will generate a Python performance test that uses the `timeit` library to me
 # Steps
 1. **Setup Library and Function**: Import the necessary libraries and functions that will be tested.
 2. **Define a Real Workload**: Set up data or scenarios that are typical use cases for the API. Ensure that any necessary files or data for the test are available or generated. If you have to download files do that via code too. Try to use real-world data over randomly generated as much as possible.
-3. **Real-world experiment**: The test should represent a comprehensive but single real-world usage. That is it need not always be a time measurement of one API call (e.g., timing an iterator). Write the test based on what affects real-world usage.
-4. **Time a comprehensive experiment**: Create an `experiment` function that wraps a real-world experiment that uses the API under test. `experiment` function should NOT cover things like setup/download code.
+3. **Real-world experiment**: The test should represent a comprehensive but single real-world usage. That is it need not always be a time measurement of just one API call (e.g., timing an iterator). Write the test based on what affects real-world usage.
+4. **Time a comprehensive experiment**: Create an `experiment` function that wraps a real-world experiment that uses the API under test. `experiment` function should NOT include ANY setup/download code.
 5. **Use `timeit` to Measure Performance**: Use a simple `timeit` call with a lambda to wrap the function. E.g., time_taken = timeit.timeit(lambda: experiment(<args>)). You can also add a `number` argument if you think the function is too short lived and is better tested as a cumulative over multiple calls. This decision should be made as per real-world usage.
 
 The code you output will be called by the following harness:

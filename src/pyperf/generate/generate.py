@@ -1,12 +1,16 @@
+import fire
+
 from r2e.llms.completions import LLMCompletions
 from pyperf.analysis.commits import PerfCommitAnalyzer
 from pyperf.data import Repo, Problem, PerformanceCommit
-from pyperf.utils.io import load_experiment
 from pyperf.logger import logger
+from pyperf.constants import EXPS_DIR
 
+from pyperf.utils.io import *
 from pyperf.generate.prompt import *
-from pyperf.generate.harness import TEST_HARNESS
 from pyperf.generate.helpers import *
+from pyperf.generate.args import PerfExpGenArgs
+from pyperf.generate.harness import TEST_HARNESS
 
 from pydantic import BaseModel, Field, HttpUrl
 
@@ -14,20 +18,32 @@ from pydantic import BaseModel, Field, HttpUrl
 class PerfExpGenerator:
     """Generate performance testing problem/experiment for a repository's APIs"""
 
-    def __init__(self, config: dict):
-        self.repo = Repo.from_url(config["repo_url"])
-        self.candidates = config["candidates"]
+    def __init__(self, args):
+        self.exp_id = args.exp_id
+        self.exp_dir = EXPS_DIR / args.exp_id
+        self.config = load_experiment(args.exp_id)
+        self.repo = Repo.from_url(self.config["repo_url"])
+        self.candidates = self.config["candidates"]
 
-    def gen(self) -> list[Problem]:
-        """Propose performance test experiments for APIs"""
-        logger.debug(f"Generating perftest: {self.repo}")
-        problems = [self.prepare_prob(cand) for cand in self.candidates]
+    def gen(self, args) -> list[Problem]:
+        logger.debug(f"Generating perftests: {self.repo}")
+
+        problems = [self.prepare(cand) for cand in self.candidates]
+        payloads = [p.chat_messages for p in problems]
+        outputs = LLMCompletions.get_llm_completions(args, payloads)
+        results = get_generated_tests(outputs)
+
+        for prob, test in zip(problems, results):
+            # logger.debug(f"Adding test for {prob.api}:\n{test}")
+            prob.add_test(test + TEST_HARNESS)
+
+        save_problems(self.exp_dir / f"{self.exp_id}_problems.json", problems)
         return problems
 
     def quickcheck():
         pass
 
-    def prepare_prob(self, cand) -> Problem:
+    def prepare(self, cand) -> Problem:
         prob = Problem.create_prob(self.repo, cand)
         commit = PerfCommitAnalyzer.process_commit(
             prob.base_commit, self.repo.local_repo_path
@@ -42,16 +58,16 @@ class PerfExpGenerator:
             pr_messages=get_github_convo(self.repo, commit.linked_pr)
         )
 
-        task_msg = f"Write a test for the {prob.api} API in the {self.repo.repo_name} repository"
+        task_msg = (
+            f"Write a test for the {prob.api} API in the {self.repo.repo_name} repository. "
+            "Remember to NOT time the setup code."
+        )
         prob.init_chat(SYSTEM_MSG, context_msg, task_msg)
 
         return prob
 
 
 if __name__ == "__main__":
-    exp_id = "exp"
-
-    # load the yaml config
-    exp_config = load_experiment(exp_id)
-    generator = PerfExpGenerator(exp_config)
-    problems = generator.gen()
+    args = fire.Fire(PerfExpGenArgs)
+    generator = PerfExpGenerator(args)
+    generator.gen(args)
