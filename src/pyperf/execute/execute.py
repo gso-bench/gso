@@ -3,35 +3,33 @@ import shutil
 import argparse
 
 from pyperf.execute.skymgr import SkyManager
-from pyperf.utils.io import load_problems
+from pyperf.utils.io import load_problems, save_problems
 from pyperf.constants import SKYGEN_TEMPLATE, EXPS_DIR
 from pyperf.data import Problem
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Execute tasks with SkyManager")
-    parser.add_argument(
-        "-e", "--exp_id", type=str, help="Experiment ID to run", required=True
-    )
-    parser.add_argument("--api", type=str, help="Specific API", required=True)
-    parser.add_argument(
-        "-m", "--machines", type=int, default=1, help="Number of machines to use"
-    )
+    parser.add_argument("-e", "--exp_id", type=str, help="Experiment ID", required=True)
+    parser.add_argument("-a", "--api", type=str, help="Specific API", required=False)
+    parser.add_argument("-m", "--machines", type=int, default=1, help="# machines")
     args = parser.parse_args()
 
-    problems = load_problems(
-        EXPS_DIR / f"{args.exp_id}" / f"{args.exp_id}_problems.json"
-    )
+    exp_dir = EXPS_DIR / f"{args.exp_id}"
+    problems = load_problems(exp_dir / f"{args.exp_id}_problems.json")
 
     if args.api:
-        problem = [p for p in problems if p.api == args.api][0]
+        prob: Problem = [p for p in problems if p.api == args.api][0]
+    else:
+        # TODO: add support to run all APIs in the experiment
+        prob = problems[0]
 
     yaml_template = SkyManager.load_template(SKYGEN_TEMPLATE)
-    wspace = SkyManager.create_workspace(problem, yaml_template)
+    wspace = SkyManager.create_workspace(prob, yaml_template)
     queue = [f"sky-pyperf-{i}" for i in range(args.machines)]
 
     # Launch tasks (use interactive=True for interactive mode)
     for c in queue:
-        SkyManager.launch_task(f"{problem.pid}_task.yaml", wspace, cluster=c)
+        SkyManager.launch_task(f"{prob.pid}_task.yaml", wspace, cluster=c)
 
     # Poll for completion
     while queue:
@@ -43,8 +41,10 @@ if __name__ == "__main__":
 
     # Get results
     for i in range(args.machines):
-        results = SkyManager.get_results(wspace, cluster=f"sky-pyperf-{i}")
-        print(results)
+        res_str, result = SkyManager.get_results(wspace, cluster=f"sky-pyperf-{i}")
+        prob.add_result(key=i, result=result)
+        print(res_str)
 
+    save_problems(exp_dir / f"{args.exp_id}_results.json", problems)
     SkyManager.cleanup_workspace(wspace)
     SkyManager.cleanup_all_clusters()

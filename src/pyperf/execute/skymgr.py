@@ -86,28 +86,28 @@ class SkyManager:
             ["rsync", "-Pavz", f"{cluster}:~/sky_workdir/results_*", "."], cwd=workspace
         )
 
+        results_a, results_b = None, None
         try:
             with open(os.path.join(workspace, "results_a.txt"), "r") as f:
                 results_a = f.read()
         except FileNotFoundError:
             logger.error(f"results_a.txt not found in {cluster}")
-            return None
 
         try:
             with open(os.path.join(workspace, "results_b.txt"), "r") as f:
                 results_b = f.read()
         except FileNotFoundError:
             logger.error(f"results_b.txt not found in {cluster}")
-            return None
 
         # NOTE(@manish): cleaning up so on subsequent launches,
         # we don't move previous results to the workspace; simplifies result logging
         os.remove(os.path.join(workspace, "results_a.txt"))
         os.remove(os.path.join(workspace, "results_b.txt"))
 
-        result = f"Cluster: {cluster}\n\nA:\n{results_a}\nB:\n{results_b}"
-        logger.info(f"{result}")
-        return result
+        result_str = f"Cluster: {cluster}\n\nA:\n{results_a}\nB:\n{results_b}"
+        result = {"base": results_a, "target": results_b}
+        logger.info(f"{result_str}")
+        return result_str, result
 
     @staticmethod
     def cleanup_workspace(workspace):

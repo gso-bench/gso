@@ -22,9 +22,8 @@ class Problem(BaseModel):
     install_commands: list[str] = Field(init=False, default=[])
 
     chat_messages: list[dict[str, str]] = Field(default=[], description="Chat messages")
-    test: str = Field(
-        default="if __name__ == '__main__': pass", description="Test code to run"
-    )
+    test: str = Field(default="if __name__ == '__main__': pass", description="Test")
+    results: dict[int, dict[str, str]] = Field(default={}, description="Exec Results")
 
     def model_post_init(self, __context) -> None:
         if self.setup_commands == []:
@@ -56,6 +55,9 @@ class Problem(BaseModel):
 
     def add_test(self, test: str):
         self.test = test
+
+    def add_result(self, key: int, result: dict[str, str]):
+        self.results[key] = result
 
     # helper to create a problem from a dict
 

@@ -40,7 +40,8 @@ class PerfExpGenerator:
         return problems
 
     def quickcheck():
-        pass
+        # TODO: quick local execution to check for test validity
+        raise NotImplementedError("quickcheck not implemented yet")
 
     def prepare(self, cand) -> Problem:
         prob = Problem.create_prob(self.repo, cand, self.config)
