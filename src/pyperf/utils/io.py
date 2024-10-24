@@ -1,5 +1,6 @@
 import json
 import yaml
+import shutil
 from pathlib import Path
 from pyperf.data import Problem
 from pyperf.constants import EXPS_DIR
@@ -24,27 +25,30 @@ def save_problems(file_path, problems: list[Problem]):
         json.dump(problems_data, f, indent=4)
 
 
-def load_experiment(exp_id="temp", api=None) -> dict:
+# Custom dumper to manage indentation
+class IndentDumper(yaml.SafeDumper):
+    def increase_indent(self, flow=False, indentless=False):
+        return super(IndentDumper, self).increase_indent(flow, False)
+
+
+def load_exp_config(yaml_path, api=None) -> dict:
     """Load an experiment from disk."""
+    # load the local yaml and get the exp_id
+    with open(yaml_path, "r") as f:
+        local_file = yaml.safe_load(f)
+        exp_id = local_file["exp_id"]
+
+    # create experiments directory and experiment file
     exp_dir = EXPS_DIR / exp_id
     exp_path = exp_dir / f"{exp_id}.yaml"
-
     EXPS_DIR.mkdir(parents=True, exist_ok=True)
+    exp_dir.mkdir(exist_ok=True)
 
-    if not exp_dir.exists():
-        print(f"Experiment dir for {exp_id} does not exists. Creating one.")
-        exp_dir.mkdir()
+    # copy the local yaml to the experiments directory
+    print(f"Copying experiment to {exp_path}")
+    shutil.copy(yaml_path, exp_path)
 
-    if not exp_path.exists():
-        print(f"Experiment file {exp_id} does not exist. Creating one.")
-        exp_path.touch()
-
-        # add default experiment data
-        _default_exp_str = (
-            'repo_url: ""\n' "candidates:\n" '  - api: ""\n' '    base_commit: ""\n'
-        )
-        with open(exp_path, "w") as f:
-            f.write(_default_exp_str)
+    ##############################
 
     print(f"Loading experiment from {exp_path}")
     with open(exp_path, "r") as f:

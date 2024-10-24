@@ -166,3 +166,4 @@ logs
 install_logs
 plots/
 analyze.py
+tmp/

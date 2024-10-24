@@ -60,8 +60,8 @@ class Problem(BaseModel):
     # helper to create a problem from a dict
 
     @classmethod
-    def create_prob(cls, repo: Repo, data: dict):
-        api = data["api"]
-        base_commit = data["base_commit"]
+    def create_prob(cls, repo: Repo, cand: dict, config: dict):
+        api = cand["api"]
+        base_commit = cand["base_commit"]
         pid = repo.repo_name + "-" + api + "-" + base_commit[:7]
-        return cls(pid=pid, repo=repo, api=api, base_commit=base_commit)
+        return cls(pid=pid, repo=repo, api=api, **config, base_commit=base_commit)

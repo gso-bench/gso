@@ -3,5 +3,5 @@ from pydantic import Field
 
 
 class PerfExpGenArgs(LLMArgs):
-    exp_id: str = Field("exp", description="Experiment ID.")
+    yaml_path: str = Field(..., description="Path to the experiment YAML file.")
     model_name: str = Field("gpt-4o", description="Model name.")

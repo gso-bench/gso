@@ -19,11 +19,11 @@ class PerfExpGenerator:
     """Generate performance testing problem/experiment for a repository's APIs"""
 
     def __init__(self, args):
-        self.exp_id = args.exp_id
-        self.exp_dir = EXPS_DIR / args.exp_id
-        self.config = load_experiment(args.exp_id)
+        self.config = load_exp_config(args.yaml_path)
+        self.exp_id = self.config["exp_id"]
         self.repo = Repo.from_url(self.config["repo_url"])
         self.candidates = self.config["candidates"]
+        self.exp_dir = EXPS_DIR / self.exp_id
 
     def gen(self, args) -> list[Problem]:
         logger.debug(f"Generating perftests: {self.repo}")
@@ -34,7 +34,6 @@ class PerfExpGenerator:
         results = get_generated_tests(outputs)
 
         for prob, test in zip(problems, results):
-            # logger.debug(f"Adding test for {prob.api}:\n{test}")
             prob.add_test(test + TEST_HARNESS)
 
         save_problems(self.exp_dir / f"{self.exp_id}_problems.json", problems)
@@ -44,7 +43,7 @@ class PerfExpGenerator:
         pass
 
     def prepare(self, cand) -> Problem:
-        prob = Problem.create_prob(self.repo, cand)
+        prob = Problem.create_prob(self.repo, cand, self.config)
         commit = PerfCommitAnalyzer.process_commit(
             prob.base_commit, self.repo.local_repo_path
         )
@@ -68,6 +67,6 @@ class PerfExpGenerator:
 
 
 if __name__ == "__main__":
-    args = fire.Fire(PerfExpGenArgs)
+    args = fire.Fire(lambda yaml_path: PerfExpGenArgs(yaml_path=yaml_path))
     generator = PerfExpGenerator(args)
     generator.gen(args)

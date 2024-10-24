@@ -26,38 +26,38 @@ Run the pipeline on any repository using the `commits.py` script:
 python src/pyperf/analysis/commits.py https://github.com/username/repo.git
 ```
 
-The analysis results are saved as a JSON file in the `ANALYSIS_DIR/commits/` directory with the format `<repo>_commits.json`.
+The analysis results are saved as a JSON file in `ANALYSIS_DIR/commits/repo_commits.json`.
 
 
 ### 2. Configure experiments
 
-<!-- TODO: make this a different command from generate -->
-First pick an experiment ID, usually the repository name (say `repo`). Then run the following command that will generate an experiment configuration file:
+First pick an experiment ID, usually the repository name (say `repo`) -- you will use this ID to refer to the experiment in following steps. Experiments can be configured using a simple YAML file with the following structure:
 
-```bash
-python src/pyperf/generate/generate.py --exp_id repo
-```
-
-The outout is saved in `EXPERIMENTS_DIR/{exp_id}/{exp_id}.yaml`:
 ```yaml
-repo_url: ""
+exp_id: "repo"
+repo_url: "https://github.com/username/repo.git"
 candidates:
-    - api: ""
-      base_commit: ""
+    - api: "abc.XYZ"
+      base_commit: "commit_hash"
+py_version: 3.9
+install_commands:
+    - "uv venv --python 3.9"
+    - "source .venv/bin/activate"
+    - "uv pip install -e ."
 ```
 
-You can now manually add the repository URL and the candidate API(s) that you want to generate and execute performance tests for. You can also add multiple candidate APIs.
+You can add the repository URL, the candidate repo API(s) to generate tests for, and custom python version & installation commands. If `install_commands` is not provided, a
+[default set](https://github.com/r2e-project/pyperf/blob/7b65c8fd7d41ae4d46e889d912e4fbc931871f39/src/pyperf/data/problem.py#L5-L6) is used.
 
 
 ### 3. Generate performance tests
 
 Run the following to generate performance tests for the configured experiment:
 ```bash
-python src/pyperf/generate/generate.py --exp_id repo
+python src/pyperf/generate/generate.py /path/to/experiment.yaml
 ```
 
-The generated performance tests are saved in `EXPERIMENTS_DIR/{exp_id}/{exp_id}_problems.json` directory.
-
+Creates an experiment workspace in `EXPERIMENTS_DIR/{exp_id}` and moves your configuration file there. It then generates performance tests for the configured experiment and saves it in the workspace as `{exp_id}_problems.json`.
 
 ### 4. Execute performance tests
 
@@ -66,4 +66,4 @@ Run the following to execute the generated performance tests:
 python src/pyperf/execute/execute.py --exp_id repo --machines K
 ```
 
-This will run performance tests for the configured experiment on `K` machines and save results in `EXPERIMENTS_DIR/{exp_id}/{exp_id}_results.json`. Optionally use `-api` to run tests for a specific API.
+This runs performance tests for the configured experiment on `K` machines and saves results in the workspace in `{exp_id}_results.json`. Optionally use `--api` to run tests for a single API.
