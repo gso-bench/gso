@@ -10,7 +10,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 
 2. Create a virtual environment, clone the repo, and install it.
 ```bash
-git clone https://github.com/r2e-project/pyperf.git
+git clone --recursive https://github.com/r2e-project/pyperf.git
 cd pyperf && uv venv && source .venv/bin/activate
 uv sync
 ```
