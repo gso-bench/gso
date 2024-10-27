@@ -79,9 +79,13 @@ class PerfCommitAnalyzer:
 
         # commit diff
         old_commit_hash = f"{commit_hash}^"
-        diff_text = run_git_command(
-            ["git", "diff", "-p", old_commit_hash, commit_hash], cwd=repo_path
-        )
+
+        try:
+            diff_text = run_git_command(
+                ["git", "diff", "-p", old_commit_hash, commit_hash], cwd=repo_path
+            )
+        except:
+            return None  # mostly for the root commit
 
         return PerformanceCommit(
             commit_hash=commit_hash,
@@ -232,23 +236,27 @@ class PerfCommitAnalyzer:
     ######################### Main Analysis #########################
 
     @staticmethod
-    def get_performance_commits(repo_path: Path) -> list[PerformanceCommit]:
+    def get_performance_commits(
+        repo_path: Path, no_grep: bool
+    ) -> list[PerformanceCommit]:
+
+        base_cmd = ["git", "log", "--pretty=format:%H", "-i"]
+        grep_filters = [
+            "--grep=perf",
+            "--grep=performance",
+            "--grep=optimize",
+            "--grep=speed up",
+            "--grep=speedup",
+            "--grep=is slow",
+        ]
+
         # use grep to cut down commits to process
-        commit_hashes = run_git_command(
-            [
-                "git",
-                "log",
-                "--pretty=format:%H",
-                "--grep=perf",
-                "--grep=performance",
-                "--grep=optimize",
-                "--grep=speed up",
-                "--grep=speedup",
-                "--grep=is slow",
-                "-i",
-            ],
-            cwd=repo_path,
-        ).splitlines()
+        if not no_grep:
+            print("Using grep to filter commits")
+            base_cmd = base_cmd[:3] + grep_filters + ["-i"]
+
+        # get commit hashes
+        commit_hashes = run_git_command(base_cmd, cwd=repo_path).splitlines()
 
         # Parse and process commits
         commits = []
@@ -263,7 +271,13 @@ class PerfCommitAnalyzer:
                 )
             )
 
+        commits = [commit for commit in commits if commit is not None]
+
         print("# Candidate Commits:", len(commits))
+
+        # ask user if they want to proceed with LLM analysis on XX commits
+        if not prompt_yes_no("Proceed with LLM analysis on these commits?"):
+            return []
 
         # LLM Analysis
         filtered, retriever = PerfCommitAnalyzer.llm_analysis(commits, repo_path)
@@ -286,7 +300,9 @@ class PerfCommitAnalyzer:
         if not os.path.exists(repo_path):
             subprocess.run(["git", "clone", repo_url, repo_path])
 
-        performance_commits = PerfCommitAnalyzer.get_performance_commits(repo_path)
+        performance_commits = PerfCommitAnalyzer.get_performance_commits(
+            repo_path, args.no_grep
+        )
 
         return PerfAnalysis(
             repo_url=repo_url,
@@ -311,6 +327,11 @@ class PerfCommitAnalyzer:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Fetch commits from a repository URL.")
     parser.add_argument("repo_url", type=str, help="The URL of the repository")
+    parser.add_argument(
+        "--no-grep",
+        action="store_true",
+        help="Use grep to filter commits",
+    )
     args = parser.parse_args()
 
     analysis = PerfCommitAnalyzer.analyze_repository(args)

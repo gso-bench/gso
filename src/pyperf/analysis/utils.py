@@ -13,3 +13,8 @@ def run_git_command(cmd: list[str], cwd: Path | None = None) -> str:
     return subprocess.check_output(
         cmd, cwd=cwd, universal_newlines=True, errors="replace"
     ).strip()
+
+
+def prompt_yes_no(message):
+    response = input(f"{message} (y/n): ")
+    return response.lower() in ["y", "yes"]
