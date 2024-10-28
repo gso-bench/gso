@@ -8,11 +8,24 @@ Generating performance tests for python repositories
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
+In case of 'command not found: uv', 
+add the source of uv to PATH, ~/.zshrc for zsh or ~/.bashrc for bash.
+```bash
+e.g. echo 'source ...' >> ~/.zshrc
+```
+then restart shell
+
 2. Create a virtual environment, clone the repo, and install it.
 ```bash
 git clone --recursive https://github.com/r2e-project/pyperf.git
 cd pyperf && uv venv && source .venv/bin/activate
 uv sync
+```
+
+3. Github token and OpenAI key setup.
+```
+export GITHUB_TOKEN="your_generated_token_here"
+export OPENAI_API_KEY="open_ai_key"
 ```
 
 ## Usage

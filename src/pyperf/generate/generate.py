@@ -54,9 +54,13 @@ class PerfExpGenerator:
             commit_message=strip_empty_lines(commit.message),
             commit_diff=commit.diff_text,
         )
-        context_msg += PR_INFO.format(
-            pr_messages=get_github_convo(self.repo, commit.linked_pr)
-        )
+        
+        # Added checking if PR message is None
+        if commit.linked_pr is not None:
+            pr_messages = get_github_convo(self.repo, commit.linked_pr)
+            context_msg += PR_INFO.format(pr_messages=pr_messages)
+        else:
+            context_msg += "No associated pull request for this commit.\n"
 
         task_msg = (
             f"Write a test for the {prob.api} API in the {self.repo.repo_name} repository. "
