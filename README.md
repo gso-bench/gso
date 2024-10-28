@@ -26,10 +26,10 @@ Generating performance tests for python repositories
     uv sync
     ```
 
-3. Github token and OpenAI key setup.
+3. [Github API token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) and [OpenAI key](https://platform.openai.com/api-keys) setup.
     ```
-    export GITHUB_TOKEN="your_generated_token_here"
-    export OPENAI_API_KEY="open_ai_key"
+    export GHAPI_TOKEN="github_token"
+    export OPENAI_API_KEY="openai_key"
     ```
 
 ## Usage
