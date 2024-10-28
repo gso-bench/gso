@@ -35,7 +35,7 @@ First pick an experiment ID, usually the repository name (say `repo`) -- you wil
 
 ```yaml
 exp_id: "repo"
-repo_url: "https://github.com/username/repo.git"
+repo_url: "https://github.com/username/repo"
 candidates:
     - api: "abc.XYZ"
       base_commit: "commit_hash"
@@ -57,7 +57,7 @@ Run the following to generate performance tests for the configured experiment:
 python src/pyperf/generate/generate.py /path/to/experiment.yaml
 ```
 
-Creates an experiment workspace in `EXPERIMENTS_DIR/{exp_id}` and moves your configuration file there. It then generates performance tests for the configured experiment and saves it in the workspace as `{exp_id}_problems.json`.
+Remember to set [`GHAPI_TOKEN`](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) env var. Creates an experiment workspace in `EXPERIMENTS_DIR/{exp_id}` and moves your configuration file there. It then generates performance tests for the configured experiment and saves it in the workspace as `{exp_id}_problems.json`.
 
 ### 4. Execute performance tests
 
