@@ -1,4 +1,7 @@
 import fire
+from pathlib import Path
+import subprocess
+import shutil
 
 from r2e.llms.completions import LLMCompletions
 from pyperf.analysis.commits import PerfCommitAnalyzer
@@ -11,8 +14,6 @@ from pyperf.generate.prompt import *
 from pyperf.generate.helpers import *
 from pyperf.generate.args import PerfExpGenArgs
 from pyperf.generate.harness import TEST_HARNESS
-
-from pydantic import BaseModel, Field, HttpUrl
 
 
 class PerfExpGenerator:
@@ -35,13 +36,45 @@ class PerfExpGenerator:
 
         for prob, test in zip(problems, results):
             prob.add_test(test + TEST_HARNESS)
+            if args.quickcheck:
+                self.quickcheck(prob)
 
         save_problems(self.exp_dir / f"{self.exp_id}_problems.json", problems)
         return problems
 
-    def quickcheck():
-        # TODO: quick local execution to check for test validity
-        raise NotImplementedError("quickcheck not implemented yet")
+    def quickcheck(self, prob: Problem) -> None:
+        print(f"=================== QUICKCHECK: {prob.pid} ===================")
+        tmp_dir = Path("./quickcheck_tmp")
+        tmp_dir.mkdir(exist_ok=True)
+        repo_dir = tmp_dir / prob.repo.repo_name
+
+        # move test to a file in the tmp directory
+        test_file = tmp_dir / "test.py"
+        with open(test_file, "w") as f:
+            f.write(prob.test)
+
+        # clone and install
+        subprocess.run(
+            ["git", "clone", prob.repo.repo_url, prob.repo.repo_name], cwd=tmp_dir
+        )
+        subprocess.run(["uv", "pip", "install", "-e", "."], cwd=repo_dir)
+
+        # run the test
+        result = subprocess.run(
+            ["python", "test.py", "results_a.txt"], cwd=tmp_dir, capture_output=True
+        )
+
+        stdout = result.stdout.decode("utf-8")
+        stderr = result.stderr.decode("utf-8")
+
+        if stderr:
+            print(stderr)
+        else:
+            print(stdout)
+
+        print(f"==================== END ===================")
+
+        shutil.rmtree(tmp_dir)
 
     def prepare(self, cand) -> Problem:
         prob = Problem.create_prob(self.repo, cand, self.config)
@@ -54,7 +87,7 @@ class PerfExpGenerator:
             commit_message=strip_empty_lines(commit.message),
             commit_diff=commit.diff_text,
         )
-        
+
         # Added checking if PR message is None
         if commit.linked_pr is not None:
             pr_messages = get_github_convo(self.repo, commit.linked_pr)
@@ -73,5 +106,6 @@ class PerfExpGenerator:
 
 if __name__ == "__main__":
     args = fire.Fire(lambda yaml_path: PerfExpGenArgs(yaml_path=yaml_path))
+    args.quickcheck = False
     generator = PerfExpGenerator(args)
     generator.gen(args)
