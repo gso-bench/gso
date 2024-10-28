@@ -4,29 +4,33 @@ Generating performance tests for python repositories
 
 ## Installation
 1. Install `uv` if you don't have it. This is our recommended way to install the package dependencies.
-```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
-```
+    ```bash
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    ```
+    <details>
+    <summary>Additional Tips</summary>
+    Add the source of uv to PATH, `~/.zshrc` for zsh or `~/.bashrc` for bash.
 
-In case of 'command not found: uv', 
-add the source of uv to PATH, ~/.zshrc for zsh or ~/.bashrc for bash.
-```bash
-e.g. echo 'source ...' >> ~/.zshrc
-```
-then restart shell
+    ```bash
+    # Example for zsh
+    echo 'source /path/to/uv' >> ~/.zshrc
+    # Example for bash
+    echo 'source /path/to/uv' >> ~/.bashrc
+    ```
+    </details>
 
 2. Create a virtual environment, clone the repo, and install it.
-```bash
-git clone --recursive https://github.com/r2e-project/pyperf.git
-cd pyperf && uv venv && source .venv/bin/activate
-uv sync
-```
+    ```bash
+    git clone --recursive https://github.com/r2e-project/pyperf.git
+    cd pyperf && uv venv && source .venv/bin/activate
+    uv sync
+    ```
 
 3. Github token and OpenAI key setup.
-```
-export GITHUB_TOKEN="your_generated_token_here"
-export OPENAI_API_KEY="open_ai_key"
-```
+    ```
+    export GITHUB_TOKEN="your_generated_token_here"
+    export OPENAI_API_KEY="open_ai_key"
+    ```
 
 ## Usage
 
