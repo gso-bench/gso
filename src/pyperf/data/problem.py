@@ -65,5 +65,6 @@ class Problem(BaseModel):
     def create_prob(cls, repo: Repo, cand: dict, config: dict):
         api = cand["api"]
         base_commit = cand["base_commit"]
-        pid = repo.repo_name + "-" + api + "-" + base_commit[:7]
+        # Important: GCP rejects pids that have uppercase letters
+        pid = repo.repo_name.lower() + "-" + api.lower() + "-" + base_commit[:7].lower()
         return cls(pid=pid, repo=repo, api=api, **config, base_commit=base_commit)
