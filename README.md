@@ -66,4 +66,21 @@ Run the following to execute the generated performance tests:
 python src/pyperf/execute/execute.py --exp_id repo --machines K
 ```
 
-This runs performance tests for the configured experiment on `K` machines and saves results in the workspace in `{exp_id}_results.json`. Optionally use `--api` to run tests for a single API.
+This runs performance tests for the configured experiment on `K` machines and saves results in the workspace in `{exp_id}_results.json`. Optionally use `--api` to run tests for a single API. Use `--interactive` to run tests in interactive mode (for debugging).
+
+Some helpful `skypilot` commands for test runs:
+```bash
+# view machines running
+sky status
+
+# stream logs or just the status of what's running in a machine
+sky logs machine_name
+sky logs --status machine_name
+
+# ssh into a machine
+ssh machine_name
+
+# shutdown machines
+sky down machine_name
+sky down --all
+```
