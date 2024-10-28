@@ -61,7 +61,9 @@ Remember to set [`GHAPI_TOKEN`](https://docs.github.com/en/authentication/keepin
 
 ### 4. Execute performance tests
 
-Run the following to execute the generated performance tests:
+*Prerequisite*: Cloud credentials set up for `skypilot` to spin up machines.
+Run `sky check` and follow the instructions it provides to set up credentials.
+Then, run the following to execute the generated performance tests: `
 ```bash
 python src/pyperf/execute/execute.py --exp_id repo --machines K
 ```
