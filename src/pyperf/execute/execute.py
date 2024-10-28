@@ -12,6 +12,7 @@ if __name__ == "__main__":
     parser.add_argument("-e", "--exp_id", type=str, help="Experiment ID", required=True)
     parser.add_argument("-a", "--api", type=str, help="Specific API", required=False)
     parser.add_argument("-m", "--machines", type=int, default=1, help="# machines")
+    parser.add_argument("-i", "--interactive", action="store_true")
     args = parser.parse_args()
 
     exp_dir = EXPS_DIR / f"{args.exp_id}"
@@ -27,9 +28,10 @@ if __name__ == "__main__":
     wspace = SkyManager.create_workspace(prob, yaml_template)
     queue = [f"sky-pyperf-{i}" for i in range(args.machines)]
 
-    # Launch tasks (use interactive=True for interactive mode)
     for c in queue:
-        SkyManager.launch_task(f"{prob.pid}_task.yaml", wspace, cluster=c)
+        SkyManager.launch_task(
+            f"{prob.pid}_task.yaml", wspace, cluster=c, interactive=args.interactive
+        )
 
     # Poll for completion
     while queue:
