@@ -78,6 +78,11 @@ class SkyManager:
         result = subprocess.run(
             ["sky", "logs", "--status", cluster], cwd=workspace, capture_output=True
         )
+        stdout, stderr = result.stdout.decode("utf-8"), result.stderr.decode("utf-8")
+        if stderr:
+            logger.error(stderr)
+            raise Exception(stderr)
+
         return "SUCCEEDED" in result.stdout.decode("utf-8")
 
     @staticmethod
