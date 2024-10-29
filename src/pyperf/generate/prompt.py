@@ -48,3 +48,14 @@ PR_INFO = """
 ## Related PR Messages:
 {pr_messages}
 """
+
+
+FEEDBACK_PROMPT = """The previous test attempt failed with the following error:
+{error_output}
+
+Please fix the test to address these issues. Some pointers:
+1. For an import issue, ensure to use a fully qualified import path.
+2. Avoid using too many APIs from the repo outside the function being tested. Instead use real-world data or scenarios.
+3. Do not include any setup code in the `experiment` function.
+4. Do not rewrite the same test. Try a different approach.
+"""
