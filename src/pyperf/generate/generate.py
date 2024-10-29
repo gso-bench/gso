@@ -103,7 +103,9 @@ class PerfExpGenerator:
 
 
 if __name__ == "__main__":
-    args = fire.Fire(lambda yaml_path: PerfExpGenArgs(yaml_path=yaml_path))
-    args.quickcheck = False
+    args = fire.Fire(PerfExpGenArgs.parse)
+    # args.quickcheck = False
     generator = PerfExpGenerator(args)
-    generator.genquickcheck(args)
+    if args.quickcheck:
+        generator.genquickcheck(args)
+    generator.gen(args)
