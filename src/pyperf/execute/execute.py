@@ -26,7 +26,10 @@ if __name__ == "__main__":
 
     yaml_template = SkyManager.load_template(SKYGEN_TEMPLATE)
     wspace = SkyManager.create_workspace(prob, yaml_template)
-    queue = [f"sky-pyperf-{i}" for i in range(args.machines)]
+
+    # Important: If you the VM naming scheme make sure you change it down below as well
+    # Otherwise get_results will fail
+    queue = [f"sky-pyperf-{i}-{args.exp_id}" for i in range(args.machines)]
 
     for c in queue:
         SkyManager.launch_task(
@@ -43,7 +46,7 @@ if __name__ == "__main__":
 
     # Get results
     for i in range(args.machines):
-        res_str, result = SkyManager.get_results(wspace, cluster=f"sky-pyperf-{i}")
+        res_str, result = SkyManager.get_results(wspace, cluster=f"sky-pyperf-{i}-{args.exp_id}")
         prob.add_result(key=i, result=result)
         print(res_str)
 
