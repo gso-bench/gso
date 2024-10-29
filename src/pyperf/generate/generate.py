@@ -1,7 +1,4 @@
 import fire
-from pathlib import Path
-import subprocess
-import shutil
 
 from r2e.llms.completions import LLMCompletions
 from pyperf.analysis.commits import PerfCommitAnalyzer
@@ -12,6 +9,7 @@ from pyperf.constants import EXPS_DIR
 from pyperf.utils.io import *
 from pyperf.generate.prompt import *
 from pyperf.generate.helpers import *
+from pyperf.generate.quickcheck import quickcheck
 from pyperf.generate.args import PerfExpGenArgs
 from pyperf.generate.harness import TEST_HARNESS
 
@@ -36,45 +34,45 @@ class PerfExpGenerator:
 
         for prob, test in zip(problems, results):
             prob.add_test(test + TEST_HARNESS)
-            if args.quickcheck:
-                self.quickcheck(prob)
 
         save_problems(self.exp_dir / f"{self.exp_id}_problems.json", problems)
         return problems
 
-    def quickcheck(self, prob: Problem) -> None:
-        print(f"=================== QUICKCHECK: {prob.pid} ===================")
-        tmp_dir = Path("./quickcheck_tmp")
-        tmp_dir.mkdir(exist_ok=True)
-        repo_dir = tmp_dir / prob.repo.repo_name
+    def genquickcheck(self, args, max_rounds: int = 1) -> list[Problem]:
+        """Generate tests with iterative improvement based on quickcheck feedback"""
+        logger.debug(f"Generating perftests with quickcheck feedback: {self.repo}")
 
-        # move test to a file in the tmp directory
-        test_file = tmp_dir / "test.py"
-        with open(test_file, "w") as f:
-            f.write(prob.test)
+        problems = [self.prepare(cand) for cand in self.candidates]
 
-        # clone and install
-        subprocess.run(
-            ["git", "clone", prob.repo.repo_url, prob.repo.repo_name], cwd=tmp_dir
-        )
-        subprocess.run(["uv", "pip", "install", "-e", "."], cwd=repo_dir)
+        for problem in problems:
+            current_round = 0
+            while current_round < max_rounds:
+                payloads = [problem.chat_messages]
+                outputs = LLMCompletions.get_llm_completions(args, payloads)
+                test = get_generated_tests(outputs)[0]
+                problem.add_test(test + TEST_HARNESS)
+                success, error_output = quickcheck(problem)
 
-        # run the test
-        result = subprocess.run(
-            ["python", "test.py", "results_a.txt"], cwd=tmp_dir, capture_output=True
-        )
+                if success:
+                    logger.info(
+                        f"Test for {problem.pid} succeeded on round {current_round + 1}"
+                    )
+                    break
 
-        stdout = result.stdout.decode("utf-8")
-        stderr = result.stderr.decode("utf-8")
+                if current_round == max_rounds - 1:
+                    logger.warning(
+                        f"Failed to generate working test for {problem.pid} after {max_rounds} rounds"
+                    )
+                    break
 
-        if stderr:
-            print(stderr)
-        else:
-            print(stdout)
+                # Add feedback and continue to next round
+                feedback_msg = FEEDBACK_PROMPT.format(error_output=error_output)
+                problem.chat_messages.append({"role": "assistant", "content": test})
+                problem.chat_messages.append({"role": "user", "content": feedback_msg})
+                current_round += 1
 
-        print(f"==================== END ===================")
-
-        shutil.rmtree(tmp_dir)
+        save_problems(self.exp_dir / f"{self.exp_id}_problems.json", problems)
+        return problems
 
     def prepare(self, cand) -> Problem:
         prob = Problem.create_prob(self.repo, cand, self.config)
@@ -105,7 +103,9 @@ class PerfExpGenerator:
 
 
 if __name__ == "__main__":
-    args = fire.Fire(lambda yaml_path: PerfExpGenArgs(yaml_path=yaml_path))
-    args.quickcheck = False
+    args = fire.Fire(PerfExpGenArgs.parse)
+    # args.quickcheck = False
     generator = PerfExpGenerator(args)
+    if args.quickcheck:
+        generator.genquickcheck(args)
     generator.gen(args)

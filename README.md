@@ -60,7 +60,7 @@ py_version: 3.9
 install_commands:
     - "uv venv --python 3.9"
     - "source .venv/bin/activate"
-    - "uv pip install -e ."
+    - "uv pip install ."
 ```
 
 You can add the repository URL, the candidate repo API(s) to generate tests for, and custom python version & installation commands. If `install_commands` is not provided, a
