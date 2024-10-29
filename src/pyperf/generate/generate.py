@@ -38,7 +38,7 @@ class PerfExpGenerator:
         save_problems(self.exp_dir / f"{self.exp_id}_problems.json", problems)
         return problems
 
-    def genquickcheck(self, args, max_rounds: int = 3) -> list[Problem]:
+    def genquickcheck(self, args, max_rounds: int = 1) -> list[Problem]:
         """Generate tests with iterative improvement based on quickcheck feedback"""
         logger.debug(f"Generating perftests with quickcheck feedback: {self.repo}")
 

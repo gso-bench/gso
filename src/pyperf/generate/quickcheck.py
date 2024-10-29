@@ -10,6 +10,8 @@ import os
 import sys
 from typing import Optional, List, Tuple
 import tempfile
+
+from pyperf.constants import HOME_DIR
 from pyperf.data import Problem
 
 
@@ -20,10 +22,7 @@ def _run_command(
     try:
         env = os.environ.copy()
         if venv_path:
-            if sys.platform == "win32":
-                venv_bin = venv_path / "Scripts"
-            else:
-                venv_bin = venv_path / "bin"
+            venv_bin = venv_path / "bin"
             env["PATH"] = f"{str(venv_bin)}{os.pathsep}{env['PATH']}"
             env["VIRTUAL_ENV"] = str(venv_path)
             env.pop("PYTHONHOME", None)
@@ -48,8 +47,7 @@ def _run_command(
 
 def quickcheck(prob: Problem) -> tuple[bool, tuple[str, str]]:
     print(f"=================== QUICKCHECK: {prob.pid} ===================")
-    tmp_dir = Path(tempfile.mkdtemp())
-    # tmp_dir = Path("./quickcheck_tmp")
+    tmp_dir = HOME_DIR / "quickcheck_tmp"
     tmp_dir.mkdir(exist_ok=True)
     repo_dir = tmp_dir / prob.repo.repo_name
     venv_dir = tmp_dir / ".venv"
@@ -88,7 +86,7 @@ def quickcheck(prob: Problem) -> tuple[bool, tuple[str, str]]:
             return False, output
 
     # run the test
-    success, output = _run_command(f"uv run test.py results_a.txt", tmp_dir)
+    success, output = _run_command(f"python test.py results_a.txt", tmp_dir, venv_dir)
     shutil.rmtree(tmp_dir)
 
     if not success:
