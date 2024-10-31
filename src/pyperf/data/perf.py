@@ -53,3 +53,10 @@ class PerfAnalysis(BaseModel):
     repo_owner: str
     repo_name: str
     performance_commits: list[PerformanceCommit]
+
+
+class APICommitMap(BaseModel):
+    repo_url: str
+    repo_owner: str
+    repo_name: str
+    api_to_commits: dict[str, list[PerformanceCommit]]

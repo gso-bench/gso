@@ -13,13 +13,11 @@ with open(config_path, "r") as file:
 HOME_DIR = Path(os.path.expanduser("~"))
 PYPERF_BUCKET_DIR = HOME_DIR / config["pyperf_bucket_dir"]
 
-# Note: the repos and extracted_data directories are borrowed from r2e
-REPOS_DIR = HOME_DIR / "buckets" / "local_repoeval_bucket" / "repos"
-
 # the following directories are specific to pyperf:
 ANALYSIS_DIR = PYPERF_BUCKET_DIR / "analysis"
 ANALYSIS_REPOS_DIR = ANALYSIS_DIR / "repos"
 ANALYSIS_COMMITS_DIR = ANALYSIS_DIR / "commits"
+ANALYSIS_APIS_DIR = ANALYSIS_DIR / "apis"
 
 TESTGEN_DIR = PYPERF_BUCKET_DIR / "testgen"
 EXPS_DIR = PYPERF_BUCKET_DIR / "experiments"

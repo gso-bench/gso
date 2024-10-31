@@ -1,8 +1,9 @@
 import json
+import argparse
 from pathlib import Path
 from collections import defaultdict
 
-from pyperf.data import PerformanceCommit, PerfAnalysis
+from pyperf.data import PerformanceCommit, PerfAnalysis, APICommitMap
 from pyperf.constants import ANALYSIS_DIR
 
 
@@ -15,13 +16,21 @@ class APIAnalyzer:
             data = json.load(f)
         return PerfAnalysis(**data)
 
-    def create_api_to_commits_map(self, analysis: PerfAnalysis) -> None:
+    def create_api_to_commits_map(self, analysis: PerfAnalysis) -> APICommitMap:
         self.commit_analysis = analysis
         for commit in analysis.performance_commits:
             for api in commit.apis:
                 if api == "None":
                     continue
                 self.api_to_commits[api].append(commit)
+
+        # return an APICommitMap object
+        return APICommitMap(
+            repo_url=analysis.repo_url,
+            repo_owner=analysis.repo_owner,
+            repo_name=analysis.repo_name,
+            api_to_commits=self.api_to_commits,
+        )
 
     def get_commits_for_api(self, api: str) -> list[PerformanceCommit]:
         return self.api_to_commits.get(api, [])
@@ -53,14 +62,32 @@ class APIAnalyzer:
                 print(f"  - {commit['commit_hash'][:8]}: {commit['subject']}")
             print()
 
+    @staticmethod
+    def save_map(map: APICommitMap, output_file: Path) -> None:
+        with open(output_file, "w") as f:
+            f.write(map.model_dump_json(indent=2))
+
+    @staticmethod
+    def load_map(input_file: Path) -> APICommitMap:
+        with open(input_file, "r") as f:
+            data = json.load(f)
+        return APICommitMap(**data)
+
 
 if __name__ == "__main__":
-    repo_name = "Pillow"
+    parser = argparse.ArgumentParser(description="Identify APIs affected by commits")
+    parser.add_argument("repo_name", type=str, help="Name of the repository")
+    args = parser.parse_args()
+
+    repo_name = args.repo_name
     output_file = ANALYSIS_DIR / "commits" / f"{repo_name}_commits.json"
 
     analyzer = APIAnalyzer()
     commit_analysis = analyzer.load_analysis(output_file)
-    analyzer.create_api_to_commits_map(commit_analysis)
+    ac_map = analyzer.create_api_to_commits_map(commit_analysis)
+
+    # save the map to a file
+    output_file = ANALYSIS_APIS_DIR / f"{repo_name}_ac_map.json"
 
     # Example usage
     analyzer.print_api_summary()
