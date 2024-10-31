@@ -27,4 +27,4 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.uv.sources]
-r2e = { path = "src/r2e" }
+r2e = { git = "https://github.com/r2e-project/r2e" }

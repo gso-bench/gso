@@ -1854,7 +1854,7 @@ requires-dist = [
     { name = "pip", specifier = ">=24.2" },
     { name = "pygithub", specifier = ">=2.4.0" },
     { name = "python-levenshtein", specifier = ">=0.25.1" },
-    { name = "r2e", directory = "src/r2e" },
+    { name = "r2e", git = "https://github.com/r2e-project/r2e" },
     { name = "r2e-test-server", specifier = ">=0.1.4" },
     { name = "rich", specifier = ">=13.8.0" },
     { name = "scipy", specifier = ">=1.14.1" },
@@ -2014,10 +2014,11 @@ wheels = [
 [[package]]
 name = "r2e"
 version = "0.1.0"
-source = { directory = "src/r2e" }
+source = { git = "https://github.com/r2e-project/r2e#44f2416e4cede8f9b0462a1202c247bfa81a1a6c" }
 dependencies = [
     { name = "anthropic" },
     { name = "black" },
+    { name = "click" },
     { name = "coverage" },
     { name = "datasets" },
     { name = "docker" },
@@ -2038,6 +2039,7 @@ dependencies = [
     { name = "pycg" },
     { name = "pyright" },
     { name = "pytest" },
+    { name = "r2e-test-server" },
     { name = "rich" },
     { name = "rpyc" },
     { name = "seaborn" },
@@ -2049,44 +2051,9 @@ dependencies = [
     { name = "tqdm" },
 ]
 
-[package.metadata]
-requires-dist = [
-    { name = "anthropic", specifier = ">=0.21.3,<0.22.0" },
-    { name = "black", specifier = ">=24.3.0,<25.0.0" },
-    { name = "coverage", specifier = ">=7.4.4,<8.0.0" },
-    { name = "datasets", specifier = ">=2.18.0,<3.0.0" },
-    { name = "docker", specifier = ">=7.0.0,<8.0.0" },
-    { name = "fire", specifier = ">=0.6.0,<0.7.0" },
-    { name = "flask", specifier = ">=3.0.2,<4.0.0" },
-    { name = "gitpython", specifier = ">=3.1.43,<4.0.0" },
-    { name = "ipykernel", specifier = ">=6.29.4,<7.0.0" },
-    { name = "ipywidgets", specifier = ">=8.1.2,<9.0.0" },
-    { name = "isort", specifier = ">=5.13.2,<6.0.0" },
-    { name = "jsonlines", specifier = ">=4.0.0,<5.0.0" },
-    { name = "matplotlib", specifier = ">=3.8.3,<4.0.0" },
-    { name = "mypy", specifier = ">=1.9.0,<2.0.0" },
-    { name = "networkx", specifier = ">=3.3,<4.0" },
-    { name = "nltk", specifier = ">=3.8.1,<4.0.0" },
-    { name = "openai", specifier = ">=1.16.0,<2.0.0" },
-    { name = "openpyxl", specifier = ">=3.1.2,<4.0.0" },
-    { name = "pebble", specifier = ">=5.0.7,<6.0.0" },
-    { name = "pycg", specifier = ">=0.0.8,<0.0.9" },
-    { name = "pyright", specifier = ">=1.1.357,<2.0.0" },
-    { name = "pytest", specifier = ">=8.1.1,<9.0.0" },
-    { name = "rich", specifier = ">=13.7.1,<14.0.0" },
-    { name = "rpyc", specifier = ">=6.0.0,<7.0.0" },
-    { name = "seaborn", specifier = ">=0.13.2,<0.14.0" },
-    { name = "setuptools", specifier = ">=69.2.0,<70.0.0" },
-    { name = "skypilot", extras = ["gcp"], specifier = ">=0.5.0,<0.6.0" },
-    { name = "termcolor", specifier = ">=2.4.0,<3.0.0" },
-    { name = "tiktoken", specifier = ">=0.6.0,<0.7.0" },
-    { name = "tomlkit", specifier = ">=0.12.4,<0.13.0" },
-    { name = "tqdm", specifier = ">=4.66.2,<5.0.0" },
-]
-
 [[package]]
 name = "r2e-test-server"
-version = "0.1.5"
+version = "0.1.8"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "astor" },
@@ -2095,9 +2062,9 @@ dependencies = [
     { name = "rpyc" },
     { name = "typer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/34/75/c97e77c268a9b73089e07d14e7944d8e971ac552c538ab126ed7204bb12c/r2e_test_server-0.1.5.tar.gz", hash = "sha256:96272a4af6c9e0f3642b888398ff6e068713e154a3089acd2e1794b034e96f94", size = 13557 }
+sdist = { url = "https://files.pythonhosted.org/packages/1e/12/aa03cbd22aed2631ea79953838d9b6b8494c89466bb8613c86d0259133d2/r2e_test_server-0.1.8.tar.gz", hash = "sha256:82d4aad1337f84bf1fdd119c1f37f56b4d9712f5163d692eb0b74869242f3169", size = 13837 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c6/40/39e1f5caa807fe3b30f043552445fb71504176c03b4708930247cf375278/r2e_test_server-0.1.5-py3-none-any.whl", hash = "sha256:6f00a33d82e38ab6d884bfbcaec224b4bd40238dc45d2be98e5700cafb665fbf", size = 17840 },
+    { url = "https://files.pythonhosted.org/packages/6e/72/e77a37fc08de33682cd26b319a71fdcc96c8fbcb9023d5510ce93bd681c9/r2e_test_server-0.1.8-py3-none-any.whl", hash = "sha256:5f7ca1ba1564ab76b09d986a8f433959169ec1b1eb9699a8c937dc2a7cf8c3fb", size = 18188 },
 ]
 
 [[package]]
