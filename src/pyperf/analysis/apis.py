@@ -4,7 +4,7 @@ from pathlib import Path
 from collections import defaultdict
 
 from pyperf.data import PerformanceCommit, PerfAnalysis, APICommitMap
-from pyperf.constants import ANALYSIS_DIR
+from pyperf.constants import *
 
 
 class APIAnalyzer:
@@ -24,7 +24,13 @@ class APIAnalyzer:
                     continue
                 self.api_to_commits[api].append(commit)
 
-        # return an APICommitMap object
+        # Sort by number of commits
+        self.api_to_commits = dict(
+            sorted(
+                self.api_to_commits.items(), key=lambda item: len(item[1]), reverse=True
+            )
+        )
+
         return APICommitMap(
             repo_url=analysis.repo_url,
             repo_owner=analysis.repo_owner,
@@ -80,14 +86,16 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     repo_name = args.repo_name
-    output_file = ANALYSIS_DIR / "commits" / f"{repo_name}_commits.json"
+    input_file = ANALYSIS_COMMITS_DIR / f"{repo_name}_commits.json"
 
     analyzer = APIAnalyzer()
-    commit_analysis = analyzer.load_analysis(output_file)
+    commit_analysis = analyzer.load_analysis(input_file)
     ac_map = analyzer.create_api_to_commits_map(commit_analysis)
 
     # save the map to a file
     output_file = ANALYSIS_APIS_DIR / f"{repo_name}_ac_map.json"
+    ANALYSIS_APIS_DIR.mkdir(parents=True, exist_ok=True)
+    analyzer.save_map(ac_map, output_file)
 
     # Example usage
-    analyzer.print_api_summary()
+    # analyzer.print_api_summary()

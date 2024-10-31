@@ -338,6 +338,7 @@ if __name__ == "__main__":
     analysis = PerfCommitAnalyzer.analyze_repository(args)
 
     output_file = ANALYSIS_COMMITS_DIR / f"{analysis.repo_name}_commits.json"
+    ANALYSIS_APIS_DIR.mkdir(parents=True, exist_ok=True)
     PerfCommitAnalyzer.save_analysis(analysis, output_file)
 
     # To load the analysis later
