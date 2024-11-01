@@ -6,7 +6,6 @@ from pyperf.data import Repo
 
 GHAPI_TOKEN = os.environ.get("GHAPI_TOKEN")
 
-
 def get_github_convo(repo: Repo, pr_num: str, max_count=5) -> str:
     """Get the conversation for a pull request.
 
@@ -45,9 +44,9 @@ def get_github_convo(repo: Repo, pr_num: str, max_count=5) -> str:
     comments_str = format_comments(comments)
 
     resp = ""
-    if pr.body != "":
+    if pr.body:
         resp += f"Description: {pr.body.strip()}"
-    if comments_str != "":
+    if comments_str:
         resp += f"\n\nComments:\n{comments_str.strip()}"
 
     return resp
