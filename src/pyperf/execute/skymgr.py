@@ -20,6 +20,7 @@ class SkyManager:
     @staticmethod
     def build_templates(temp_dir, task, phase1, phase2, problem):
         setup_commands = "\n  ".join(problem.setup_commands)
+        install_commands = "\n        ".join(problem.install_commands)
         candidates = " ".join(t.quick_hash for t in problem.tests)
 
         task = task.safe_substitute(
@@ -34,13 +35,12 @@ class SkyManager:
         )
 
         phase1 = phase1.safe_substitute(
-            repo_name=problem.repo.repo_name,
-            install_commands="\n        ".join(problem.install_commands),
+            repo_name=problem.repo.repo_name, install_commands=install_commands
         )
 
         phase2 = phase2.safe_substitute(
             repo_name=problem.repo.repo_name,
-            install_commands="\n".join(problem.install_commands),
+            install_commands=install_commands,
             target_commit=problem.target_commit,
             file_before="results_a.txt",
             file_after="results_b.txt",

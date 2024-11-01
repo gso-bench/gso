@@ -73,7 +73,7 @@ class Problem(BaseModel):
                 "source .venv/bin/activate",
                 "which python",
                 "python --version",
-                "uv pip install .",
+                "uv pip install -e .",
                 "uv pip install requests",
                 f"uv pip show {self.repo.repo_name}",
             ]
