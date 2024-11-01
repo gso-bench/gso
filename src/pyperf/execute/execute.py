@@ -52,4 +52,4 @@ if __name__ == "__main__":
     save_problems(exp_dir / f"{args.exp_id}_results.json", problems)
     SkyManager.cleanup_workspace(wspace)
     for i in range(args.machines):
-        SkyManager.cleanup_cluster(f"sky-pyperf-{i}-{args.exp_id}")
+        SkyManager.cleanup_cluster(f"sky-pyperf-{args.exp_id}-{i}")
