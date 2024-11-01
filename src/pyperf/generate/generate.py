@@ -23,12 +23,6 @@ class PerfExpGenerator:
         self.exp_id = self.config["exp_id"]
         self.repo = Repo.from_url(self.config["repo_url"])
         self.candidates = self.get_commit_map(self.repo)
-
-        # debug: use only first 3 APIs
-        self.candidates = {
-            k: v for i, (k, v) in enumerate(self.candidates.items()) if i < 3
-        }
-
         self.exp_dir = EXPS_DIR / self.exp_id
 
     def get_commit_map(self, repo: Repo):
