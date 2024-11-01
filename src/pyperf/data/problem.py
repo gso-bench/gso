@@ -67,4 +67,8 @@ class Problem(BaseModel):
         base_commit = cand["base_commit"]
         # Important: GCP rejects pids that have uppercase letters
         pid = repo.repo_name.lower() + "-" + api.lower() + "-" + base_commit[:7].lower()
+        # GCP rejects PIDs with several consecutive __s or --s
+        pid = pid.replace("--", "")
+        pid = pid.replace("__", "")
+
         return cls(pid=pid, repo=repo, api=api, **config, base_commit=base_commit)
