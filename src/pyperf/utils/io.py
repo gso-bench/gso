@@ -1,15 +1,29 @@
 import json
 import yaml
 import shutil
+from datetime import datetime
 from pathlib import Path
-from pyperf.data import Problem
+
+from pyperf.data import Problem, APICommitMap
 from pyperf.constants import EXPS_DIR
+
+
+class DateTimeEncoder(json.JSONEncoder):
+    def default(self, obj: any) -> any:
+        if isinstance(obj, datetime):
+            return obj.isoformat()
+        return super().default(obj)
 
 
 def load_json(file_path: str | Path) -> dict | list:
     """Load a JSON file from disk."""
     with open(file_path, "r") as f:
         return json.load(f)
+
+
+def load_map(file_path) -> APICommitMap:
+    ac_map = load_json(file_path)
+    return APICommitMap(**ac_map)
 
 
 def load_problems(file_path) -> list[Problem]:
@@ -22,7 +36,7 @@ def save_problems(file_path, problems: list[Problem]):
     problems_data = [problem.dict() for problem in problems]
 
     with open(file_path, "w") as f:
-        json.dump(problems_data, f, indent=4)
+        json.dump(problems_data, f, indent=4, cls=DateTimeEncoder)
 
 
 # Custom dumper to manage indentation

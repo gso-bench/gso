@@ -65,12 +65,12 @@ def extract_codeblock(output) -> str:
     return "\n".join(outputlines[indexlines[0] + 1 : indexlines[1]])
 
 
-def get_generated_tests(outputs) -> list[str]:
-    # NOTE: only a single sampled output from the model
-    outputs = [output[0] for output in outputs]
-
-    code_blocks = []
+def get_generated_tests(outputs) -> list[list[str]]:
+    results = []
     for output in outputs:
-        code = extract_codeblock(output)
-        code_blocks.append(code)
-    return code_blocks
+        code_blocks = []
+        for sample in output:
+            code = extract_codeblock(sample)
+            code_blocks.append(code)
+        results.append(code_blocks)
+    return results

@@ -56,11 +56,12 @@ def quickcheck(prob: Problem) -> tuple[bool, tuple[str, str]]:
 
     # move test to a file in the tmp directory
     test_file = tmp_dir / "test.py"
+    test = prob.tests[0].samples[0]  # only run the first test for now
     with open(test_file, "w") as f:
-        f.write(prob.test)
+        f.write(test)
 
     print("Test:\n")
-    print(prob.test)
+    print(test)
 
     # Clone repository if it doesn't exist
     if not repo_dir.exists():
