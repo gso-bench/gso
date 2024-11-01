@@ -1,0 +1,41 @@
+#!/bin/bash
+set -e
+
+echo "Phase 1: Finding first working commit and test..."
+working_pair=""
+
+# List of commits to try
+candidate_commits=($COMMITS)
+
+for commit_hash in "${candidate_commits[@]}"; do
+    echo "Testing candidate commit: ${commit_hash}"
+    
+    cd $repo_name
+    # Try to checkout the commit's parent
+    if git checkout "${commit_hash}^"; then
+        $install_commands
+        cd ..
+        
+        # Try each test file for this commit
+        for test_file in "${commit_hash}"/test_*.py; do
+            echo "Trying test: ${test_file}"
+            if python "${test_file}" candidate_result.txt; then
+                working_pair="${commit_hash} ${test_file}"
+                echo "Found working pair: ${working_pair}"
+                echo "${working_pair}" > working_pair.txt
+                
+                # Move the working test outside commit directory
+                cp "${test_file}" "working_test.py"
+                break 2
+            fi
+        done
+    fi
+    cd ..
+done
+
+if [ -z "${working_pair}" ]; then
+    echo "No working commit-test pair found!"
+    exit 1
+fi
+
+echo "Phase 1 complete. Working pair saved to working_pair.txt"

@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from pydantic import BaseModel, Field, HttpUrl
 from pyperf.generate.harness import TEST_HARNESS
 from pyperf.data.repo import Repo
@@ -8,7 +10,6 @@ class Tests(BaseModel):
     commit_hash: str = Field(..., description="Commit hash on which tests are run")
     chat_messages: list[dict[str, str]] = Field(default=[], description="Chat messages")
     samples: list[str] = Field(default=[], description="Sampled tests")
-    results: dict[int, dict[str, str]] = Field(default={}, description="Exec Results")
 
     def init_chat(self, sys_msg: str, context_msg: str, task_msg: str):
         self.chat_messages = [
@@ -23,8 +24,9 @@ class Tests(BaseModel):
     def add_samples(self, samples: list[str]):
         self.samples.extend([t + TEST_HARNESS for t in samples])
 
-    def add_result(self, key: int, result: dict[str, str]):
-        self.results[key] = result
+    @property
+    def quick_hash(self) -> str:
+        return self.commit_hash[:7]
 
     # helper to create a test for a commit
     @classmethod
@@ -54,6 +56,9 @@ class Problem(BaseModel):
     commits: list[PerformanceCommit] = []
     tests: list[Tests] = []
 
+    # key: machine_id, value: list of results from multiple runs (run = commit + test pair)
+    results: dict[int, list[dict]] = defaultdict(list)
+
     def model_post_init(self, __context) -> None:
         if self.setup_commands == []:
             self.setup_commands = [
@@ -79,7 +84,7 @@ class Problem(BaseModel):
 
     def add_result(self, key: int, result: dict[str, str]):
         """Add execution results for the problem"""
-        self.results[key] = result
+        self.results[key].append(result)
 
     def set_base_commit(self, commit_hash: str):
         """Set the final base commit for this problem"""

@@ -4,8 +4,9 @@ import argparse
 
 from pyperf.execute.skymgr import SkyManager
 from pyperf.utils.io import load_problems, save_problems
-from pyperf.constants import SKYGEN_TEMPLATE, EXPS_DIR
 from pyperf.data import Problem
+from pyperf.constants import *
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Execute tasks with SkyManager")
@@ -24,8 +25,7 @@ if __name__ == "__main__":
         # TODO: add support to run all APIs in the experiment
         prob = problems[0]
 
-    yaml_template = SkyManager.load_template(SKYGEN_TEMPLATE)
-    wspace = SkyManager.create_workspace(prob, yaml_template)
+    wspace = SkyManager.create_workspace(prob)
     queue = [f"sky-pyperf-{args.exp_id}-{i}" for i in range(args.machines)]
 
     for c in queue:
