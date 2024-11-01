@@ -1,5 +1,35 @@
 from pydantic import BaseModel, Field, HttpUrl
+from pyperf.generate.harness import TEST_HARNESS
 from pyperf.data.repo import Repo
+from pyperf.data.perf import PerformanceCommit
+
+
+class Tests(BaseModel):
+    commit_hash: str = Field(..., description="Commit hash on which tests are run")
+    chat_messages: list[dict[str, str]] = Field(default=[], description="Chat messages")
+    samples: list[str] = Field(default=[], description="Sampled tests")
+    results: dict[int, dict[str, str]] = Field(default={}, description="Exec Results")
+
+    def init_chat(self, sys_msg: str, context_msg: str, task_msg: str):
+        self.chat_messages = [
+            {"role": "system", "content": sys_msg},
+            {"role": "user", "content": context_msg},
+            {"role": "user", "content": task_msg},
+        ]
+
+    def add_sample(self, test: str):
+        self.samples.append(test + TEST_HARNESS)
+
+    def add_samples(self, samples: list[str]):
+        self.samples.extend([t + TEST_HARNESS for t in samples])
+
+    def add_result(self, key: int, result: dict[str, str]):
+        self.results[key] = result
+
+    # helper to create a test for a commit
+    @classmethod
+    def from_commit(cls, commit):
+        return cls(commit_hash=commit.commit_hash)
 
 
 class Problem(BaseModel):
@@ -14,16 +44,15 @@ class Problem(BaseModel):
     py_version: str = Field(default="3.9", description="Python version")
 
     # commit info
-    base_commit: str = Field(..., description="Commit hash for before test")
-    target_commit: str = Field(default="main", description="Commit hash for after test")
+    base_commit: str = Field(default="", description="Base Commit for problem")
+    target_commit: str = Field(default="main", description="Target Commit for problem")
 
     # commands
     setup_commands: list[str] = Field(init=False, default=[])
     install_commands: list[str] = Field(init=False, default=[])
 
-    chat_messages: list[dict[str, str]] = Field(default=[], description="Chat messages")
-    test: str = Field(default="if __name__ == '__main__': pass", description="Test")
-    results: dict[int, dict[str, str]] = Field(default={}, description="Exec Results")
+    commits: list[PerformanceCommit] = []
+    tests: list[Tests] = []
 
     def model_post_init(self, __context) -> None:
         if self.setup_commands == []:
@@ -39,32 +68,26 @@ class Problem(BaseModel):
                 "source .venv/bin/activate",
                 "which python",
                 "python --version",
-                "uv pip install -e .",
+                "uv pip install .",
                 "uv pip install requests",
                 f"uv pip show {self.repo.repo_name}",
             ]
 
-    # helpers to generate test
-
-    def init_chat(self, sys_msg: str, context_msg: str, task_msg: str):
-        self.chat_messages = [
-            {"role": "system", "content": sys_msg},
-            {"role": "user", "content": context_msg},
-            {"role": "user", "content": task_msg},
-        ]
-
-    def add_test(self, test: str):
-        self.test = test
+    def set_tests(self, tests: list[Tests]):
+        """Set test objects for the problem"""
+        self.tests = tests
 
     def add_result(self, key: int, result: dict[str, str]):
+        """Add execution results for the problem"""
         self.results[key] = result
+
+    def set_base_commit(self, commit_hash: str):
+        """Set the final base commit for this problem"""
+        self.base_commit = commit_hash
 
     # helper to create a problem from a dict
 
     @classmethod
-    def create_prob(cls, repo: Repo, cand: dict, config: dict):
-        api = cand["api"]
-        base_commit = cand["base_commit"]
-        # Important: GCP rejects pids that have uppercase letters
-        pid = repo.repo_name.lower() + "-" + api.lower() + "-" + base_commit[:7].lower()
-        return cls(pid=pid, repo=repo, api=api, **config, base_commit=base_commit)
+    def create_prob(cls, repo: Repo, api: str, commits: list, config: dict):
+        pid = repo.repo_name.lower() + "-" + api.lower()
+        return cls(pid=pid, repo=repo, api=api, commits=commits, **config)

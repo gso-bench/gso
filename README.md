@@ -41,9 +41,10 @@ The [analysis/](/src/pyperf/analysis/) directory contains the performance commit
 Run the pipeline on any repository using the `commits.py` script:
 ```bash
 python src/pyperf/analysis/commits.py https://github.com/username/repo.git
+python src/pyperf/analysis/apis.py repo
 ```
 
-The analysis results are saved as a JSON file in `ANALYSIS_DIR/commits/repo_commits.json`.
+The commit analysis results are saved as a JSON file in `ANALYSIS_DIR/commits/repo_commits.json`. Then, the API analysis results are saved in `ANALYSIS_DIR/apis/repo_ac_map.json`.
 
 
 ### 2. Configure experiments
