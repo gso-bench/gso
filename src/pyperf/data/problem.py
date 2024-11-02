@@ -82,9 +82,9 @@ class Problem(BaseModel):
         """Set test objects for the problem"""
         self.tests = tests
 
-    def add_result(self, key: int, result: dict[str, str]):
+    def add_results(self, key: int, results: list[dict]):
         """Add execution results for the problem"""
-        self.results[key].append(result)
+        self.results[key] = results
 
     def set_base_commit(self, commit_hash: str):
         """Set the final base commit for this problem"""

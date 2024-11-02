@@ -1,10 +1,12 @@
 import os
+import json
 import shutil
 import tempfile
 import subprocess
 from pathlib import Path
 from string import Template
 
+from pyperf.execute.helpers import zip_results
 from pyperf.constants import *
 from pyperf.logger import logger
 
@@ -113,39 +115,34 @@ class SkyManager:
     @staticmethod
     def get_results(workspace, cluster="sky-pyperf"):
         subprocess.run(
-            ["rsync", "-Pavz", f"{cluster}:~/sky_workdir/results_*", "."], cwd=workspace
+            ["rsync", "-Pavz", f"{cluster}:~/sky_workdir/results/*", "./results/"],
+            cwd=workspace,
         )
 
-        subprocess.run(
-            ["rsync", "-Pavz", f"{cluster}:~/sky_workdir/working_*", "."], cwd=workspace
-        )
+        file_groups = zip_results(workspace / "results")
+        results = []
 
-        results_a, results_b, metadata, working_test = None, None, None, None
-        try:
-            with open(workspace / "results_a.txt", "r") as f:
-                results_a = f.read()
+        for identifier, files in file_groups.items():
+            commit, test_file = identifier.split("_", 1)
+            base_file = files.get("base")
+            target_file = files.get("target")
+            meta_file = files.get("meta")
 
-            with open(workspace / "results_b.txt", "r") as f:
-                results_b = f.read()
+            if base_file and target_file and meta_file:
+                with open(meta_file, "r") as f:
+                    meta = json.load(f)
+                    meta["test_id"] = int(meta["test_file"][:-3].split("_")[-1])
 
-            with open(workspace / "working_pair.txt", "r") as f:
-                commit, test_file = f.read().split(" ")
-                metadata = {"commit": commit, "test_file": test_file.split("/")[-1]}
+                with open(base_file, "r") as f:
+                    meta["base_result"] = f.read()
 
-            with open(workspace / "working_test.py", "r") as f:
-                working_test = f.read()
-        except FileNotFoundError as e:
-            logger.error(f"{cluster}: {str(e)}")
+                with open(target_file, "r") as f:
+                    meta["target_result"] = f.read()
 
-        result_str = f"Cluster: {cluster}\nMetadata:{metadata}\n\nA:\n{results_a}\nB:\n{results_b}"
-        result = {
-            "base": results_a,
-            "target": results_b,
-            "metadata": metadata,
-            "test": working_test,
-        }
-        logger.info(f"{result_str}")
-        return result_str, result
+                results.append(meta)
+
+        result_str = f"Cluster: {cluster} returned!"
+        return result_str, results
 
     @staticmethod
     def cleanup_workspace(workspace):

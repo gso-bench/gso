@@ -43,12 +43,12 @@ if __name__ == "__main__":
 
     # Get results
     for i in range(args.machines):
-        res_str, result = SkyManager.get_results(
+        res_str, results = SkyManager.get_results(
             wspace, cluster=f"sky-pyperf-{args.exp_id}-{i}"
         )
-        prob.add_result(key=i, result=result)
+        prob.add_results(key=i, results=results)
         print(res_str)
 
     save_problems(exp_dir / f"{args.exp_id}_results.json", problems)
     SkyManager.cleanup_workspace(wspace)
-    SkyManager.cleanup_all_clusters()
+    SkyManager.cleanup_all_clusters(interactive=args.interactive)

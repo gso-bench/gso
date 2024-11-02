@@ -64,4 +64,5 @@ if [ "$(cat working_pairs.json)" == "[]" ]; then
     exit 1
 fi
 
+rm -f phase1_results.txt
 echo "Phase 1 complete. Working pairs saved to working_pairs.json"
