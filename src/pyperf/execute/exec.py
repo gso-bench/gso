@@ -241,7 +241,10 @@ async def async_main(
 
     manager = ExecutionManager(exp_id, exp_dir, problems, machines, runs)
     manager.initialize_problems()
-    await manager.run()
+    try:
+        await manager.run()
+    finally:
+        SkyManager.cleanup_all_clusters()
 
     save_problems(exp_dir / f"{exp_id}_results.json", problems)
 
