@@ -108,6 +108,10 @@ class SkyManager:
             logger.error(stderr)
             raise Exception(stderr)
 
+        elif "FAILED" in result.stdout.decode("utf-8"):
+            logger.warning(f"is_complete: cluster {cluster} failed")
+            return True
+
         return "SUCCEEDED" in result.stdout.decode("utf-8")
 
     @staticmethod

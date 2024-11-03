@@ -182,6 +182,8 @@ class ExecutionManager:
 
     async def run(self):
         """Main execution loop using async/await"""
+        count = 0
+        results_json = self.exp_dir / f"{self.exp_id}_results.json"
         try:
             while not self.all_tasks_complete():
                 print("======== Phase: Launch =========", flush=True)
@@ -191,16 +193,17 @@ class ExecutionManager:
                 print("======== Phase: Execution =========", flush=True)
                 await self.check_completion()
                 print(self.get_progress_summary(), flush=True)
+                print("---------------------------------\n\n", flush=True)
                 await asyncio.sleep(5)
 
-                # if number of completed tasks is a multiple of 10, save the results
-                if len(self.completed_clusters) % 10 == 0:
-                    save_problems(
-                        self.exp_dir / f"{self.exp_id}_results.json", self.problems
-                    )
+                # Save on every 10 new problems that are completed
+                if len(self.completed_clusters) - count >= 10:
+                    save_problems(results_json, self.problems)
+                    count = len(self.completed_clusters)
         finally:
             self.thread_pool.shutdown(wait=True)
             self.cleanup_all()
+            save_problems(results_json, self.problems)
 
     def cleanup_all(self):
         for state in self.tasks.values():
@@ -245,8 +248,7 @@ async def async_main(
         await manager.run()
     finally:
         SkyManager.cleanup_all_clusters()
-
-    save_problems(exp_dir / f"{exp_id}_results.json", problems)
+        save_problems(exp_dir / f"{exp_id}_results.json", problems)
 
 
 def main(
