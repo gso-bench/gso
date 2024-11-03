@@ -87,18 +87,16 @@ class SkyManager:
     def launch_task(task_yaml, workspace, cluster="sky-pyperf", interactive=False):
         cmd = ["sky", "launch", "-c", cluster, task_yaml]
         if not interactive:
-            cmd.append("--detach-setup")
-            cmd.append("--detach-run")
-
-        subprocess.run(
-            cmd, cwd=workspace, input="Y\n" if not interactive else None, text=True
-        )
+            subprocess.run(
+                cmd + ["--detach-setup", "--detach-run", "--yes"],
+                cwd=workspace,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                text=True,
+            )
+        else:
+            subprocess.run(cmd, cwd=workspace, text=True)
         logger.info(f"Launched task: {task_yaml}")
-
-    @staticmethod
-    def exec_task(task_yaml, workspace, cluster="sky-pyperf"):
-        subprocess.run(["sky", "exec", cluster, task_yaml], cwd=workspace)
-        logger.info(f"Execed task: {task_yaml}")
 
     @staticmethod
     def is_complete(workspace, cluster="sky-pyperf"):
@@ -118,6 +116,9 @@ class SkyManager:
             ["rsync", "-Pavz", f"{cluster}:~/sky_workdir/results/*", "./results/"],
             cwd=workspace,
         )
+
+        if not (workspace / "results").exists():
+            return f"Cluster: {cluster}: no results!", []
 
         file_groups = zip_results(workspace / "results")
         results = []
@@ -141,8 +142,7 @@ class SkyManager:
 
                 results.append(meta)
 
-        result_str = f"Cluster: {cluster} returned!"
-        return result_str, results
+        return f"Cluster: {cluster}: results returned!", results
 
     @staticmethod
     def cleanup_workspace(workspace):
@@ -151,14 +151,16 @@ class SkyManager:
 
     @staticmethod
     def cleanup_cluster(cluster, interactive=False):
-        subprocess.run(
-            ["sky", "down", cluster], input="Y\n" if not interactive else None
-        )
+        cmd = ["sky", "down", cluster]
+        if not interactive:
+            cmd.append("--yes")
+        subprocess.run(cmd)
         logger.info(f"Deleted cluster: {cluster}")
 
     @staticmethod
     def cleanup_all_clusters(interactive=False):
-        subprocess.run(
-            ["sky", "down", "-a"], input="Y\n" if not interactive else None, text=True
-        )
+        cmd = ["sky", "down", "-a"]
+        if not interactive:
+            cmd.append("--yes")
+        subprocess.run(cmd)
         logger.info(f"Deleted all clusters")

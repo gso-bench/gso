@@ -57,7 +57,7 @@ class Problem(BaseModel):
     tests: list[Tests] = []
 
     # key: machine_id, value: list of results from multiple runs (run = commit + test pair)
-    results: dict[int, list[dict]] = defaultdict(list)
+    results: dict[int | str, list[dict]] = defaultdict(list)
 
     def model_post_init(self, __context) -> None:
         if self.setup_commands == []:
