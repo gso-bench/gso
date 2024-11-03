@@ -26,7 +26,7 @@ class SkyManager:
         candidates = " ".join(t.quick_hash for t in problem.tests)
 
         task = task.safe_substitute(
-            id=problem.pid,
+            id=problem.pid.replace("__", ""),
             cloud=problem.cloud,
             region=problem.region,
             instance_type=problem.instance_type,
