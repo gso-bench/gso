@@ -102,7 +102,7 @@ def create_analysis_dataframe(problems) -> pd.DataFrame:
 def plot_speedup_distribution(df: pd.DataFrame, output_dir: str):
     """Create a distribution plot of speedups across all tests."""
     plt.figure(figsize=(12, 6))
-    sns.histplot(data=df, x="opt_perc", bins=30, kde=True)
+    sns.histplot(data=df, x="opt_perc", bins=10, kde=True)
     plt.axvline(
         df["opt_perc"].mean(),
         color="r",
@@ -136,22 +136,32 @@ def plot_execution_times_distribution(df: pd.DataFrame, output_dir: str):
 
     # Create KDE plots for both distributions
     sns.kdeplot(
-        data=df["base_time"], label="Base Time", color="blue", fill=True, alpha=0.3
+        data=df["base_time"],
+        label="Base Time",
+        color="red",
+        fill=True,
+        alpha=0.2,
+        clip=(0, None),
     )
     sns.kdeplot(
-        data=df["target_time"], label="Target Time", color="red", fill=True, alpha=0.3
+        data=df["target_time"],
+        label="Target Time",
+        color="blue",
+        fill=True,
+        alpha=0.2,
+        clip=(0, None),
     )
 
     # Add vertical lines for means
     plt.axvline(
         df["base_time"].mean(),
-        color="blue",
+        color="red",
         linestyle="--",
         label=f'Base Mean: {df["base_time"].mean():.3f}s',
     )
     plt.axvline(
         df["target_time"].mean(),
-        color="red",
+        color="blue",
         linestyle="--",
         label=f'Target Mean: {df["target_time"].mean():.3f}s',
     )
@@ -159,6 +169,7 @@ def plot_execution_times_distribution(df: pd.DataFrame, output_dir: str):
     plt.title("Distribution of Base vs Target Execution Times")
     plt.xlabel("Execution Time (seconds)")
     plt.ylabel("Density")
+    plt.xlim(left=0)
     plt.legend()
     plt.tight_layout()
     plt.savefig(f"{output_dir}/execution_times_distribution.png")
