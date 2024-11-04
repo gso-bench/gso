@@ -19,7 +19,6 @@ ANALYSIS_REPOS_DIR = ANALYSIS_DIR / "repos"
 ANALYSIS_COMMITS_DIR = ANALYSIS_DIR / "commits"
 ANALYSIS_APIS_DIR = ANALYSIS_DIR / "apis"
 
-TESTGEN_DIR = PYPERF_BUCKET_DIR / "testgen"
 EXPS_DIR = PYPERF_BUCKET_DIR / "experiments"
 SKYGEN_TEMPLATE = current_dir / "execute" / "template.yaml"
 PHASE1_TEMPLATE = current_dir / "execute" / "phase1.txt"

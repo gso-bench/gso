@@ -90,6 +90,35 @@ class Problem(BaseModel):
         """Set the final base commit for this problem"""
         self.base_commit = commit_hash
 
+    # helper to get properties of the problem
+    def num_commits(self) -> int:
+        return len(self.commits)
+
+    def num_tests(self) -> int:
+        return sum(len(test.samples) for test in self.tests)
+
+    def num_results(self) -> int:
+        return sum(len(res) for res in self.results.values())
+
+    def num_runs(self) -> int:
+        return len(self.results)
+
+    def mach1_res(self) -> list[dict]:
+        if not self.results:
+            return []
+
+        first_key = list(self.results.keys())[0]
+        return self.results[first_key]
+
+    def is_valid(self) -> bool:
+        return self.num_results() > 0
+
+    def num_valid_commits(self) -> list[PerformanceCommit]:
+        return len({res["commit"] for res in self.mach1_res()})
+
+    def num_valid_tests(self) -> list[str]:
+        return len({res["test_file"] for res in self.mach1_res()})
+
     # helper to create a problem from a dict
 
     @classmethod
