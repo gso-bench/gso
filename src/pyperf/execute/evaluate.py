@@ -55,8 +55,9 @@ def speedup_summary(prob):
         target_times = parse_times(target_result)
         target_mean, target_std = compute_stats(target_times)
 
-        speedup = ((base_mean - target_mean) / base_mean) * 100
-        if base_mean > target_mean and speedup > 2:
+        opt_perc = ((base_mean - target_mean) / base_mean) * 100
+        speedup_factor = base_mean / target_mean
+        if base_mean > target_mean and opt_perc > 2:
             ct_stats = {
                 "pid": prob.pid,
                 "api": prob.api,
@@ -66,7 +67,8 @@ def speedup_summary(prob):
                 "base_std": base_std,
                 "target_mean": target_mean,
                 "target_std": target_std,
-                "speedup": speedup,
+                "opt_perc": opt_perc,
+                "speedup_factor": speedup_factor,
             }
             key = f"{prob.pid}-{test}"
             stats.update({key: ct_stats})
@@ -88,7 +90,7 @@ def create_analysis_dataframe(problems) -> pd.DataFrame:
                     "target_time": stats["target_mean"],
                     "base_std": stats["base_std"],
                     "target_std": stats["target_std"],
-                    "speedup": stats["speedup"],
+                    "opt_perc": stats["opt_perc"],
                 }
             )
     return pd.DataFrame(rows)
@@ -100,15 +102,15 @@ def create_analysis_dataframe(problems) -> pd.DataFrame:
 def plot_speedup_distribution(df: pd.DataFrame, output_dir: str):
     """Create a distribution plot of speedups across all tests."""
     plt.figure(figsize=(12, 6))
-    sns.histplot(data=df, x="speedup", bins=30, kde=True)
+    sns.histplot(data=df, x="opt_perc", bins=30, kde=True)
     plt.axvline(
-        df["speedup"].mean(),
+        df["opt_perc"].mean(),
         color="r",
         linestyle="--",
-        label=f'Mean: {df["speedup"].mean():.2f}%',
+        label=f'Mean: {df["opt_perc"].mean():.2f}%',
     )
     plt.title("Distribution of Performance Improvements")
-    plt.xlabel("Speedup (%)")
+    plt.xlabel("Opt (%)")
     plt.ylabel("Count")
     plt.legend()
     plt.savefig(f"{output_dir}/speedup_distribution.png")
@@ -117,11 +119,11 @@ def plot_speedup_distribution(df: pd.DataFrame, output_dir: str):
 
 def plot_top_improvements(df: pd.DataFrame, output_dir: str, top_n: int = 30):
     """Create a horizontal bar plot of top N improvements."""
-    top_improvements = df.nlargest(top_n, "speedup")
+    top_improvements = df.nlargest(top_n, "opt_perc")
     plt.figure(figsize=(12, 8))
-    sns.barplot(data=top_improvements, y="pid", x="speedup")
+    sns.barplot(data=top_improvements, y="pid", x="opt_perc")
     plt.title(f"Top {top_n} Performance Improvements")
-    plt.xlabel("Speedup (%)")
+    plt.xlabel("Opt (%)")
     plt.ylabel("PID")
     plt.tight_layout()
     plt.savefig(f"{output_dir}/top_improvements.png")
@@ -170,11 +172,11 @@ def create_performance_summary(df: pd.DataFrame) -> Dict:
     """Generate comprehensive performance statistics."""
     summary = {
         "total_tests": len(df),
-        "mean_speedup": df["speedup"].mean(),
-        "median_speedup": df["speedup"].median(),
-        "std_speedup": df["speedup"].std(),
-        "max_speedup": df["speedup"].max(),
-        "min_speedup": df["speedup"].min(),
+        "mean_speedup": df["opt_perc"].mean(),
+        "median_speedup": df["opt_perc"].median(),
+        "std_speedup": df["opt_perc"].std(),
+        "max_speedup": df["opt_perc"].max(),
+        "min_speedup": df["opt_perc"].min(),
     }
     return summary
 
@@ -222,11 +224,11 @@ def main(exp_id: str, specific_api: str | None = None):
 
     print("\nTest Analysis:")
     print(f"  Total tests analyzed: {summary['total_tests']}")
-    print(f"  Mean speedup: {summary['mean_speedup']:.2f}%")
-    print(f"  Median speedup: {summary['median_speedup']:.2f}%")
+    print(f"  Mean Opt: {summary['mean_speedup']:.2f}%")
+    print(f"  Median Opt: {summary['median_speedup']:.2f}%")
     print(f"  Standard deviation: {summary['std_speedup']:.2f}%")
-    print(f"  Max speedup: {summary['max_speedup']:.2f}%")
-    print(f"  Min speedup: {summary['min_speedup']:.2f}%")
+    print(f"  Max Opt: {summary['max_speedup']:.2f}%")
+    print(f"  Min Opt: {summary['min_speedup']:.2f}%")
     print("=" * 35)
 
     return df, summary
