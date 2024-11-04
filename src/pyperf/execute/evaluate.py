@@ -1,6 +1,7 @@
-import pandas as pd
 import re
 import os
+import argparse
+import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 from scipy import stats
@@ -58,6 +59,7 @@ def speedup_summary(prob):
         if base_mean > target_mean and speedup > 2:
             ct_stats = {
                 "pid": prob.pid,
+                "api": prob.api,
                 "commit": ct["commit"],
                 "test_id": ct["test_id"],
                 "base_mean": base_mean,
@@ -151,12 +153,15 @@ def main(exp_id: str, specific_api: str | None = None):
 
     num_valid = 0
     opt_problems = {}
+    opt_apis = set()
     for prob in problems:
         if prob.is_valid():
             stats = speedup_summary(prob)
             num_valid += 1
             if stats:
                 opt_problems[prob.pid] = stats
+                for _, v in stats.items():
+                    opt_apis.add(v["api"])
 
     os.makedirs(output_dir, exist_ok=True)
     df = create_analysis_dataframe(opt_problems)
@@ -171,6 +176,7 @@ def main(exp_id: str, specific_api: str | None = None):
     print(
         f"Optimized problems: {len(opt_problems)} ({len(opt_problems)/num_valid*100:.2f}%)"
     )
+    # print(f"Optimized APIs: {opt_apis}")
 
     print("\nTest Analysis:")
     print(f"  Total tests analyzed: {summary['total_tests']}")
@@ -185,6 +191,8 @@ def main(exp_id: str, specific_api: str | None = None):
 
 
 if __name__ == "__main__":
-    exp_id = "networkx"
-    specific_api = None
-    df, summary = main(exp_id, specific_api)
+    parser = argparse.ArgumentParser(description="Analyze performance results")
+    parser.add_argument("-e", "--exp_id", type=str, help="Experiment ID", required=True)
+    parser.add_argument("-a", "--api", type=str, help="Specific API", required=False)
+    args = parser.parse_args()
+    df, summary = main(args.exp_id, args.api)
