@@ -94,6 +94,9 @@ def create_analysis_dataframe(problems) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+#########  Plotting Functions #########
+
+
 def plot_speedup_distribution(df: pd.DataFrame, output_dir: str):
     """Create a distribution plot of speedups across all tests."""
     plt.figure(figsize=(12, 6))
@@ -112,19 +115,6 @@ def plot_speedup_distribution(df: pd.DataFrame, output_dir: str):
     plt.close()
 
 
-def create_performance_summary(df: pd.DataFrame) -> Dict:
-    """Generate comprehensive performance statistics."""
-    summary = {
-        "total_tests": len(df),
-        "mean_speedup": df["speedup"].mean(),
-        "median_speedup": df["speedup"].median(),
-        "std_speedup": df["speedup"].std(),
-        "max_speedup": df["speedup"].max(),
-        "min_speedup": df["speedup"].min(),
-    }
-    return summary
-
-
 def plot_top_improvements(df: pd.DataFrame, output_dir: str, top_n: int = 30):
     """Create a horizontal bar plot of top N improvements."""
     top_improvements = df.nlargest(top_n, "speedup")
@@ -136,6 +126,57 @@ def plot_top_improvements(df: pd.DataFrame, output_dir: str, top_n: int = 30):
     plt.tight_layout()
     plt.savefig(f"{output_dir}/top_improvements.png")
     plt.close()
+
+
+def plot_execution_times_distribution(df: pd.DataFrame, output_dir: str):
+    """Create a KDE plot comparing base and target execution times."""
+    plt.figure(figsize=(12, 6))
+
+    # Create KDE plots for both distributions
+    sns.kdeplot(
+        data=df["base_time"], label="Base Time", color="blue", fill=True, alpha=0.3
+    )
+    sns.kdeplot(
+        data=df["target_time"], label="Target Time", color="red", fill=True, alpha=0.3
+    )
+
+    # Add vertical lines for means
+    plt.axvline(
+        df["base_time"].mean(),
+        color="blue",
+        linestyle="--",
+        label=f'Base Mean: {df["base_time"].mean():.3f}s',
+    )
+    plt.axvline(
+        df["target_time"].mean(),
+        color="red",
+        linestyle="--",
+        label=f'Target Mean: {df["target_time"].mean():.3f}s',
+    )
+
+    plt.title("Distribution of Base vs Target Execution Times")
+    plt.xlabel("Execution Time (seconds)")
+    plt.ylabel("Density")
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(f"{output_dir}/execution_times_distribution.png")
+    plt.close()
+
+
+#########  Performance Summary #########
+
+
+def create_performance_summary(df: pd.DataFrame) -> Dict:
+    """Generate comprehensive performance statistics."""
+    summary = {
+        "total_tests": len(df),
+        "mean_speedup": df["speedup"].mean(),
+        "median_speedup": df["speedup"].median(),
+        "std_speedup": df["speedup"].std(),
+        "max_speedup": df["speedup"].max(),
+        "min_speedup": df["speedup"].min(),
+    }
+    return summary
 
 
 def main(exp_id: str, specific_api: str | None = None):
@@ -167,6 +208,7 @@ def main(exp_id: str, specific_api: str | None = None):
     df = create_analysis_dataframe(opt_problems)
     plot_speedup_distribution(df, output_dir)
     plot_top_improvements(df, output_dir)
+    plot_execution_times_distribution(df, output_dir)
     summary = create_performance_summary(df)
 
     # Print summary report
@@ -176,7 +218,7 @@ def main(exp_id: str, specific_api: str | None = None):
     print(
         f"Optimized problems: {len(opt_problems)} ({len(opt_problems)/num_valid*100:.2f}%)"
     )
-    # print(f"Optimized APIs: {opt_apis}")
+    print(f"Optimized APIs: {opt_apis}")
 
     print("\nTest Analysis:")
     print(f"  Total tests analyzed: {summary['total_tests']}")
