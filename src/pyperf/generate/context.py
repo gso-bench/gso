@@ -5,19 +5,31 @@ from pyperf.generate.prompt import *
 from pyperf.generate.helpers import *
 from pyperf.logger import logger
 
+MAX_COMMIT_TOKENS = 50000
+MAX_PR_TOKENS = 20000
+
 
 def prepare_mp_helper(args) -> Tests:
     """Helper function to prepare test objects for a commit."""
     repo, prob, commit = args
+
+    if count_tokens(commit.diff_text) > MAX_COMMIT_TOKENS:
+        diff_text = commit.diff_text[:MAX_COMMIT_TOKENS] + "...(truncated)..."
+    else:
+        diff_text = commit.diff_text
+
     context_msg = CONTEXT_MSG.format(
         api=prob.api,
         repo_name=repo.repo_name,
         commit_message=strip_empty_lines(commit.message),
-        commit_diff=commit.diff_text,
+        commit_diff=diff_text,
     )
 
     if commit.linked_pr is not None:
         pr_messages = get_github_convo(repo, commit.linked_pr)
+        if count_tokens(pr_messages) > MAX_PR_TOKENS:
+            pr_messages = pr_messages[:MAX_PR_TOKENS] + "...(truncated)..."
+
         context_msg += PR_INFO.format(pr_messages=pr_messages)
     else:
         context_msg += "No associated pull request for this commit.\n"

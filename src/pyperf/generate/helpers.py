@@ -1,10 +1,16 @@
 import os
 import re
+import tiktoken
 from ghapi.core import GhApi
 
 from pyperf.data import Repo
 
 GHAPI_TOKEN = os.environ.get("GHAPI_TOKEN")
+tokenizer = tiktoken.encoding_for_model("gpt-4")
+
+
+def count_tokens(context: str):
+    return len(tokenizer.encode(context, disallowed_special=()))
 
 
 def get_github_convo(repo: Repo, pr_num: str, max_count=5) -> str:

@@ -31,6 +31,7 @@ if __name__ == '__main__':
 2. Any setup code must be in a separate function that is called before the `experiment` function. 
 3. In `setup` use the `requests` library to download any files and `gzip` to extract them, if necessary.
 4. For graph datasets, if appropriate use real-world datasets like social networks, road networks, etc.
+5. For the `load_dataset` API, ensure to use the dataset's full name (e.g., stanfordnlp/imdb not just imdb).
 
 # Output Format
 - The output should be a complete Python script that must contain an entry point: `run_test()`
