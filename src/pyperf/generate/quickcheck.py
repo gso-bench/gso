@@ -46,6 +46,17 @@ def _run_command(
 
 
 def quickcheck(prob: Problem) -> tuple[bool, tuple[str, str]]:
+    print("Before the commit...")
+    pre_commit_success, pre_commit_error = quickcheck_with_commit(prob, True)
+    print("After the commit...")
+    post_commit_success, post_commit_error = quickcheck_with_commit(prob, False)
+    
+    if pre_commit_success and post_commit_success:
+        return True, None
+    else:
+        return False, (pre_commit_error, post_commit_error)
+
+def quickcheck_with_commit(prob: Problem, run_base_commit) -> tuple[bool, tuple[str, str]]:
     print(f"=================== QUICKCHECK: {prob.pid} ===================")
     tmp_dir = HOME_DIR / "quickcheck_tmp"
     tmp_dir.mkdir(exist_ok=True)
@@ -70,6 +81,15 @@ def quickcheck(prob: Problem) -> tuple[bool, tuple[str, str]]:
         if not success:
             return False, output
 
+    # Checkout base commit
+    if run_base_commit:
+        print(f"Travelling back in time to base commit parent: {prob.base_commit}^")
+        success, output = _run_command(
+            f"git checkout {prob.base_commit}^", repo_dir
+        )
+        if not success:
+            print("ERROR in checkout base commit: ", output)
+            return False, output
     # Run each install command from prob.install_commands
     for cmd in prob.install_commands:
         print("Running:", cmd)
@@ -87,6 +107,9 @@ def quickcheck(prob: Problem) -> tuple[bool, tuple[str, str]]:
 
     # run the test
     success, output = _run_command(f"python test.py results_a.txt", tmp_dir, venv_dir)
+    print("Quickchecking problem finished output:", output)
+    print("cat results_a.txt results:")
+    print(_run_command(f"cat results_a.txt", tmp_dir))
     shutil.rmtree(tmp_dir)
 
     if not success:
