@@ -48,13 +48,19 @@ def _run_command(
 def quickcheck(prob: Problem) -> tuple[bool, tuple[str, str]]:
     print("Before the commit...")
     pre_commit_success, pre_commit_error = quickcheck_with_commit(prob, True)
+
+    if not pre_commit_success:
+        print("Pre-commit failed! Quitting immediately")
+        return False, pre_commit_error
+
     print("After the commit...")
     post_commit_success, post_commit_error = quickcheck_with_commit(prob, False)
-    
-    if pre_commit_success and post_commit_success:
-        return True, None
-    else:
-        return False, (pre_commit_error, post_commit_error)
+
+    if not post_commit_success:
+        print("Post-commit failed! Quitting immediately")
+        return False, post_commit_error
+
+    return True, None
 
 def quickcheck_with_commit(prob: Problem, run_base_commit) -> tuple[bool, tuple[str, str]]:
     print(f"=================== QUICKCHECK: {prob.pid} ===================")
