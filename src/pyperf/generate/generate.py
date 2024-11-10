@@ -38,6 +38,10 @@ class PerfExpGenerator:
             Problem.create_prob(self.repo, api, commits, self.config)
             for api, commits in self.candidates.items()
         ]
+        # filter their commits to a maximum year and remove empty problems
+        for prob in problems:
+            prob.filter_commits(args.max_year)
+        problems = [prob for prob in problems if prob.num_commits() > 0]
 
         # prepare each problem for test generation
         outputs = run_tasks_in_parallel(

@@ -46,12 +46,15 @@ def get_github_convo(repo: Repo, pr_num: str, max_count=5) -> str:
 
     # use ghapi to get the PR discussion messages
     api = GhApi(token=GHAPI_TOKEN)
-    pr = api.pulls.get(repo_owner, repo_name, int(pr_num))
-    comments = api.issues.list_comments(repo_owner, repo_name, int(pr_num))
-    comments_str = format_comments(comments)
+    try:
+        pr = api.pulls.get(repo_owner, repo_name, int(pr_num))
+        comments = api.issues.list_comments(repo_owner, repo_name, int(pr_num))
+        comments_str = format_comments(comments)
+    except Exception as e:
+        return ""
 
     resp = ""
-    if pr.body != "":
+    if pr and pr.body and pr.body != "":
         resp += f"Description: {pr.body.strip()}"
     if comments_str != "":
         resp += f"\n\nComments:\n{comments_str.strip()}"

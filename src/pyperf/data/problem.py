@@ -90,6 +90,10 @@ class Problem(BaseModel):
         """Set the final base commit for this problem"""
         self.base_commit = commit_hash
 
+    def filter_commits(self, max_year: int):
+        """Filter out commits older than max_year"""
+        self.commits = [c for c in self.commits if c.date.year >= max_year]
+
     # helper to get properties of the problem
     def num_commits(self) -> int:
         return len(self.commits)
