@@ -96,6 +96,7 @@ def quickcheck_with_commit(prob: Problem, run_base_commit) -> tuple[bool, tuple[
         if not success:
             print("ERROR in checkout base commit: ", output)
             return False, output
+
     # Run each install command from prob.install_commands
     for cmd in prob.install_commands:
         print("Running:", cmd)
