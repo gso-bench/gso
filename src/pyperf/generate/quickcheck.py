@@ -114,7 +114,11 @@ def quickcheck_with_commit(prob: Problem, run_base_commit) -> tuple[bool, tuple[
 
     # run the test
     success, output = _run_command(f"python test.py results_a.txt", tmp_dir, venv_dir)
-    print("Quickchecking problem finished output:", output)
+    if run_base_commit:
+        print("Finished running test.py on base commit with output", output)
+    else:
+        print("Finished running test.py on target commit with output", output)
+
     print("cat results_a.txt results:")
     print(_run_command(f"cat results_a.txt", tmp_dir))
     shutil.rmtree(tmp_dir)
