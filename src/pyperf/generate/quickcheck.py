@@ -13,6 +13,7 @@ import tempfile
 
 from pyperf.constants import HOME_DIR
 from pyperf.data import Problem
+import time
 
 
 def _run_command(
@@ -64,7 +65,8 @@ def quickcheck(prob: Problem) -> tuple[bool, tuple[str, str]]:
 
 def quickcheck_with_commit(prob: Problem, run_base_commit) -> tuple[bool, tuple[str, str]]:
     print(f"=================== QUICKCHECK: {prob.pid} ===================")
-    tmp_dir = HOME_DIR / "quickcheck_tmp"
+
+    tmp_dir = HOME_DIR / ("quickcheck_tmp"+str(int(time.time())))
     tmp_dir.mkdir(exist_ok=True)
     repo_dir = tmp_dir / prob.repo.repo_name
     venv_dir = tmp_dir / ".venv"
