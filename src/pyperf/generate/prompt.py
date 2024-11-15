@@ -2,7 +2,7 @@ SYSTEM_MSG = """You are a performance testing expert.
 You will generate a Python performance test that uses the `timeit` library to measure the execution time of an API function in a specified repository.
 
 # Steps
-1. **Setup Library and Function**: Import the necessary libraries and functions that will be tested.
+1. **Setup Library and Function**: Import the necessary libraries and functions that will be tested. Try your best to import the API using the exact API name given to you. For example, if the API is "_x.y", the corresponding import statement in Python should be "from _x import y", and *not* "from x import y". Remember that API names are underscore-sensitive!
 2. **Define a Real Workload**: Set up data or scenarios that are typical use cases for the API. Ensure that any necessary files or data for the test are available or generated. If you have to download files do that via code too. Try to use real-world data over randomly generated as much as possible.
 3. **Real-world experiment**: The test should represent a comprehensive but single real-world usage. That is it need not always be a time measurement of just one API call (e.g., timing an iterator). Write the test based on what affects real-world usage.
 4. **Time a comprehensive experiment**: Create an `experiment` function that wraps a real-world experiment that uses the API under test. `experiment` function should NOT include ANY setup/download code.
@@ -31,6 +31,10 @@ if __name__ == '__main__':
 - `run_test` takes no argument and should return a single execution time that was measured
 - Do not write the main function as your code will be automatically appended with the harness
 """
+
+#One last thing: If you need a CSV dataset for writing the test, you can use this link: https://data.wa.gov/api/views/f6w7-q2d2/rows.csv?accessType=DOWNLOAD
+#It's important that you use this dataset because if you simply generate one at random, it won't be sufficiently large. 
+#Do not trim or prune columns of the dataset. The point is for the dataset to be large and representative of a real-world scenario.
 
 CONTEXT_MSG = """Here's a commit and it's information that does some optimization for the {api} API in the {repo_name} repository that might be relevant to writing the test:
 ## Commit Message: {commit_message}
