@@ -54,9 +54,6 @@ First pick an experiment ID, usually the repository name (say `repo`) -- you wil
 ```yaml
 exp_id: "repo"
 repo_url: "https://github.com/username/repo"
-candidates:
-    - api: "abc.XYZ"
-      base_commit: "commit_hash"
 py_version: 3.9
 install_commands:
     - "uv venv --python 3.9"
@@ -64,7 +61,7 @@ install_commands:
     - "uv pip install -e ."
 ```
 
-You can add the repository URL, the candidate repo API(s) to generate tests for, and custom python version & installation commands. If `install_commands` is not provided, a
+You can add the repository URL and custom python version & installation commands. If `install_commands` is not provided, a
 [default set](https://github.com/r2e-project/pyperf/blob/7b65c8fd7d41ae4d46e889d912e4fbc931871f39/src/pyperf/data/problem.py#L5-L6) is used.
 
 
@@ -88,19 +85,21 @@ python src/pyperf/execute/execute.py --exp_id repo --machines K
 
 This runs performance tests for the configured experiment on `K` machines and saves results in the workspace in `{exp_id}_results.json`. Optionally use `--api` to run tests for a single API. Use `--interactive` to run tests in interactive mode (for debugging).
 
-Some helpful `skypilot` commands for test runs:
-```bash
-# view machines running
-sky status
+<details>
+<summary>Some helpful `skypilot` commands for test runs:</summary>
+    ```bash
+    # view machines running
+    sky status
 
-# stream logs or just the status of what's running in a machine
-sky logs machine_name
-sky logs --status machine_name
+    # stream logs or just the status of what's running in a machine
+    sky logs machine_name
+    sky logs --status machine_name
 
-# ssh into a machine
-ssh machine_name
+    # ssh into a machine
+    ssh machine_name
 
-# shutdown machines
-sky down machine_name
-sky down --all
-```
+    # shutdown machines
+    sky down machine_name
+    sky down --all
+    ```
+</details>
