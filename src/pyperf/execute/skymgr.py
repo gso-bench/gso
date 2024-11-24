@@ -1,10 +1,13 @@
 import os
+import json
 import shutil
 import tempfile
 import subprocess
 from pathlib import Path
 from string import Template
 
+from pyperf.execute.helpers import zip_results
+from pyperf.constants import *
 from pyperf.logger import logger
 
 
@@ -17,40 +20,64 @@ class SkyManager:
             return Template(f.read())
 
     @staticmethod
-    def create_yaml_content(template, problem):
+    def build_templates(temp_dir, task, phase1, phase2, problem):
         setup_commands = "\n  ".join(problem.setup_commands)
-        install_commands = "\n  ".join(problem.install_commands)
+        install_commands = "\n        ".join(problem.install_commands)
+        candidates = " ".join(t.quick_hash for t in problem.tests)
 
-        result = template.safe_substitute(
-            id=problem.pid,
+        task = task.safe_substitute(
+            id=problem.pid.replace("__", ""),
             cloud=problem.cloud,
             region=problem.region,
             instance_type=problem.instance_type,
             setup_commands=setup_commands,
             repo_url=problem.repo.repo_url,
             repo_name=problem.repo.repo_name,
-            base_commit=problem.base_commit,
+            candidates=candidates,
+        )
+
+        phase1 = phase1.safe_substitute(
+            repo_name=problem.repo.repo_name, install_commands=install_commands
+        )
+
+        phase2 = phase2.safe_substitute(
+            repo_name=problem.repo.repo_name,
+            install_commands=install_commands,
             target_commit=problem.target_commit,
-            install_commands_before=install_commands,
-            install_commands_after=install_commands,
             file_before="results_a.txt",
             file_after="results_b.txt",
         )
-        return result
+
+        with open(temp_dir / f"{problem.pid}_task.yaml", "w") as yaml_file:
+            yaml_file.write(task)
+
+        with open(temp_dir / f"phase1.sh", "w") as phase1_file:
+            phase1_file.write(phase1)
+
+        with open(temp_dir / f"phase2.sh", "w") as phase2_file:
+            phase2_file.write(phase2)
 
     @staticmethod
-    def create_workspace(problem, yaml_template):
-        with tempfile.TemporaryDirectory(delete=False) as temp_dir:
-            # Create and write the YAML file
-            yaml_content = SkyManager.create_yaml_content(yaml_template, problem)
-            yaml_path = os.path.join(temp_dir, f"{problem.pid}_task.yaml")
-            with open(yaml_path, "w") as yaml_file:
-                yaml_file.write(yaml_content)
+    def create_workspace(problem) -> Path:
+        task = SkyManager.load_template(SKYGEN_TEMPLATE)
+        phase1 = SkyManager.load_template(PHASE1_TEMPLATE)
+        phase2 = SkyManager.load_template(PHASE2_TEMPLATE)
 
-            # Create and write the test.py file
-            test_script_path = os.path.join(temp_dir, "test.py")
-            with open(test_script_path, "w") as test_file:
-                test_file.write(problem.test)
+        with tempfile.TemporaryDirectory(delete=False) as temp_dir:
+            temp_dir = Path(temp_dir)
+
+            # Create and write tamplates (task, phase1, phase2) to workspace
+            SkyManager.build_templates(temp_dir, task, phase1, phase2, problem)
+
+            # each candidate commit is a subdirectory in the workspace
+            for commit_tests in problem.tests:
+                commit_dir = temp_dir / commit_tests.quick_hash
+                commit_dir.mkdir(parents=True, exist_ok=True)
+
+                # write sampled tests for each commit
+                for i, sample in enumerate(commit_tests.samples):
+                    with open(commit_dir / f"test_{i}.py", "w") as test_file:
+                        test_file.write(sample)
 
             logger.info(f"Created workspace: {temp_dir}")
 
@@ -60,18 +87,16 @@ class SkyManager:
     def launch_task(task_yaml, workspace, cluster="sky-pyperf", interactive=False):
         cmd = ["sky", "launch", "-c", cluster, task_yaml]
         if not interactive:
-            cmd.append("--detach-setup")
-            cmd.append("--detach-run")
-
-        subprocess.run(
-            cmd, cwd=workspace, input="Y\n" if not interactive else None, text=True
-        )
+            subprocess.run(
+                cmd + ["--detach-setup", "--detach-run", "--yes"],
+                cwd=workspace,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                text=True,
+            )
+        else:
+            subprocess.run(cmd, cwd=workspace, text=True)
         logger.info(f"Launched task: {task_yaml}")
-
-    @staticmethod
-    def exec_task(task_yaml, workspace, cluster="sky-pyperf"):
-        subprocess.run(["sky", "exec", cluster, task_yaml], cwd=workspace)
-        logger.info(f"Execed task: {task_yaml}")
 
     @staticmethod
     def is_complete(workspace, cluster="sky-pyperf"):
@@ -83,36 +108,45 @@ class SkyManager:
             logger.error(stderr)
             raise Exception(stderr)
 
+        elif "FAILED" in result.stdout.decode("utf-8"):
+            logger.warning(f"is_complete: cluster {cluster} failed")
+            return True
+
         return "SUCCEEDED" in result.stdout.decode("utf-8")
 
     @staticmethod
     def get_results(workspace, cluster="sky-pyperf"):
         subprocess.run(
-            ["rsync", "-Pavz", f"{cluster}:~/sky_workdir/results_*", "."], cwd=workspace
+            ["rsync", "-Pavz", f"{cluster}:~/sky_workdir/results/*", "./results/"],
+            cwd=workspace,
         )
 
-        results_a, results_b = None, None
-        try:
-            with open(os.path.join(workspace, "results_a.txt"), "r") as f:
-                results_a = f.read()
-        except FileNotFoundError:
-            logger.error(f"results_a.txt not found in {cluster}")
+        if not (workspace / "results").exists():
+            return f"Cluster: {cluster}: no results!", []
 
-        try:
-            with open(os.path.join(workspace, "results_b.txt"), "r") as f:
-                results_b = f.read()
-        except FileNotFoundError:
-            logger.error(f"results_b.txt not found in {cluster}")
+        file_groups = zip_results(workspace / "results")
+        results = []
 
-        # NOTE(@manish): cleaning up so on subsequent launches,
-        # we don't move previous results to the workspace; simplifies result logging
-        os.remove(os.path.join(workspace, "results_a.txt"))
-        os.remove(os.path.join(workspace, "results_b.txt"))
+        for identifier, files in file_groups.items():
+            commit, test_file = identifier.split("_", 1)
+            base_file = files.get("base")
+            target_file = files.get("target")
+            meta_file = files.get("meta")
 
-        result_str = f"Cluster: {cluster}\n\nA:\n{results_a}\nB:\n{results_b}"
-        result = {"base": results_a, "target": results_b}
-        logger.info(f"{result_str}")
-        return result_str, result
+            if base_file and target_file and meta_file:
+                with open(meta_file, "r") as f:
+                    meta = json.load(f)
+                    meta["test_id"] = int(meta["test_file"][:-3].split("_")[-1])
+
+                with open(base_file, "r") as f:
+                    meta["base_result"] = f.read()
+
+                with open(target_file, "r") as f:
+                    meta["target_result"] = f.read()
+
+                results.append(meta)
+
+        return f"Cluster: {cluster}: results returned!", results
 
     @staticmethod
     def cleanup_workspace(workspace):
@@ -120,11 +154,17 @@ class SkyManager:
         logger.info(f"Deleted workspace: {workspace}")
 
     @staticmethod
-    def cleanup_cluster(cluster):
-        subprocess.run(["sky", "down", cluster])
+    def cleanup_cluster(cluster, interactive=False):
+        cmd = ["sky", "down", cluster]
+        if not interactive:
+            cmd.append("--yes")
+        subprocess.run(cmd)
         logger.info(f"Deleted cluster: {cluster}")
 
     @staticmethod
-    def cleanup_all_clusters():
-        subprocess.run(["sky", "down", "-a"])
+    def cleanup_all_clusters(interactive=False):
+        cmd = ["sky", "down", "-a"]
+        if not interactive:
+            cmd.append("--yes")
+        subprocess.run(cmd)
         logger.info(f"Deleted all clusters")

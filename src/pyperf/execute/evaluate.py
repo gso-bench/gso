@@ -1,95 +1,17 @@
 import re
 import os
-import numpy as np
-import matplotlib.pyplot as plt
+import argparse
+import pandas as pd
 import seaborn as sns
+import matplotlib.pyplot as plt
+from scipy import stats
+import numpy as np
+from typing import Dict, List
 
-# create /plots
-os.makedirs("plots", exist_ok=True)
-
-# Time data
-time1 = """
-A:
-Execution time: 110.785194s
-Execution time: 110.968854s
-Execution time: 111.177443s
-Execution time: 113.135757s
-Execution time: 111.675586s
-
-B:
-Execution time: 23.462409s
-Execution time: 23.436030s
-Execution time: 23.610371s
-Execution time: 23.736650s
-Execution time: 24.024381s
-"""
-
-time2 = """
-A:
-Execution time: 106.219454s
-Execution time: 107.948086s
-Execution time: 110.418012s
-Execution time: 107.410151s
-Execution time: 107.541450s
-
-B:
-Execution time: 23.446738s
-Execution time: 23.539465s
-Execution time: 23.328237s
-Execution time: 23.862795s
-Execution time: 23.448002s
-"""
-
-time3 = """
-A:
-Execution time: 104.214771s
-Execution time: 106.154633s
-Execution time: 108.376314s
-Execution time: 107.014499s
-Execution time: 107.281865s
-
-B:
-Execution time: 23.165330s
-Execution time: 23.831978s
-Execution time: 23.865407s
-Execution time: 23.700852s
-Execution time: 23.756649s
-"""
-
-time4 = """
-A:
-Execution time: 109.785981s
-Execution time: 111.679360s
-Execution time: 111.180119s
-Execution time: 111.934369s
-Execution time: 112.060562s
-
-B:
-Execution time: 23.303541s
-Execution time: 23.663041s
-Execution time: 23.178878s
-Execution time: 24.226274s
-Execution time: 23.419775s
-"""
-
-time5 = """
-A:
-Execution time: 95.006532s
-Execution time: 92.567094s
-Execution time: 92.523155s
-Execution time: 92.673451s
-Execution time: 92.691092s
-
-B:
-Execution time: 18.104597s
-Execution time: 18.191019s
-Execution time: 18.110599s
-Execution time: 18.028916s
-Execution time: 18.228759s
-"""
+from pyperf.constants import EXPS_DIR
+from pyperf.utils.io import load_problems
 
 
-# Function to parse time strings and convert to seconds
 def parse_times(time_str):
     pattern = r"Execution time:\s+([\d\.]+)s"
     times = []
@@ -101,192 +23,231 @@ def parse_times(time_str):
     return times
 
 
-# Split times into subgroups (each subgroup has 5 measurements)
-def split_subgroups(times):
-    commit_a = times[:5]
-    commit_b = times[5:10]
-
-    return commit_a, commit_b
-
-
-# Compute statistics: mean and standard deviation
 def compute_stats(times):
     mean = np.mean(times)
-    std_dev = np.std(times, ddof=1)  # Sample standard deviation
+    std_dev = np.std(times, ddof=1)
     return mean, std_dev
 
 
-# Split times for each machine
-commit_a_times1, commit_b_times1 = split_subgroups(parse_times(time1))
-commit_a_times2, commit_b_times2 = split_subgroups(parse_times(time2))
-commit_a_times3, commit_b_times3 = split_subgroups(parse_times(time3))
-commit_a_times4, commit_b_times4 = split_subgroups(parse_times(time4))
-commit_a_times5, commit_b_times5 = split_subgroups(parse_times(time5))
+def print_prob_summary(prob):
+    print("-" * 50)
+    print("Problem.", prob.pid)
+    print("  commits:", prob.num_commits())
+    print("  tests:", prob.num_tests())
+    print("  results:", prob.num_results())
+    print("  valid_commits:", prob.num_valid_commits())
+    print("  valid_tests:", prob.num_valid_tests())
+    print("-" * 50)
 
 
-# Compute stats for each subgroup
-stats = {}
-for i, (sbg1, sbg2) in enumerate(
-    [
-        (commit_a_times1, commit_b_times1),
-        (commit_a_times2, commit_b_times2),
-        (commit_a_times3, commit_b_times3),
-        (commit_a_times4, commit_b_times4),
-        (commit_a_times5, commit_b_times5),
-    ],
-    1,
-):
-    mean1, std1 = compute_stats(sbg1)
-    mean2, std2 = compute_stats(sbg2)
-    opt = ((mean1 - mean2) / mean1) * 100  # Percentage change
-    combined_times = sbg1 + sbg2
-    noise = np.std(combined_times, ddof=1)
-    stats[f"M{i}"] = {
-        "C1 Mean": mean1,
-        "C1 StdDev": std1,
-        "C2 Mean": mean2,
-        "C2 StdDev": std2,
-        "Opt (%)": opt,
-        "Noise (StdDev of All)": noise,
-    }
+def speedup_summary(prob):
+    run0_res = list(prob.results.values())[0]
+    stats = {}
 
-# Print statistics
-for machine, machine_stats in stats.items():
-    print(f"{machine}:")
-    for stat_name, value in machine_stats.items():
-        print(f"  {stat_name}: {value:.3f}")
-    print()
+    for ct in run0_res:
+        test = ct["test_file"]
 
-# Plotting
-sns.set_style("whitegrid")
-machines = ["M1", "M2", "M3", "M4", "M5"]
-subgroup_labels = ["Commit A", "Commit B"]
+        base_result = ct["base_result"]
+        base_times = parse_times(base_result)
+        base_mean, base_std = compute_stats(base_times)
 
-# Collect all times
-all_times = [
-    commit_a_times1,
-    commit_b_times1,
-    commit_a_times2,
-    commit_b_times2,
-    commit_a_times3,
-    commit_b_times3,
-    commit_a_times4,
-    commit_b_times4,
-    commit_a_times5,
-    commit_b_times5,
-]
+        target_result = ct["target_result"]
+        target_times = parse_times(target_result)
+        target_mean, target_std = compute_stats(target_times)
 
-# Flatten the list for boxplot
-flattened_times = [time for subgroup in all_times for time in subgroup]
-group_labels = sum(
-    [[f"M{idx1} C{idx2}"] * 5 for idx1 in range(1, 6) for idx2 in range(1, 3)], []
-)
-
-#################### # Boxplot of times for each subgroup on each machine ####################
-
-# Create DataFrame for seaborn
-import pandas as pd
-
-df = pd.DataFrame({"Time (s)": flattened_times, "Commit": group_labels})
-
-plt.figure(figsize=(12, 6))
-sns.boxplot(
-    x="Commit", y="Time (s)", data=df, palette="Pastel1", hue="Commit", legend=False
-)
-plt.title("Time Measurements Across Machines and Commits", fontsize=16)
-plt.xlabel("Machine and Commit", fontsize=14)
-plt.ylabel("Time (seconds)", fontsize=14)
-plt.xticks(fontsize=12)
-plt.yticks(fontsize=12)
-plt.tight_layout()
-plt.savefig("./plots/boxplot.png")
+        opt_perc = ((base_mean - target_mean) / base_mean) * 100
+        speedup_factor = base_mean / target_mean
+        if base_mean > target_mean and opt_perc > 2:
+            ct_stats = {
+                "pid": prob.pid,
+                "api": prob.api,
+                "commit": ct["commit"],
+                "test_id": ct["test_id"],
+                "base_mean": base_mean,
+                "base_std": base_std,
+                "target_mean": target_mean,
+                "target_std": target_std,
+                "opt_perc": opt_perc,
+                "speedup_factor": speedup_factor,
+            }
+            key = f"{prob.pid}-{test}"
+            stats.update({key: ct_stats})
+    return stats
 
 
-#################### Bar plot of mean times with error bars ####################
+def create_analysis_dataframe(problems) -> pd.DataFrame:
+    """Convert problems data into a pandas DataFrame for analysis."""
+    rows = []
+    for pid, prob_stats in problems.items():
+        for key, stats in prob_stats.items():
+            rows.append(
+                {
+                    "key": key,
+                    "pid": stats["pid"],
+                    "commit": stats["commit"],
+                    "test_id": stats["test_id"],
+                    "base_time": stats["base_mean"],
+                    "target_time": stats["target_mean"],
+                    "base_std": stats["base_std"],
+                    "target_std": stats["target_std"],
+                    "opt_perc": stats["opt_perc"],
+                }
+            )
+    return pd.DataFrame(rows)
 
-means = []
-stds = []
-labels = []
-for machine in ["M1", "M2", "M3", "M4", "M5"]:
-    means.append(stats[machine]["C1 Mean"])
-    stds.append(stats[machine]["C1 StdDev"])
-    means.append(stats[machine]["C2 Mean"])
-    stds.append(stats[machine]["C2 StdDev"])
-    labels.extend([f"{machine} {label}" for label in ["C1", "C2"]])
+
+#########  Plotting Functions #########
 
 
-x = np.arange(len(labels))
+def plot_speedup_distribution(df: pd.DataFrame, output_dir: str):
+    """Create a distribution plot of speedups across all tests."""
+    plt.figure(figsize=(12, 6))
+    sns.histplot(data=df, x="opt_perc", bins=10, kde=True)
+    plt.axvline(
+        df["opt_perc"].mean(),
+        color="r",
+        linestyle="--",
+        label=f'Mean: {df["opt_perc"].mean():.2f}%',
+    )
+    plt.title("Distribution of Performance Improvements")
+    plt.xlabel("Opt (%)")
+    plt.ylabel("Count")
+    plt.legend()
+    plt.savefig(f"{output_dir}/speedup_distribution.png")
+    plt.close()
 
-plt.figure(figsize=(12, 6))
-barlist = plt.bar(x, means, yerr=stds, capsize=5, color="skyblue", edgecolor="black")
-plt.title("Average Time with Error Bars", fontsize=16)
-plt.xlabel("Machine and Commit", fontsize=14)
-plt.ylabel("Average Time (seconds)", fontsize=14)
-plt.xticks(x, labels, fontsize=12)
-plt.yticks(fontsize=12)
 
-# Annotate optimization percentages
-for i in range(0, len(means), 2):
-    opt = stats[f"M{i//2+1}"]["Opt (%)"]
-    plt.text(
-        i + 1,
-        max(means) * 0.3,
-        f"{opt:.2f}%",
-        ha="center",
-        fontsize=12,
-        color="green",
+def plot_top_improvements(df: pd.DataFrame, output_dir: str, top_n: int = 30):
+    """Create a horizontal bar plot of top N improvements."""
+    top_improvements = df.nlargest(top_n, "opt_perc")
+    plt.figure(figsize=(12, 8))
+    sns.barplot(data=top_improvements, y="pid", x="opt_perc")
+    plt.title(f"Top {top_n} Performance Improvements")
+    plt.xlabel("Opt (%)")
+    plt.ylabel("PID")
+    plt.tight_layout()
+    plt.savefig(f"{output_dir}/top_improvements.png")
+    plt.close()
+
+
+def plot_execution_times_distribution(df: pd.DataFrame, output_dir: str):
+    """Create a KDE plot comparing base and target execution times."""
+    plt.figure(figsize=(12, 6))
+
+    # Create KDE plots for both distributions
+    sns.kdeplot(
+        data=df["base_time"],
+        label="Base Time",
+        color="red",
+        fill=True,
+        alpha=0.2,
+        clip=(0, None),
+    )
+    sns.kdeplot(
+        data=df["target_time"],
+        label="Target Time",
+        color="blue",
+        fill=True,
+        alpha=0.2,
+        clip=(0, None),
     )
 
-plt.tight_layout()
-plt.savefig("./plots/barplot.png")
+    # Add vertical lines for means
+    plt.axvline(
+        df["base_time"].mean(),
+        color="red",
+        linestyle="--",
+        label=f'Base Mean: {df["base_time"].mean():.3f}s',
+    )
+    plt.axvline(
+        df["target_time"].mean(),
+        color="blue",
+        linestyle="--",
+        label=f'Target Mean: {df["target_time"].mean():.3f}s',
+    )
 
-#################### Boxplot of times for each subgroup ####################
+    plt.title("Distribution of Base vs Target Execution Times")
+    plt.xlabel("Execution Time (seconds)")
+    plt.ylabel("Density")
+    plt.xlim(left=0)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(f"{output_dir}/execution_times_distribution.png")
+    plt.close()
 
-commit_a_combined = (
-    commit_a_times1
-    + commit_a_times2
-    + commit_a_times3
-    + commit_a_times4
-    + commit_a_times5
-)
-commit_b_combined = (
-    commit_b_times1
-    + commit_b_times2
-    + commit_b_times3
-    + commit_b_times4
-    + commit_b_times5
-)
 
-df = pd.DataFrame(
-    {
-        "Commit A": commit_a_combined,
-        "Commit B": commit_b_combined,
+#########  Performance Summary #########
+
+
+def create_performance_summary(df: pd.DataFrame) -> Dict:
+    """Generate comprehensive performance statistics."""
+    summary = {
+        "total_tests": len(df),
+        "mean_speedup": df["opt_perc"].mean(),
+        "median_speedup": df["opt_perc"].median(),
+        "std_speedup": df["opt_perc"].std(),
+        "max_speedup": df["opt_perc"].max(),
+        "min_speedup": df["opt_perc"].min(),
     }
-)
+    return summary
 
-plt.figure(figsize=(12, 6))
-sns.boxplot(data=df, palette="Pastel1")
-plt.title("Time Measurements Across Commits", fontsize=16)
-plt.xlabel("Commits", fontsize=14)
-plt.ylabel("Time (seconds)", fontsize=14)
-plt.xticks(fontsize=12)
-plt.yticks(fontsize=12)
-plt.tight_layout()
-plt.savefig("./plots/boxplot_commits.png")
 
-#################### Summary ####################
+def main(exp_id: str, specific_api: str | None = None):
+    """Updated main function incorporating enhanced analysis."""
+    exp_dir = EXPS_DIR / f"{exp_id}"
+    output_dir = "plots"
 
-opts = []
-for i, (v1, v2) in enumerate(zip(commit_a_combined, commit_b_combined), 1):
-    opt1 = ((v1 - v2) / v1) * 100
-    opts.append(opt1)
+    all_problems = load_problems(exp_dir / f"{exp_id}_results.json")
+    if specific_api:
+        problems = [p for p in all_problems if p.api == specific_api]
+        if not problems:
+            raise ValueError(f"No problem found for API: {specific_api}")
+    else:
+        problems = all_problems
 
-print("Summary:")
-print(
-    f"Commit A: {np.mean(commit_a_combined):.3f}s ({np.std(commit_a_combined, ddof=1):.2f})"
-)
-print(
-    f"Commit B: {np.mean(commit_b_combined):.3f}s ({np.std(commit_b_combined, ddof=1):.2f})"
-)
+    num_valid = 0
+    opt_problems = {}
+    opt_apis = set()
+    for prob in problems:
+        if prob.is_valid():
+            stats = speedup_summary(prob)
+            num_valid += 1
+            if stats:
+                opt_problems[prob.pid] = stats
+                for _, v in stats.items():
+                    opt_apis.add(v["api"])
 
-print(f"Opt: {np.mean(opts):.2f}% ({np.std(opts, ddof=1):.2f})")
+    os.makedirs(output_dir, exist_ok=True)
+    df = create_analysis_dataframe(opt_problems)
+    plot_speedup_distribution(df, output_dir)
+    plot_top_improvements(df, output_dir)
+    plot_execution_times_distribution(df, output_dir)
+    summary = create_performance_summary(df)
+
+    # Print summary report
+    print("\n=== Performance Analysis Summary ===")
+    print(f"Total problems: {len(problems)}")
+    print(f"Valid problems: {num_valid} ({num_valid/len(problems)*100:.2f}%)")
+    print(
+        f"Optimized problems: {len(opt_problems)} ({len(opt_problems)/num_valid*100:.2f}%)"
+    )
+    print(f"Optimized APIs: {opt_apis}")
+
+    print("\nTest Analysis:")
+    print(f"  Total tests analyzed: {summary['total_tests']}")
+    print(f"  Mean Opt: {summary['mean_speedup']:.2f}%")
+    print(f"  Median Opt: {summary['median_speedup']:.2f}%")
+    print(f"  Standard deviation: {summary['std_speedup']:.2f}%")
+    print(f"  Max Opt: {summary['max_speedup']:.2f}%")
+    print(f"  Min Opt: {summary['min_speedup']:.2f}%")
+    print("=" * 35)
+
+    return df, summary
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Analyze performance results")
+    parser.add_argument("-e", "--exp_id", type=str, help="Experiment ID", required=True)
+    parser.add_argument("-a", "--api", type=str, help="Specific API", required=False)
+    args = parser.parse_args()
+    df, summary = main(args.exp_id, args.api)

@@ -1,0 +1,86 @@
+#!/bin/bash
+set -e
+
+echo "Phase 2: Running performance comparison for all working combinations..."
+
+# Initialize results directory if it doesn't exist
+mkdir -p results
+
+# Function to run tests multiple times for a given commit and test
+run_tests_for_commit() {
+    local test_file=$1
+    local result_file=$2
+    local iterations=5
+    
+    echo "Running test $test_file $iterations times..."
+    for i in $(seq 1 $iterations); do
+        echo "  Iteration $i/$iterations"
+        python "$test_file" "$result_file"
+    done
+}
+
+total_pairs=$(jq length working_pairs.json)
+echo "Processing $total_pairs test pairs"
+
+
+# First run all base commit tests
+for i in $(seq 0 $(($total_pairs - 1))); do
+    commit=$(jq -r ".[$i].commit" working_pairs.json)
+    test_file=$(jq -r ".[$i].test_file" working_pairs.json)
+    test_basename=$(basename $test_file)
+    base_result="results/base_${commit}_${test_basename%.py}.txt"
+    target_result="results/target_${commit}_${test_basename%.py}.txt"
+
+    echo "Processing base commit $commit with test $test_file"
+
+    # Test base commit (parent of working commit)
+    cd $repo_name
+    echo "Testing base commit: ${commit}^"
+    git checkout "${commit}^"
+    $install_commands
+    cd ..
+
+    # Run base commit tests
+    run_tests_for_commit "$test_file" "$base_result"
+
+    # Create metadata file for this combination
+    meta_file="results/meta_${commit}_${test_basename%.py}.json"
+    echo "{
+        \"commit\": \"$commit\",
+        \"test_file\": \"$test_file\",
+        \"base_result\": \"$base_result\",
+        \"target_result\": \"$target_result\",
+        \"base_commit\": \"${commit}^\",
+        \"target_commit\": \"main\",
+        \"timestamp\": \"$(date -u +"%Y-%m-%dT%H:%M:%SZ")\"
+    }" > "$meta_file"
+done
+
+# Now run target commit tests once
+echo "Testing target commit: ${target_commit}"
+cd $repo_name
+git checkout ${target_commit}
+$install_commands
+cd ..
+
+echo "Testing target commit: main"
+cd $repo_name
+git checkout main
+$install_commands
+cd ..
+
+# Run each test once for target commit
+for i in $(seq 0 $(($total_pairs - 1))); do
+    commit=$(jq -r ".[$i].commit" working_pairs.json)
+    test_file=$(jq -r ".[$i].test_file" working_pairs.json)
+    test_basename=$(basename $test_file)
+    target_result="results/target_${commit}_${test_basename%.py}.txt"
+
+    echo "Processing target commit main with test $test_file"
+
+    # Run target commit tests
+    run_tests_for_commit "$test_file" "$target_result"
+done
+
+echo "Phase 2 complete. Results saved in results directory."
+echo "Task complete on $(hostname)"

@@ -41,9 +41,10 @@ The [analysis/](/src/pyperf/analysis/) directory contains the performance commit
 Run the pipeline on any repository using the `commits.py` script:
 ```bash
 python src/pyperf/analysis/commits.py https://github.com/username/repo.git
+python src/pyperf/analysis/apis.py repo
 ```
 
-The analysis results are saved as a JSON file in `ANALYSIS_DIR/commits/repo_commits.json`.
+The commit analysis results are saved as a JSON file in `ANALYSIS_DIR/commits/repo_commits.json`. Then, the API analysis results are saved in `ANALYSIS_DIR/apis/repo_ac_map.json`.
 
 
 ### 2. Configure experiments
@@ -53,17 +54,14 @@ First pick an experiment ID, usually the repository name (say `repo`) -- you wil
 ```yaml
 exp_id: "repo"
 repo_url: "https://github.com/username/repo"
-candidates:
-    - api: "abc.XYZ"
-      base_commit: "commit_hash"
 py_version: 3.9
 install_commands:
     - "uv venv --python 3.9"
     - "source .venv/bin/activate"
-    - "uv pip install ."
+    - "uv pip install -e ."
 ```
 
-You can add the repository URL, the candidate repo API(s) to generate tests for, and custom python version & installation commands. If `install_commands` is not provided, a
+You can add the repository URL and custom python version & installation commands. If `install_commands` is not provided, a
 [default set](https://github.com/r2e-project/pyperf/blob/7b65c8fd7d41ae4d46e889d912e4fbc931871f39/src/pyperf/data/problem.py#L5-L6) is used.
 
 
@@ -80,26 +78,33 @@ Remember to set [`GHAPI_TOKEN`](https://docs.github.com/en/authentication/keepin
 
 *Prerequisite*: Cloud credentials set up for `skypilot` to spin up machines.
 Run `sky check` and follow the instructions it provides to set up credentials.
-Then, run the following to execute the generated performance tests: `
+Then, run the following to execute the generated performance tests:
 ```bash
 python src/pyperf/execute/execute.py --exp_id repo --machines K
 ```
 
 This runs performance tests for the configured experiment on `K` machines and saves results in the workspace in `{exp_id}_results.json`. Optionally use `--api` to run tests for a single API. Use `--interactive` to run tests in interactive mode (for debugging).
 
-Some helpful `skypilot` commands for test runs:
+View the stats of the results using:
 ```bash
-# view machines running
-sky status
-
-# stream logs or just the status of what's running in a machine
-sky logs machine_name
-sky logs --status machine_name
-
-# ssh into a machine
-ssh machine_name
-
-# shutdown machines
-sky down machine_name
-sky down --all
+python src/pyperf/execute/evaluate.py --exp_id repo
 ```
+
+
+<details>
+    <summary>Some helpful `skypilot` commands for test runs:</summary>
+    
+    # view machines running
+    sky status
+    
+    # stream logs or just the status of what's running in a machine
+    sky logs machine_name
+    sky logs --status machine_name
+    
+    # ssh into a machine
+    ssh machine_name
+    
+    # shutdown machines
+    sky down machine_name
+    sky down --all
+</details>

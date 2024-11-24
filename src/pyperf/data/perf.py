@@ -47,9 +47,22 @@ class PerformanceCommit(BaseModel):
     def add_affected_paths(self, paths: list[str]):
         self.affected_paths.extend(paths)
 
+    def quick_hash(self) -> str:
+        return self.commit_hash[:7]
+
+    def __str__(self):
+        return f"{self.quick_hash()}: {self.subject}"
+
 
 class PerfAnalysis(BaseModel):
     repo_url: str
     repo_owner: str
     repo_name: str
     performance_commits: list[PerformanceCommit]
+
+
+class APICommitMap(BaseModel):
+    repo_url: str
+    repo_owner: str
+    repo_name: str
+    api_to_commits: dict[str, list[PerformanceCommit]]

@@ -16,24 +16,9 @@ setup: |
   git clone $repo_url $repo_name
 
 run: |
-  cd $repo_name
-  git checkout $base_commit^
-  $install_commands_before
-  
-  cd ..
-  echo "Running test.py with version before the commit..."
-  for i in {1..5}; do
-    python test.py $file_before
-  done
+  export COMMITS="$candidates"
+  chmod +x phase1.sh
+  chmod +x phase2.sh
 
-  cd $repo_name
-  git checkout $target_commit
-  $install_commands_after
-  
-  cd ..
-  echo "Running test.py with version after the commit..."
-  for i in {1..5}; do
-    python test.py $file_after
-  done
-
-  echo "Task complete on $(hostname)"
+  ./phase1.sh
+  ./phase2.sh

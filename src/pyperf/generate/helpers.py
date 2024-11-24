@@ -1,10 +1,16 @@
 import os
 import re
+import tiktoken
 from ghapi.core import GhApi
 
 from pyperf.data import Repo
 
 GHAPI_TOKEN = os.environ.get("GHAPI_TOKEN")
+tokenizer = tiktoken.encoding_for_model("gpt-4")
+
+
+def count_tokens(context: str):
+    return len(tokenizer.encode(context, disallowed_special=()))
 
 
 def get_github_convo(repo: Repo, pr_num: str, max_count=5) -> str:
@@ -40,12 +46,15 @@ def get_github_convo(repo: Repo, pr_num: str, max_count=5) -> str:
 
     # use ghapi to get the PR discussion messages
     api = GhApi(token=GHAPI_TOKEN)
-    pr = api.pulls.get(repo_owner, repo_name, int(pr_num))
-    comments = api.issues.list_comments(repo_owner, repo_name, int(pr_num))
-    comments_str = format_comments(comments)
+    try:
+        pr = api.pulls.get(repo_owner, repo_name, int(pr_num))
+        comments = api.issues.list_comments(repo_owner, repo_name, int(pr_num))
+        comments_str = format_comments(comments)
+    except Exception as e:
+        return ""
 
     resp = ""
-    if pr.body != "":
+    if pr and pr.body and pr.body != "":
         resp += f"Description: {pr.body.strip()}"
     if comments_str != "":
         resp += f"\n\nComments:\n{comments_str.strip()}"
@@ -65,12 +74,12 @@ def extract_codeblock(output) -> str:
     return "\n".join(outputlines[indexlines[0] + 1 : indexlines[1]])
 
 
-def get_generated_tests(outputs) -> list[str]:
-    # NOTE: only a single sampled output from the model
-    outputs = [output[0] for output in outputs]
-
-    code_blocks = []
+def get_generated_tests(outputs) -> list[list[str]]:
+    results = []
     for output in outputs:
-        code = extract_codeblock(output)
-        code_blocks.append(code)
-    return code_blocks
+        code_blocks = []
+        for sample in output:
+            code = extract_codeblock(sample)
+            code_blocks.append(code)
+        results.append(code_blocks)
+    return results

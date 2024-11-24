@@ -12,12 +12,13 @@ from ghapi.core import GhApi
 from r2e.llms.llm_args import LLMArgs
 from r2e.llms.completions import LLMCompletions
 
-from pyperf.constants import ANALYSIS_DIR
 from pyperf.data import PerformanceCommit, PerfAnalysis
 from pyperf.analysis.parser import DiffParser
 from pyperf.analysis.retriever import Retriever
 from pyperf.analysis.prompt import *
 from pyperf.analysis.utils import *
+from pyperf.constants import *
+
 
 GHAPI_TOKEN = os.environ.get("GHAPI_TOKEN")
 MAX_COMMIT_TOKENS = 20000
@@ -294,7 +295,7 @@ class PerfCommitAnalyzer:
     def analyze_repository(args) -> PerfAnalysis:
         repo_url = args.repo_url
         repo_owner, repo_name = repo_url.split("/")[-2:]
-        repo_path = ANALYSIS_DIR / "repos" / repo_name
+        repo_path = ANALYSIS_REPOS_DIR / repo_name
 
         # Clone the repository if not alread in ANALYSIS_DIR / "repos"
         if not os.path.exists(repo_path):
@@ -336,7 +337,8 @@ if __name__ == "__main__":
 
     analysis = PerfCommitAnalyzer.analyze_repository(args)
 
-    output_file = ANALYSIS_DIR / "commits" / f"{analysis.repo_name}_commits.json"
+    output_file = ANALYSIS_COMMITS_DIR / f"{analysis.repo_name}_commits.json"
+    ANALYSIS_APIS_DIR.mkdir(parents=True, exist_ok=True)
     PerfCommitAnalyzer.save_analysis(analysis, output_file)
 
     # To load the analysis later

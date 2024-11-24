@@ -1,17 +1,18 @@
 import fire
 
 from r2e.llms.completions import LLMCompletions
+from r2e.multiprocess import run_tasks_in_parallel
 from pyperf.analysis.commits import PerfCommitAnalyzer
 from pyperf.data import Repo, Problem, PerformanceCommit
 from pyperf.logger import logger
-from pyperf.constants import EXPS_DIR
+from pyperf.constants import EXPS_DIR, ANALYSIS_APIS_DIR
 
 from pyperf.utils.io import *
 from pyperf.generate.prompt import *
 from pyperf.generate.helpers import *
+from pyperf.generate.context import prepare
 from pyperf.generate.quickcheck import quickcheck
 from pyperf.generate.args import PerfExpGenArgs
-from pyperf.generate.harness import TEST_HARNESS
 
 
 class PerfExpGenerator:
@@ -21,36 +22,94 @@ class PerfExpGenerator:
         self.config = load_exp_config(args.yaml_path)
         self.exp_id = self.config["exp_id"]
         self.repo = Repo.from_url(self.config["repo_url"])
-        self.candidates = self.config["candidates"]
+        self.candidates = self.get_commit_map(self.repo)
         self.exp_dir = EXPS_DIR / self.exp_id
+
+    def get_commit_map(self, repo: Repo):
+        """Get the api-commit map for the repository"""
+        ac_map = load_map(ANALYSIS_APIS_DIR / f"{repo.repo_name}_ac_map.json")
+        return ac_map.api_to_commits
 
     def gen(self, args) -> list[Problem]:
         logger.debug(f"Generating perftests: {self.repo}")
 
-        problems = [self.prepare(cand) for cand in self.candidates]
-        payloads = [p.chat_messages for p in problems]
+        # create new problems
+        problems = [
+            Problem.create_prob(self.repo, api, commits, self.config)
+            for api, commits in self.candidates.items()
+        ]
+        # filter their commits to a maximum year and remove empty problems
+        for prob in problems:
+            prob.filter_commits(args.max_year)
+        problems = [prob for prob in problems if prob.num_commits() > 0]
+
+        # prepare each problem for test generation
+        outputs = run_tasks_in_parallel(
+            prepare,
+            [(self.repo, prob) for prob in problems],
+            use_progress_bar=True,
+            progress_bar_desc="Preparing tests",
+        )
+
+        problems, payloads = [], []
+        for output in outputs:
+            if output.is_success():
+                prob = output.result
+                problems.append(prob)
+                for test in prob.tests:
+                    payloads.append(test.chat_messages)
+            else:
+                logger.error(f"Failed to prepare: {output.exception_tb}")
+
         outputs = LLMCompletions.get_llm_completions(args, payloads)
         results = get_generated_tests(outputs)
-
-        for prob, test in zip(problems, results):
-            prob.add_test(test + TEST_HARNESS)
+        idx = 0
+        for prob in problems:
+            existing_tests = prob.tests
+            for test in prob.tests:
+                if idx < len(results):
+                    test.add_samples(results[idx])
+                    idx += 1
 
         save_problems(self.exp_dir / f"{self.exp_id}_problems.json", problems)
         return problems
 
     def genquickcheck(self, args, max_rounds: int = 1) -> list[Problem]:
-        """Generate tests with iterative improvement based on quickcheck feedback"""
+        """Debug tests with iterative improvement based on quickcheck feedback"""
         logger.debug(f"Generating perftests with quickcheck feedback: {self.repo}")
 
-        problems = [self.prepare(cand) for cand in self.candidates]
+        problems = [
+            Problem.create_prob(self.repo, api, commits, self.config)
+            for api, commits in self.candidates.items()
+        ]
+
+        outputs = run_tasks_in_parallel(
+            prepare,
+            [(self.repo, prob) for prob in problems],
+            use_progress_bar=True,
+            progress_bar_desc="Preparing tests",
+        )
+
+        problems = []
+        for output in outputs:
+            if output.is_success():
+                problem = output.result
+                problems.append(problem)
+            else:
+                logger.error(f"Failed to prepare: {output.exception_tb}")
+                continue
+
+        if args.n > 1:
+            raise ValueError("Quickcheck only supports generating 1 test per problem")
 
         for problem in problems:
             current_round = 0
             while current_round < max_rounds:
-                payloads = [problem.chat_messages]
+                prob_test = problem.tests[0]
+                payloads = [prob_test.chat_messages]  # only use first test
                 outputs = LLMCompletions.get_llm_completions(args, payloads)
-                test = get_generated_tests(outputs)[0]
-                problem.add_test(test + TEST_HARNESS)
+                test = get_generated_tests(outputs)[0][0]  # get first generated test
+                prob_test.add_sample(test)
                 success, error_output = quickcheck(problem)
 
                 if success:
@@ -74,38 +133,11 @@ class PerfExpGenerator:
         save_problems(self.exp_dir / f"{self.exp_id}_problems.json", problems)
         return problems
 
-    def prepare(self, cand) -> Problem:
-        prob = Problem.create_prob(self.repo, cand, self.config)
-        commit = PerfCommitAnalyzer.process_commit(
-            prob.base_commit, self.repo.local_repo_path
-        )
-        context_msg = CONTEXT_MSG.format(
-            api=prob.api,
-            repo_name=self.repo.repo_name,
-            commit_message=strip_empty_lines(commit.message),
-            commit_diff=commit.diff_text,
-        )
-
-        # Added checking if PR message is None
-        if commit.linked_pr is not None:
-            pr_messages = get_github_convo(self.repo, commit.linked_pr)
-            context_msg += PR_INFO.format(pr_messages=pr_messages)
-        else:
-            context_msg += "No associated pull request for this commit.\n"
-
-        task_msg = (
-            f"Write a test for the {prob.api} API in the {self.repo.repo_name} repository. "
-            "Remember to NOT time the setup code."
-        )
-        prob.init_chat(SYSTEM_MSG, context_msg, task_msg)
-
-        return prob
-
 
 if __name__ == "__main__":
     args = fire.Fire(PerfExpGenArgs.parse)
-    # args.quickcheck = False
     generator = PerfExpGenerator(args)
     if args.quickcheck:
         generator.genquickcheck(args)
-    generator.gen(args)
+    else:
+        generator.gen(args)

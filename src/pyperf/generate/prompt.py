@@ -26,6 +26,14 @@ if __name__ == '__main__':
     main()
 ```
 
+# Tips
+1. Ensure the scale of data used in the test is non-trivial, challenging, and realistic.
+2. Any setup code must be in a separate function that is called before the `experiment` function. 
+3. In `setup` use the `requests` library to download any files and `gzip` to extract them, if necessary.
+4. For graph datasets, if appropriate use real-world datasets like social networks, road networks, etc.
+5. When using `load_dataset` API, use FULL dataset name with the `username/dataset` format: load_dataset('stanforldnlp/imdb'), load_dataset('rajpurkar/squad') etc. DO NOT use short names e.g.: load_dataset('imdb'), etc.
+6. For images, use real-world images if of appropriate size and scale. If not, create large synthetic images appropriate to the API. Note: Don't use `Image.open` with context managers and avoid mixing ranges and integers in operations.
+
 # Output Format
 - The output should be a complete Python script that must contain an entry point: `run_test()`
 - `run_test` takes no argument and should return a single execution time that was measured
