@@ -4,303 +4,86 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Performance Test Results</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>Optimization Problems</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-    <script>
-        function openTab(evt, tabName) {
-            var parent = evt.currentTarget.closest('.test-info');
-            var tabcontent = parent.getElementsByClassName("instrument-tabcontent");
-            for (var i = 0; i < tabcontent.length; i++) {
-                tabcontent[i].style.display = "none";
-            }
-            var tablinks = parent.getElementsByClassName("tablinks");
-            for (var i = 0; i < tablinks.length; i++) {
-                tablinks[i].className = tablinks[i].className.replace(" active", "");
-            }
-            parent.querySelector("#" + tabName).style.display = "block";
-            evt.currentTarget.className += " active";
+    <style>
+        .summary {
+            background-color: #ecf0f1;
         }
-
-        function openExecutionTab(evt, tabName) {
-            var parent = evt.currentTarget.closest('.test-info');
-            var tabcontent = parent.getElementsByClassName("execution-tabcontent");
-            for (var i = 0; i < tabcontent.length; i++) {
-                tabcontent[i].style.display = "none";
-            }
-            var tablinks = parent.getElementsByClassName("execution-tablinks");
-            for (var i = 0; i < tablinks.length; i++) {
-                tablinks[i].className = tablinks[i].className.replace(" active", "");
-            }
-            parent.querySelector("#" + tabName).style.display = "block";
-            evt.currentTarget.className += " active";
-        }
-
-        // Open all tables and Summary tabs by default
-        window.onload = function () {
-            var allTableViews = document.querySelectorAll('[id^="TableView"]');
-            var allTableButtons = document.querySelectorAll('.tablinks:nth-child(1)');
-            var allSummaryTabs = document.querySelectorAll('[id^="Summary"]');
-            var allSummaryButtons = document.querySelectorAll('.execution-tablinks:nth-child(1)');
-
-            allTableViews.forEach(function (tableView) {
-                tableView.style.display = "block";
-            });
-
-            allTableButtons.forEach(function (button) {
-                button.classList.add("active");
-            });
-
-            allSummaryTabs.forEach(function (sumTab) {
-                sumTab.style.display = "block";
-            });
-
-            allSummaryButtons.forEach(function (button) {
-                button.classList.add("active");
-            });
-        };
-
-        // Keyboard navigation with Cmd + Arrow/A/D
-        document.addEventListener('keydown', function (event) {
-            if (event.metaKey) {
-                if (event.key === 'ArrowLeft' || event.key === 'a') {
-                    var prevLink = document.querySelector('.navigation a:first-child');
-                    if (!prevLink.classList.contains('disabled')) {
-                        window.location.href = prevLink.href;
-                    }
-                } else if (event.key === 'ArrowRight' || event.key === 'd') {
-                    var nextLink = document.querySelector('.navigation a:last-child');
-                    if (!nextLink.classList.contains('disabled')) {
-                        window.location.href = nextLink.href;
-                    }
-                }
-            }
-        });
-    </script>
+    </style>
 </head>
 
 <body>
-    <h1>Performance Test Results</h1>
-    <div class="summary">
-        <h2>Overall Summary</h2>
-        <div class="summary-item">Total Functions: <strong>{{ total_functions }}</strong></div>
-        <div class="summary-item">Successful Tests: <strong class="success">{{ successful_tests }}</strong></div>
-        <div class="summary-item">Failed Tests: <strong class="error">{{ failed_tests }}</strong></div>
-        <div class="summary-item">Errors: <strong class="warning">{{ errors }}</strong></div>
-        <div class="summary-item">Timeouts: <strong class="timeout">{{ timeouts }}</strong></div>
-    </div>
-    <div class="filter-search-container">
-        <div class="filter-buttons">
-            <a href="?filter=all&remove_tests={{ 'true' if remove_tests else 'false' }}"
-                class="all {{ 'active' if filter_type == 'all' }}">All</a>
-            <a href="?filter=success&remove_tests={{ 'true' if remove_tests else 'false' }}"
-                class="success {{ 'active' if filter_type == 'success' }}">Success</a>
-            <a href="?filter=failure&remove_tests={{ 'true' if remove_tests else 'false' }}"
-                class="failure {{ 'active' if filter_type == 'failure' }}">Failed</a>
-            <a href="?filter=error&remove_tests={{ 'true' if remove_tests else 'false' }}"
-                class="error {{ 'active' if filter_type == 'error' }}">Errors</a>
-            <a href="?filter=timeout&remove_tests={{ 'true' if remove_tests else 'false' }}"
-                class="timeout {{ 'active' if filter_type == 'timeout' }}">Timeout</a>
-            <a href="?filter={{ filter_type }}&remove_tests={{ 'false' if remove_tests else 'true' }}"
-                class="removetests {{ 'active' if remove_tests }}">{{ 'Include Tests' if remove_tests else 'Remove
-                Tests' }}</a>
-        </div>
-        <div class="search-bar">
-            <form action="/" method="get">
-                <input type="hidden" name="filter" value="{{ filter_type }}">
-                <input type="hidden" name="remove_tests" value="{{ 'true' if remove_tests else 'false' }}">
-                <input type="text" name="search" placeholder="Search function name" value="{{ search_query }}">
-                <input type="submit" value="Search">
-            </form>
-        </div>
-        <div class="navigation">
-            <a href="?page={{ current_page - 1 }}&filter={{ filter_type }}&remove_tests={{ 'true' if remove_tests else 'false' }}&search={{ search_query }}"
-                {% if current_page==1 %}class="disabled" {% endif %}>Previous</a>
-            <span>{{ current_page }} / {{ total_pages }}</span>
-            <a href="?page={{ current_page + 1 }}&filter={{ filter_type }}&remove_tests={{ 'true' if remove_tests else 'false' }}&search={{ search_query }}"
-                {% if current_page==total_pages %}class="disabled" {% endif %}>Next</a>
-        </div>
-    </div>
+    <h1>Optimization Problems</h1>
 
-    {% if item %}
-    <div class="function-info">
-        <h2>Function: {{ item.function_id.identifier if item.function_id else item.method_id.identifier }}</h2>
-        <h3 class="status">Status:
-            {% if status == "error" %}
-            <span class="warning">Error</span>
-            {% elif status == "success" %}
-            <span class="success">Test Success</span>
-            {% elif status == "failure" %}
-            <span class="error">Test Failure</span>
-            {% elif status == "timeout" %}
-            <span class="timeout">Timeout</span>
-            {% else %}
-            <span class="warning">❓ Unknown</span>
-            {% endif %}
-        </h3>
-        <h3>Function Code:</h3>
-        <pre>{{ item.function_code if item.function_code else item.method_code }}</pre>
-    </div>
-    <div class="test-info">
-        <h3>Tests:</h3>
-        {% for test in item.test_history.history %}
-        {% set tl = loop %}
-        <!-- <h4>Test:</h4> -->
-        <pre>{{ test.tests.test_0 }}</pre>
-        <h4>Execution Output:</h4>
-        <div class="tab execution-tab">
-            <button class="tablinks execution-tablinks" onclick="openExecutionTab(event, 'Summary{{ tl.index }}')">Test
-                Results</button>
-            <button class="tablinks execution-tablinks"
-                onclick="openExecutionTab(event, 'STDERR{{ tl.index }}')">STDERR</button>
-            <button class="tablinks execution-tablinks"
-                onclick="openExecutionTab(event, 'STDOUT{{ tl.index }}')">STDOUT</button>
-        </div>
-
-        <div id="Summary{{ tl.index }}" class="tabcontent execution-tabcontent">
-            <pre>
-Passed: {{ test.exec_stats.run_tests_logs.test_0.passed_count if test.exec_stats.run_tests_logs else 0 }}
-Failed: {{ test.exec_stats.run_tests_logs.test_0.failed_count if test.exec_stats.run_tests_logs else 0 }}
-Errors: {{ test.exec_stats.run_tests_logs.test_0.errored_count if test.exec_stats.run_tests_logs else 0 }}
-                        </pre>
-        </div>
-
-        <div id="STDERR{{ tl.index }}" class="tabcontent execution-tabcontent">
-            {% if test.exec_stats.error %}
-            <pre class="error scrollable-output">{{ test.exec_stats.error }}</pre>
-            {% elif test.exec_stats.run_test_errors.test_0 %}
-            <pre class="error scrollable-output">{{ test.exec_stats.run_test_errors.test_0[0].message}}</pre>
-            {% else %}
-            <pre>No errors</pre>
-            {% endif %}
-        </div>
-
-        <div id="STDOUT{{ tl.index }}" class="tabcontent execution-tabcontent">
-            <pre class="scrollable-output">{{ test.exec_stats.output if test.exec_stats.output else 'No output' }}</pre>
-        </div>
-
-        {% if test.exec_stats.instrumenter_logs %}
-        <h5>Instrumenter Logs:</h5>
-        <div class="tab">
-            <button class="tablinks" onclick="openTab(event, 'TableView{{ tl.index }}')">Table View</button>
-            <button class="tablinks" onclick="openTab(event, 'PlotView{{ tl.index }}')">Plot View</button>
-        </div>
-        <div id="TableView{{ tl.index }}" class="tabcontent instrument-tabcontent">
-            <div class="scrollable-output">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Function Name</th>
-                            <th>Duration (s)</th>
-                            <th>Caller Function</th>
-                            <th>Caller Line</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for log in test.exec_stats.instrumenter_logs %}
-                        <tr>
-                            <td>{{ log.func_name }}</td>
-                            <td>{{ "%.6f"|format(log.duration) }}</td>
-                            <td>{{ log.caller_info.func_name }}</td>
-                            <td>{{ log.caller_info.lineno }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        <div id="PlotView{{ tl.index }}" class="tabcontent instrument-tabcontent">
-            <canvas id="durationChart{{ tl.index }}" width="300" height="100"></canvas>
-        </div>
-        <script>
-            // Extract durations from instrumenter logs
-            var durations = {{ test.exec_stats.instrumenter_logs | map(attribute = 'duration') | list | tojson }};
-
-            // Calculate mean and standard deviation
-            var mean = durations.reduce((a, b) => a + b, 0) / durations.length;
-            var variance = durations.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / durations.length;
-            var stdDev = Math.sqrt(variance);
-
-            // Create data for the chart
-            var chartData{{ tl.index }} = {
-                labels: durations.map((_, index) => 'Call ' + (index + 1)),
-                    datasets: [{
-                        label: 'Duration',
-                        data: durations,
-                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                        borderColor: 'rgba(75, 192, 192, 1)',
-                        borderWidth: 1
-                    }, {
-                        label: 'Mean',
-                        data: durations.map(() => mean),
-                        type: 'line',
-                        fill: false,
-                        borderColor: 'rgba(255, 99, 132, 1)',
-                        borderWidth: 2,
-                        pointRadius: 0
-                    }, {
-                        label: 'Mean + StdDev',
-                        data: durations.map(() => mean + stdDev),
-                        type: 'line',
-                        fill: false,
-                        borderColor: 'rgba(255, 159, 64, 1)',
-                        borderWidth: 1,
-                        pointRadius: 0,
-                        borderDash: [5, 5]
-                    }, {
-                        label: 'Mean - StdDev',
-                        data: durations.map(() => Math.max(0, mean - stdDev)),
-                        type: 'line',
-                        fill: false,
-                        borderColor: 'rgba(255, 159, 64, 1)',
-                        borderWidth: 1,
-                        pointRadius: 0,
-                        borderDash: [5, 5]
-                    }]
-            };
-
-            // Create the chart
-            var ctx{{ tl.index }} = document.getElementById('durationChart{{ tl.index }}').getContext('2d');
-            var myChart{{ tl.index }} = new Chart(ctx{{ tl.index }}, {
-                type: 'bar',
-                data: chartData{{ tl.index }},
-                options: {
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: 'Duration (s)'
-                        }
-                    },
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'Function Calls'
-                        }
-                    }
-                },
-                plugins: {
-                    tooltip: {
-                        callbacks: {
-                            afterBody: function (context) {
-                                return 'Mean: ' + mean.toFixed(6) + '\n' + 'Std Dev: ' + stdDev.toFixed(6);
-                            }
-                        }
-                    }
-                }
-            }
-                            });
-        </script>
-        {% elif test.exec_stats.output %}
-        <h5>STDOUT:</h5>
-        <pre class="scrollable-output">{{ test.exec_stats.output }}</pre>
-        {% endif %}
+    <label for="repo-select" style="font-size: 20px;">Repo:</label>
+    <select id="repo-select" onchange="loadRepoData(this.value)">
+        {% for repo in repos %}
+        <option value="{{ repo }}" {% if repo==default_repo %} selected{% endif %}>{{ repo }}</option>
         {% endfor %}
+    </select>
+
+    <div class="summary">
+        <h2 id="repo-name"></h2>
+        <div class="summary-item">URL: <strong><a id="repo-url" target="_blank"></a></strong></div>
+        <div class="summary-item" id="commit-count">#Commits: </div>
+        <div class="summary-item" id="api-commit-map"></div>
     </div>
-    {% else %}
-    <p>No functions found matching the current criteria.</p>
-    {% endif %}
+    </div>
+
+    <h3>Optimization Problems</h3>
+    <div id="commits-container"></div>
+
+    <script>
+        function loadRepoData(repoName) {
+            fetch(`/get_repo_data/${repoName}`)
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Data length:', data.length);
+                    const probContainer = document.getElementById('commits-container');
+                    probContainer.innerHTML = '';
+
+                    data.forEach(prob => {
+                        const probElement = document.createElement('div');
+                        probElement.className = 'commit';
+                        probElement.innerHTML = `
+                            <h3>${prob.pid}</h3>
+                            <div>
+                                <span class="stat-item"><strong>API:&nbsp;</strong> ${prob.api} </span>
+                                <span class="stat-item"><strong>Commit:&nbsp;</strong> ${prob.commit} </span>
+                                <span class="stat-item"><strong>Test ID:&nbsp;</strong> ${prob.test_id} </span>
+                                <span class="stat-item"><strong>Base Mean:&nbsp;</strong> ${prob.base_mean} </span>
+                                <span class="stat-item"><strong>Base Std Dev:&nbsp;</strong> ${prob.base_std} </span>
+                                <span class="stat-item"><strong>Target Mean:&nbsp;</strong> ${prob.target_mean} </span>
+                                <span class="stat-item"><strong>Target Std Dev:&nbsp;</strong> ${prob.target_std} </span>
+                                <span class="stat-item"><strong>Optimization Percentage:&nbsp;</strong> ${prob.opt_perc} </span>
+                                <span class="stat-item"><strong>Speedup Factor:&nbsp;</strong> ${prob.speedup_factor} </span>
+                            </div>
+                            <h4 class="toggle-section" onclick="toggleSection(this)">Generated Test</h4>
+                            <div class="message collapsible">
+                                <pre>${prob.test}</pre>
+                            </div>
+                        `;
+                        probContainer.appendChild(probElement);
+                    });
+                });
+        }
+
+        // Load the default repo data when the page loads
+        document.addEventListener('DOMContentLoaded', function () {
+            const defaultRepo = document.getElementById('repo-select').value;
+            if (defaultRepo) {
+                loadRepoData(defaultRepo);
+            }
+        });
+
+        // Toggle sections
+        function toggleSection(element) {
+            element.classList.toggle('active');
+            const collapsibleDiv = element.nextElementSibling;
+            collapsibleDiv.classList.toggle('show');
+        }
+    </script>
 </body>
 
 </html>

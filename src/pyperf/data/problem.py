@@ -93,6 +93,13 @@ class Problem(BaseModel):
     def filter_commits(self, max_year: int):
         """Filter out commits older than max_year"""
         self.commits = [c for c in self.commits if c.date.year >= max_year]
+        
+    def get_test(self, commit_hash: str, test_id: str) -> str:
+        """Get test object for a commit"""
+        for test in self.tests:
+            if test.quick_hash == commit_hash:
+                return test.samples[test_id]
+        return None
 
     # helper to get properties of the problem
     def num_commits(self) -> int:
