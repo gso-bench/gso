@@ -94,18 +94,18 @@ python src/pyperf/execute/evaluate.py --exp_id repo
 <details>
     <summary>Some helpful `skypilot` commands for test runs:</summary>
     <pre>
-        # view machines running
-        sky status
+    # view machines running
+    sky status
 
-        # stream logs or just the status of what's running in a machine
-        sky logs machine_name
-        sky logs --status machine_name
+    # stream logs or just the status of what's running in a machine
+    sky logs machine_name
+    sky logs --status machine_name
 
-        # ssh into a machine
-        ssh machine_name
+    # ssh into a machine
+    ssh machine_name
 
-        # shutdown machines
-        sky down machine_name
-        sky down --all
+    # shutdown machines
+    sky down machine_name
+    sky down --all
     </pre>
 </details>
