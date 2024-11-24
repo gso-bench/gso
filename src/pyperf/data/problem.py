@@ -1,7 +1,7 @@
 from collections import defaultdict
 
 from pydantic import BaseModel, Field, HttpUrl
-from pyperf.generate.harness import TEST_HARNESS
+from pyperf.generate.harness import TEST_HARNESS, TIMEIT_TEMPLATE
 from pyperf.data.repo import Repo
 from pyperf.data.perf import PerformanceCommit
 
@@ -19,10 +19,10 @@ class Tests(BaseModel):
         ]
 
     def add_sample(self, test: str):
-        self.samples.append(test + TEST_HARNESS)
+        self.samples.append(test + TIMEIT_TEMPLATE + TEST_HARNESS)
 
     def add_samples(self, samples: list[str]):
-        self.samples.extend([t + TEST_HARNESS for t in samples])
+        self.samples.extend([t + TIMEIT_TEMPLATE + TEST_HARNESS for t in samples])
 
     @property
     def quick_hash(self) -> str:

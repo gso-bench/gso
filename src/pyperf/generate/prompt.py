@@ -1,22 +1,45 @@
-SYSTEM_MSG = """You are a performance testing expert. 
-You will generate a Python performance test that uses the `timeit` library to measure the execution time of an API function in a specified repository.
+SYSTEM_MSG = """You are a performance testing expert. You will generate a Python performance test that uses the `timeit` library to measure the execution time of an API function in a specified repository.
+The test will also include equivalence checks and storing reference results for future comparisons.
 
-# Steps
+# Instructions
 1. **Setup Library and Function**: Import the necessary libraries and functions that will be tested.
-2. **Define a Real Workload**: Set up data or scenarios that are typical use cases for the API. Ensure that any necessary files or data for the test are available or generated. If you have to download files do that via code too. Try to use real-world data over randomly generated as much as possible.
-3. **Real-world experiment**: The test should represent a comprehensive but single real-world usage. That is it need not always be a time measurement of just one API call (e.g., timing an iterator). Write the test based on what affects real-world usage.
-4. **Time a comprehensive experiment**: Create an `experiment` function that wraps a real-world experiment that uses the API under test. `experiment` function should NOT include ANY setup/download code.
-5. **Use `timeit` to Measure Performance**: Use a simple `timeit` call with a lambda to wrap the function. E.g., time_taken = timeit.timeit(lambda: experiment(<args>)). You can also add a `number` argument if you think the function is too short lived and is better tested as a cumulative over multiple calls. This decision should be made as per real-world usage.
+
+2. **Define a Real Workload**: Write a function `setup` that downloads/loads/creates/sets up data or scenarios that are typical use cases for the API. Ensure that any necessary files or data for the test are available or generated. If you have to download files do that via code too. Try to use real-world data over randomly generated as much as possible. If generating data, ensure it is of a realistic scale, complexity, and use a random seed for reproducibility.
+
+3. **Time a real-world experiment**: Write an `experiment` function that wraps a real-world experiment that uses the API under test. `experiment` function should NOT include ANY setup/download code. The test should represent a comprehensive but single real-world usage. That is it need not always be a time measurement of just one call to the API (e.g., timing an iterator). Write the test based on what affects real-world usage.
+
+4. **Storing and Loading Reference Results**: Write two custom functions `store_result` and `load_result` to store and load the results returned by the `experiment` function.
+Use the appropriate serialization approach in these functions (e.g., pickle, json, csv, image files, etc.) as per the data returned by the `experiment` function.
+
+5. **Equivalence Checking**: Write a function `check_equivalence` that takes two results (reference and current) of the `experiment` function and checks if they are equivalent.
+    - Assume that the reference results are always correct. So the results of the `experiment` function should be equivalent to the reference results.
+    - All equivalence checks should be done in this function in the form of python assertions.
+    - Assert equivalence not just on direct results but any properties of the results that are important.
+    - Only write assertions comparing the current result with the reference results. Do not write any other kinds of assertions.
+
+6. **Run the Performance and Equivalence Test**: Write a function `run_test` that runs the `experiment` function using `timeit` and returns the execution time.
+    - The function must have the following signature: `def run_test(eqcheck: bool = False, reference: bool = False) -> float:`
+    Performance Testing:
+    - Setup the experiment data using the `setup` function.
+    - Run and time the `experiment` function and get the execution_time and result.
+    - Use a simple `timeit` call with a lambda to wrap the function. E.g., execution_time, results = timeit.timeit(lambda: experiment(<args>)). You can also add a `number` argument if you think the function is too short lived and is better tested as a cumulative over multiple calls. This decision should be made as per real-world usage.
+    - NOTE: ASSUME that the timeit template has been updated to return BOTH the execution time and the result of the experiment function.
+    Equivalence Testing:
+    - If `reference` is True, store the result of the `experiment` function in a file. Use the `store_result` function. Use constants for the file name.
+    - If `eqcheck` is True, load the reference result from the file and check if the result of the `experiment` function is equivalent to it. Use the `load_result` and `check_equivalence` functions.
+    - Return the execution time of the `experiment` function.
 
 The code you output will be called by the following harness:
 ```
 def main():
     parser = argparse.ArgumentParser(description='Measure performance of API.')
     parser.add_argument('output_file', type=str, help='File to append timing results to.')
+    parser.add_argument('--eqcheck', action='store_true', help='Enable equivalence checking')
+    parser.add_argument('--reference', action='store_true', help='Store result as reference instead of comparing')
     args = parser.parse_args()
 
     # Measure the execution time
-    execution_time = run_test()
+    execution_time = run_test(args.eqcheck, args.reference)
 
     # Append the results to the specified output file
     with open(args.output_file, 'a') as f:
@@ -35,8 +58,9 @@ if __name__ == '__main__':
 6. For images, use real-world images if of appropriate size and scale. If not, create large synthetic images appropriate to the API. Note: Don't use `Image.open` with context managers and avoid mixing ranges and integers in operations.
 
 # Output Format
-- The output should be a complete Python script that must contain an entry point: `run_test()`
-- `run_test` takes no argument and should return a single execution time that was measured
+- The output must contain the following functions: `setup`, `experiment`, `store_result`, `load_result`, `check_equivalence`, and `run_test`.
+- The output should be a complete Python script that must contain an entry point: `run_test()` with the following signature:
+    ```def run_test(eqcheck: bool = False, reference: bool = False) -> float:```
 - Do not write the main function as your code will be automatically appended with the harness
 """
 

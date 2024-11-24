@@ -7,10 +7,12 @@ def main():
 
     parser = argparse.ArgumentParser(description='Measure performance of API.')
     parser.add_argument('output_file', type=str, help='File to append timing results to.')
+    parser.add_argument('--eqcheck', action='store_true', help='Enable equivalence checking')
+    parser.add_argument('--reference', action='store_true', help='Store result as reference instead of comparing')
     args = parser.parse_args()
 
     # Measure the execution time
-    execution_time = run_test()
+    execution_time = run_test(args.eqcheck, args.reference)
 
     # Append the results to the specified output file
     with open(args.output_file, 'a') as f:
@@ -18,4 +20,17 @@ def main():
 
 if __name__ == '__main__':
     main()
+"""
+
+TIMEIT_TEMPLATE = """
+
+timeit.template = \"\"\"
+def inner(_it, _timer{init}):
+    {setup}
+    _t0 = _timer()
+    for _i in _it:
+        retval = {stmt}
+    _t1 = _timer()
+    return _t1 - _t0, retval
+\"\"\"
 """
