@@ -78,28 +78,34 @@ Remember to set [`GHAPI_TOKEN`](https://docs.github.com/en/authentication/keepin
 
 *Prerequisite*: Cloud credentials set up for `skypilot` to spin up machines.
 Run `sky check` and follow the instructions it provides to set up credentials.
-Then, run the following to execute the generated performance tests: `
+Then, run the following to execute the generated performance tests:
 ```bash
 python src/pyperf/execute/execute.py --exp_id repo --machines K
 ```
 
 This runs performance tests for the configured experiment on `K` machines and saves results in the workspace in `{exp_id}_results.json`. Optionally use `--api` to run tests for a single API. Use `--interactive` to run tests in interactive mode (for debugging).
 
+View the stats of the results using:
+```bash
+python src/pyperf/execute/evaluate.py --exp_id repo
+```
+
+
 <details>
-<summary>Some helpful `skypilot` commands for test runs:</summary>
-    ```bash
-    # view machines running
-    sky status
+    <summary>Some helpful `skypilot` commands for test runs:</summary>
+    <pre>
+        # view machines running
+        sky status
 
-    # stream logs or just the status of what's running in a machine
-    sky logs machine_name
-    sky logs --status machine_name
+        # stream logs or just the status of what's running in a machine
+        sky logs machine_name
+        sky logs --status machine_name
 
-    # ssh into a machine
-    ssh machine_name
+        # ssh into a machine
+        ssh machine_name
 
-    # shutdown machines
-    sky down machine_name
-    sky down --all
-    ```
+        # shutdown machines
+        sky down machine_name
+        sky down --all
+    </pre>
 </details>
