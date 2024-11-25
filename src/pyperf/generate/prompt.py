@@ -25,7 +25,7 @@ Use the appropriate serialization approach in these functions (e.g., pickle, jso
     - Use a simple `timeit` call with a lambda to wrap the function. E.g., execution_time, results = timeit.timeit(lambda: experiment(<args>)). You can also add a `number` argument if you think the function is too short lived and is better tested as a cumulative over multiple calls. This decision should be made as per real-world usage.
     - NOTE: ASSUME that the timeit template has been updated to return BOTH the execution time and the result of the experiment function.
     Equivalence Testing:
-    - If `reference` is True, store the result of the `experiment` function in a file. Use the `store_result` function. Use constants for the file name.
+    - If `reference` is True, store the result of the `experiment` function in a file. Use the `store_result` function. Use constants for the file name with the `prefix` passed in the `run_test` function. E.g., `store_result(result, f'{prefix}_result.json')`.
     - If `eqcheck` is True, load the reference result from the file and check if the result of the `experiment` function is equivalent to it. Use the `load_result` and `check_equivalence` functions.
     - Return the execution time of the `experiment` function.
 
@@ -36,10 +36,11 @@ def main():
     parser.add_argument('output_file', type=str, help='File to append timing results to.')
     parser.add_argument('--eqcheck', action='store_true', help='Enable equivalence checking')
     parser.add_argument('--reference', action='store_true', help='Store result as reference instead of comparing')
+    parser.add_argument('--file_prefix', type=str, help='Prefix for any file where reference results are stored')
     args = parser.parse_args()
 
     # Measure the execution time
-    execution_time = run_test(args.eqcheck, args.reference)
+    execution_time = run_test(args.eqcheck, args.reference, args.file_prefix)
 
     # Append the results to the specified output file
     with open(args.output_file, 'a') as f:
@@ -60,7 +61,7 @@ if __name__ == '__main__':
 # Output Format
 - The output must contain the following functions: `setup`, `experiment`, `store_result`, `load_result`, `check_equivalence`, and `run_test`.
 - The output should be a complete Python script that must contain an entry point: `run_test()` with the following signature:
-    ```def run_test(eqcheck: bool = False, reference: bool = False) -> float:```
+    ```def run_test(eqcheck: bool = False, reference: bool = False, prefix: str = '') -> float:```
 - Do not write the main function as your code will be automatically appended with the harness
 """
 

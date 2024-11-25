@@ -10,12 +10,14 @@ mkdir -p results
 run_tests_for_commit() {
     local test_file=$1
     local result_file=$2
+    local flag=$3
+    local prefix=$4
     local iterations=5
     
     echo "Running test $test_file $iterations times..."
     for i in $(seq 1 $iterations); do
         echo "  Iteration $i/$iterations"
-        python "$test_file" "$result_file"
+        python "$test_file" "$result_file" "$flag" --file_prefix "$prefix"
     done
 }
 
@@ -30,6 +32,7 @@ for i in $(seq 0 $(($total_pairs - 1))); do
     test_basename=$(basename $test_file)
     base_result="results/base_${commit}_${test_basename%.py}.txt"
     target_result="results/target_${commit}_${test_basename%.py}.txt"
+    file_prefix="${commit}_${test_basename}"
 
     echo "Processing base commit $commit with test $test_file"
 
@@ -40,8 +43,7 @@ for i in $(seq 0 $(($total_pairs - 1))); do
     $install_commands
     cd ..
 
-    # Run base commit tests
-    run_tests_for_commit "$test_file" "$base_result"
+    run_tests_for_commit "$test_file" "$base_result" "--reference" "$file_prefix"
 
     # Create metadata file for this combination
     meta_file="results/meta_${commit}_${test_basename%.py}.json"
@@ -75,11 +77,12 @@ for i in $(seq 0 $(($total_pairs - 1))); do
     test_file=$(jq -r ".[$i].test_file" working_pairs.json)
     test_basename=$(basename $test_file)
     target_result="results/target_${commit}_${test_basename%.py}.txt"
+    file_prefix="${commit}_${test_basename}"
 
     echo "Processing target commit main with test $test_file"
 
     # Run target commit tests
-    run_tests_for_commit "$test_file" "$target_result"
+    run_tests_for_commit "$test_file" "$target_result" "--eqcheck" "$file_prefix"
 done
 
 echo "Phase 2 complete. Results saved in results directory."
