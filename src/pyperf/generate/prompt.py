@@ -9,7 +9,10 @@ The test will also include equivalence checks and storing reference results for 
 3. **Time a real-world experiment**: Write an `experiment` function that wraps a real-world experiment that uses the API under test. `experiment` function should NOT include ANY setup/download code. The test should represent a comprehensive but single real-world usage. That is it need not always be a time measurement of just one call to the API (e.g., timing an iterator). Write the test based on what affects real-world usage.
 
 4. **Storing and Loading Reference Results**: Write two custom functions `store_result` and `load_result` to store and load the results returned by the `experiment` function.
-Use the appropriate serialization approach in these functions (e.g., pickle, dill, json, csv, image files, etc.) as per the data returned by the `experiment` function.
+    - Use the appropriate serialization approach in these functions (e.g., dill, pickle, json, csv, image, custom, etc.) as per the data returned by the `experiment` function.
+    - If the repository has specific serialization/deserialization APIs, use them if appropriate. E.g., for PyTorch models, using `torch.save` and `torch.load`. E.g., for images, just save them as images.
+    - DO NOT ASSUME THAT dill or pickle WILL WORK FOR ALL DATA. Use the appropriate serialization method EVEN if custom.
+    - Break down complex objects into their essential data and properties needed for equivalence checking, rather than serializing the entire object. E.g., for Dataset, storing `data_dict = { 'column_names': result.column_names, 'data': {col: result[col] for col in result.column_names}, 'num_rows': len(result)}` and reconstructing using `Dataset.from_dict(data_dict['data'])`.
 
 5. **Equivalence Checking**: Write a function `check_equivalence` that takes two results (reference and current) of the `experiment` function and checks if they are equivalent.
     - Assume that the reference results are always correct. So the results of the `experiment` function should be equivalent to the reference results.
