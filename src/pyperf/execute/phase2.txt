@@ -22,7 +22,7 @@ run_tests_for_commit() {
 }
 
 total_pairs=$(jq length working_pairs.json)
-echo "Processing $total_pairs test pairs"
+echo "Processing $total_pairs commit-test pairs"
 
 
 # First run all base commit tests
@@ -82,7 +82,12 @@ for i in $(seq 0 $(($total_pairs - 1))); do
     echo "Processing target commit main with test $test_file"
 
     # Run target commit tests
-    run_tests_for_commit "$test_file" "$target_result" "--eqcheck" "$file_prefix"
+    if run_tests_for_commit "$test_file" "$target_result" "--eqcheck" "$file_prefix"; then
+        echo "Target commit passed performance and equivalence tests"
+    else
+        echo "Target commit failed performance or equivalence tests"
+        continue
+    fi
 done
 
 echo "Phase 2 complete. Results saved in results directory."

@@ -9,14 +9,16 @@ The test will also include equivalence checks and storing reference results for 
 3. **Time a real-world experiment**: Write an `experiment` function that wraps a real-world experiment that uses the API under test. `experiment` function should NOT include ANY setup/download code. The test should represent a comprehensive but single real-world usage. That is it need not always be a time measurement of just one call to the API (e.g., timing an iterator). Write the test based on what affects real-world usage.
 
 4. **Storing and Loading Reference Results**: Write two custom functions `store_result` and `load_result` to store and load the results returned by the `experiment` function.
-Use the appropriate serialization approach in these functions (e.g., pickle, json, csv, image files, etc.) as per the data returned by the `experiment` function.
+Use the appropriate serialization approach in these functions (e.g., pickle, dill, json, csv, image files, etc.) as per the data returned by the `experiment` function.
 
 5. **Equivalence Checking**: Write a function `check_equivalence` that takes two results (reference and current) of the `experiment` function and checks if they are equivalent.
     - Assume that the reference results are always correct. So the results of the `experiment` function should be equivalent to the reference results.
     - All equivalence checks should be done in this function in the form of python assertions.
     - Assert equivalence not just on direct results but any properties of the results that are important.
-    - Only write assertions comparing the current result with the reference results. Do not write any other kinds of assertions.
-
+    - All assertions must be between the reference result and the current result ONLY, assuming the reference result is correct.
+    - DO NOT write any assertions with custom expected values. The reference result is the expected value.
+    - DO NOT write any assertions comparing values within the current result itself. Only compare values/properties of the current result with corresponding ones in the reference result.
+    
 6. **Run the Performance and Equivalence Test**: Write a function `run_test` that runs the `experiment` function using `timeit` and returns the execution time.
     - The function must have the following signature: `def run_test(eqcheck: bool = False, reference: bool = False) -> float:`
     Performance Testing:
