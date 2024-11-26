@@ -230,10 +230,20 @@ async def async_main(
     machines: int,
     runs: int,
     specific_api: str | None = None,
+    exp_yaml: str | None = None,
     interactive: bool = False,
 ):
     exp_dir = EXPS_DIR / f"{exp_id}"
     all_problems = load_problems(exp_dir / f"{exp_id}_problems.json")
+
+    if exp_yaml is not None:
+        if os.path.exists(exp_yaml):
+            with open(exp_yaml, "r") as f:
+                exp_data = yaml.safe_load(f)
+            for p in all_problems:
+                p.install_commands = exp_data.get("install_commands", [])
+        else:
+            raise ValueError(f"Experiment YAML file provided but not found: {exp_yaml}")
 
     if specific_api:
         problems = [p for p in all_problems if p.api == specific_api]
@@ -256,15 +266,26 @@ def main(
     machines: int,
     runs: int,
     specific_api: str | None = None,
+    exp_yaml: str | None = None,
     interactive: bool = False,
 ):
-    asyncio.run(async_main(exp_id, machines, runs, specific_api, interactive))
+    asyncio.run(async_main(exp_id, machines, runs, specific_api, exp_yaml, interactive))
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Execute tasks with SkyManager")
     parser.add_argument("-e", "--exp_id", type=str, help="Experiment ID", required=True)
-    parser.add_argument("-a", "--api", type=str, help="Specific API", required=False)
+    parser.add_argument(
+        "-a", "--api", type=str, help="Specific API", required=False, default=None
+    )
+    parser.add_argument(
+        "-yp",
+        "--exp_yaml",
+        type=str,
+        help="Path to experiment YAML",
+        required=False,
+        default=None,
+    )
     parser.add_argument(
         "-m", "--machines", type=int, default=2, help="Max concurrent machines"
     )
@@ -274,4 +295,6 @@ if __name__ == "__main__":
     parser.add_argument("-i", "--interactive", action="store_true")
     args = parser.parse_args()
 
-    main(args.exp_id, args.machines, args.runs, args.api, args.interactive)
+    main(
+        args.exp_id, args.machines, args.runs, args.api, args.exp_yaml, args.interactive
+    )

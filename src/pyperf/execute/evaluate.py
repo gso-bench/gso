@@ -240,6 +240,9 @@ def main(exp_id: str, specific_api: str | None = None):
     print(f"  Standard deviation: {summary['std_speedup']:.2f}%")
     print(f"  Max Opt: {summary['max_speedup']:.2f}%")
     print(f"  Min Opt: {summary['min_speedup']:.2f}%")
+    print(
+        f"Speedup distribution:\n{df['opt_perc'].describe(percentiles=[0,0.05,0.1,0.2,0.4,0.5,0.6,0.8,0.9,0.95,1])}"
+    )
     print("=" * 35)
 
     return df, summary

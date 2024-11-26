@@ -62,9 +62,11 @@ class Problem(BaseModel):
     def model_post_init(self, __context) -> None:
         if self.setup_commands == []:
             self.setup_commands = [
+                "sudo apt update -y && sudo upt upgrade -y",
                 "sudo apt-get install -y libtiff5-dev libjpeg8-dev libopenjp2-7-dev zlib1g-dev",
                 "sudo apt-get install -y libfreetype6-dev liblcms2-dev libwebp-dev tcl8.6-dev tk8.6-dev python3-tk",
                 "sudo apt-get install -y libharfbuzz-dev libfribidi-dev libxcb1-dev libx11-dev",
+                "sudo apt install -y gcc g++ gfortran libopenblas-dev liblapack-dev pkg-config",
             ]
 
         if self.install_commands == []:
@@ -93,7 +95,7 @@ class Problem(BaseModel):
     def filter_commits(self, max_year: int):
         """Filter out commits older than max_year"""
         self.commits = [c for c in self.commits if c.date.year >= max_year]
-        
+
     def get_test(self, commit_hash: str, test_id: str) -> str:
         """Get test object for a commit"""
         for test in self.tests:
