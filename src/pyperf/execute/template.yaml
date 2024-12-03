@@ -13,7 +13,7 @@ setup: |
   curl -LsSf https://astral.sh/uv/install.sh | sh
   source $HOME/.cargo/env
   $setup_commands
-  git clone $repo_url $repo_name
+  git clone --recursive $repo_url $repo_name
 
 run: |
   export COMMITS="$candidates"
