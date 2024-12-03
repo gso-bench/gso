@@ -64,7 +64,7 @@ class CommitParser:
                         current_file_diff.is_binary_file = True
                         current_file_diff.binary_line = line
                     else:
-                        raise ValueError(f"Unexpected line: {line}")
+                        print(f"Unexpected line: {line} in {current_file_diff.path}")
                 else:
                     self.parse_hunk_line(current_hunk, line)
 
@@ -88,9 +88,9 @@ class CommitParser:
 
         old_path, new_path = match.groups()
         assert old_path and new_path, f"Invalid paths: {old_path}, {new_path}"
-        assert (
-            old_path == new_path
-        ), f"Invalid paths: {old_path}, {new_path} ; usually means file was renamed which is not supported"
+        # assert (
+        #     old_path == new_path
+        # ), f"Invalid paths: {old_path}, {new_path} ; usually means file was renamed which is not supported"
 
         old_file_content = subprocess.run(
             ["git", "--no-pager", "show", f"{old_commit_hash}:{old_path}"],
