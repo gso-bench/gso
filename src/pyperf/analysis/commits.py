@@ -56,7 +56,7 @@ class PerfCommitAnalyzer:
         return stats
 
     @staticmethod
-    def process_commit(commit_hash: str, repo_path: Path) -> PerformanceCommit:
+    def process_commit(commit_hash: str, repo_path: Path, max_year: int) -> PerformanceCommit:
         # commit subject
         subject = run_git_command(
             ["git", "show", "--no-patch", "--format=%s", commit_hash], cwd=repo_path
@@ -72,6 +72,9 @@ class PerfCommitAnalyzer:
             ["git", "show", "-s", "--format=%cd", commit_hash], cwd=repo_path
         )
         date = datetime.strptime(date_str, "%a %b %d %H:%M:%S %Y %z")
+        
+        if max_year and date.year <= max_year:
+            return None
 
         # changed files
         files_changed = run_git_command(
@@ -238,7 +241,7 @@ class PerfCommitAnalyzer:
 
     @staticmethod
     def get_performance_commits(
-        repo_path: Path, no_grep: bool
+        repo_path: Path, no_grep: bool, max_year: int
     ) -> list[PerformanceCommit]:
 
         base_cmd = ["git", "log", "--pretty=format:%H", "-i"]
@@ -266,7 +269,7 @@ class PerfCommitAnalyzer:
                 tqdm(
                     pool.starmap(
                         PerfCommitAnalyzer.process_commit,
-                        [(commit_hash, repo_path) for commit_hash in commit_hashes],
+                        [(commit_hash, repo_path, max_year) for commit_hash in commit_hashes],
                     ),
                     total=len(commit_hashes),
                 )
@@ -302,7 +305,7 @@ class PerfCommitAnalyzer:
             subprocess.run(["git", "clone", repo_url, repo_path])
 
         performance_commits = PerfCommitAnalyzer.get_performance_commits(
-            repo_path, args.no_grep
+            repo_path, args.no_grep, args.max_year
         )
 
         return PerfAnalysis(
@@ -328,6 +331,7 @@ class PerfCommitAnalyzer:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Fetch commits from a repository URL.")
     parser.add_argument("repo_url", type=str, help="The URL of the repository")
+    parser.add_argument("--max_year", type=int, required=False, default=None, help="Maximum year for commits")
     parser.add_argument(
         "--no-grep",
         action="store_true",

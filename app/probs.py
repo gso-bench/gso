@@ -22,7 +22,7 @@ def load_repo_data(repo_name):
     opt_problems = []
     
     for prob in all_problems:
-        print("///", prob.pid, "///")
+        # print("///", prob.pid, "///")
         if prob.is_valid():
             stats = speedup_summary(prob)
             if stats:

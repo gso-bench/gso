@@ -40,7 +40,7 @@ The [analysis/](/src/pyperf/analysis/) directory contains the performance commit
 
 Run the pipeline on any repository using the `commits.py` script:
 ```bash
-python src/pyperf/analysis/commits.py https://github.com/username/repo.git
+python src/pyperf/analysis/commits.py https://github.com/username/repo
 python src/pyperf/analysis/apis.py repo
 ```
 

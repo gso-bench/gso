@@ -23,14 +23,6 @@
         {% endfor %}
     </select>
 
-    <div class="summary">
-        <h2 id="repo-name"></h2>
-        <div class="summary-item">URL: <strong><a id="repo-url" target="_blank"></a></strong></div>
-        <div class="summary-item" id="commit-count">#Commits: </div>
-        <div class="summary-item" id="api-commit-map"></div>
-    </div>
-    </div>
-
     <h3>Optimization Problems</h3>
     <div id="commits-container"></div>
 
@@ -52,12 +44,10 @@
                                 <span class="stat-item"><strong>API:&nbsp;</strong> ${prob.api} </span>
                                 <span class="stat-item"><strong>Commit:&nbsp;</strong> ${prob.commit} </span>
                                 <span class="stat-item"><strong>Test ID:&nbsp;</strong> ${prob.test_id} </span>
-                                <span class="stat-item"><strong>Base Mean:&nbsp;</strong> ${prob.base_mean} </span>
-                                <span class="stat-item"><strong>Base Std Dev:&nbsp;</strong> ${prob.base_std} </span>
-                                <span class="stat-item"><strong>Target Mean:&nbsp;</strong> ${prob.target_mean} </span>
-                                <span class="stat-item"><strong>Target Std Dev:&nbsp;</strong> ${prob.target_std} </span>
-                                <span class="stat-item"><strong>Optimization Percentage:&nbsp;</strong> ${prob.opt_perc} </span>
-                                <span class="stat-item"><strong>Speedup Factor:&nbsp;</strong> ${prob.speedup_factor} </span>
+                                <span class="stat-item"><strong>Base Mean:&nbsp;</strong> ${prob.base_mean.toFixed(6)} (± ${prob.base_std.toFixed(6)})</span>
+                                <span class="stat-item"><strong>Target Mean:&nbsp;</strong> ${prob.target_mean.toFixed(6)} (± ${prob.target_std.toFixed(6)})</span>
+                                <span class="stat-item"><strong>Optimization Percentage:&nbsp;</strong> ${prob.opt_perc.toFixed(3)} </span>
+                                <span class="stat-item"><strong>Speedup Factor:&nbsp;</strong> ${prob.speedup_factor.toFixed(3)} </span>
                             </div>
                             <h4 class="toggle-section" onclick="toggleSection(this)">Generated Test</h4>
                             <div class="message collapsible">
