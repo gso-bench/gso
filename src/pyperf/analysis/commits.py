@@ -273,11 +273,7 @@ class PerfCommitAnalyzer:
             )
 
         commits = [commit for commit in commits if commit is not None]
-
         print("# Candidate Commits:", len(commits))
-        
-        # test w 5
-        commits = commits[:5]
 
         # ask user if they want to proceed with LLM analysis on XX commits
         if not prompt_yes_no("Proceed with LLM analysis on these commits?"):
