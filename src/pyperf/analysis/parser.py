@@ -1,13 +1,15 @@
 # type: ignore
 
 import re
+import subprocess
+from pathlib import Path
 from datetime import datetime
 
 from pyperf.data import *
 from pyperf.data.parsing import *
 
 
-class DiffParser:
+class CommitParser:
     def parse_git_diff(
         self,
         old_commit_hash: str,
@@ -15,28 +17,56 @@ class DiffParser:
         diff_text: str,
         commit_message: str,
         commit_date: datetime,
+        repo_location: Path,
     ) -> ParsedCommit:
         file_diffs = []
         current_file_diff: FileDiff | None = None
         current_hunk: UniHunk | None = None
-        hunk_state: str | None = None  # Can be 'pre', 'change', 'post'
 
         for line in diff_text.split("\n"):
             if line.startswith("diff --git"):
                 if current_file_diff:
                     file_diffs.append(current_file_diff)
-                current_file_diff = self.parse_file_diff_header(line)
+                current_file_diff = self.parse_file_diff_header(
+                    line, old_commit_hash, new_commit_hash, repo_location
+                )
                 current_hunk = None
-                hunk_state = None
             elif current_file_diff:
-                if line.startswith("index"):
-                    self.parse_file_diff_content(file_diff=current_file_diff, line=line)
-                elif line.startswith("@@"):
+                if line.startswith("@@ "):
                     current_hunk = self.parse_hunk_header(line)
                     current_file_diff.hunks.append(current_hunk)
-                    hunk_state = "pre"
-                elif current_hunk is not None:
-                    hunk_state = self.parse_hunk_line(current_hunk, line, hunk_state)
+                if current_hunk is None:
+                    if line.startswith("index"):
+                        self.parse_file_diff_content(
+                            file_diff=current_file_diff, line=line
+                        )
+                    elif any(
+                        [
+                            line.startswith(mode_prefix)
+                            for mode_prefix in [
+                                "old mode",
+                                "new mode",
+                                "deleted file mode",
+                                "new file mode",
+                            ]
+                        ]
+                    ):
+                        if current_file_diff.header.misc_line:
+                            current_file_diff.header.misc_line += f"\n{line}"
+                        else:
+                            current_file_diff.header.misc_line = line
+
+                    elif line.startswith("+++ "):
+                        current_file_diff.plus_file = FileInfo(path=line[4:])
+                    elif line.startswith("--- "):
+                        current_file_diff.minus_file = FileInfo(path=line[4:])
+                    elif line.startswith("Binary files"):
+                        current_file_diff.is_binary_file = True
+                        current_file_diff.binary_line = line
+                    else:
+                        raise ValueError(f"Unexpected line: {line}")
+                else:
+                    self.parse_hunk_line(current_hunk, line)
 
         if current_file_diff:
             file_diffs.append(current_file_diff)
@@ -49,22 +79,39 @@ class DiffParser:
             commit_date=commit_date,
         )
 
-    def parse_file_diff_header(self, header: str) -> FileDiff:
+    def parse_file_diff_header(
+        self, header: str, old_commit_hash: str, new_commit_hash: str, repo_path: Path
+    ) -> FileDiff:
         match = re.match(r"diff --git a/(\S+) b/(\S+)", header)
         if not match:
             raise ValueError(f"Invalid diff header: {header}")
 
         old_path, new_path = match.groups()
+        assert old_path and new_path, f"Invalid paths: {old_path}, {new_path}"
+        assert (
+            old_path == new_path
+        ), f"Invalid paths: {old_path}, {new_path} ; usually means file was renamed which is not supported"
+
+        old_file_content = subprocess.run(
+            ["git", "--no-pager", "show", f"{old_commit_hash}:{old_path}"],
+            cwd=repo_path,
+            capture_output=True,
+            text=True,
+        ).stdout
+        new_file_content = subprocess.run(
+            ["git", "--no-pager", "show", f"{new_commit_hash}:{new_path}"],
+            cwd=repo_path,
+            capture_output=True,
+            text=True,
+        ).stdout
+
+        header = FileDiffHeader(
+            file=FileInfo(path=old_path),
+        )
         return FileDiff(
-            old_file=FileInfo(
-                path=old_path, timestamp=datetime.now()  # Placeholder timestamp...
-            ),
-            new_file=FileInfo(
-                path=new_path, timestamp=datetime.now()  # Placeholder timestamp...
-            ),
-            old_commit_hash="",  # To be filled later
-            new_commit_hash="",  # To be filled later
-            hunks=[],
+            old_file_content=old_file_content,
+            new_file_content=new_file_content,
+            header=header,
         )
 
     def parse_file_diff_content(self, file_diff: FileDiff, line: str):
@@ -72,10 +119,15 @@ class DiffParser:
             parts = line.split()
             if len(parts) < 2:
                 raise ValueError(f"Invalid index line: {line}")
+            assert parts[0] == "index"
             hashes = parts[1].split("..")
             if len(hashes) != 2:
                 raise ValueError(f"Invalid index hashes: {parts[1]}")
-            file_diff.old_commit_hash, file_diff.new_commit_hash = hashes
+            file_diff.index_line = IndexLine(
+                old_commit_hash=hashes[0],
+                new_commit_hash=hashes[1],
+                mode=parts[2] if len(parts) > 2 else "",
+            )
 
     def parse_hunk_header(self, header: str) -> UniHunk:
         match = re.match(r"@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@(.*)", header)
@@ -91,53 +143,49 @@ class DiffParser:
                 new_range=Range(
                     start=int(new_start), length=int(new_length) if new_length else None
                 ),
-                section=section.strip(),
+                section=section.lstrip(),
             ),
             line_group=LineGroup(),
         )
 
-    def parse_hunk_line(
-        self, hunk: UniHunk, line: str, state: str | None
-    ) -> str | None:
+    def parse_hunk_line(self, hunk: UniHunk, line: str) -> str | None:
         """
         Parses a single line within a hunk and updates the LineGroup accordingly.
         Returns the updated state.
         """
         if line == "" or line.startswith(" "):
-            context_line = ContextLine(content=line[1:])
-            if state == "pre":
-                hunk.line_group.pre_context_lines.append(context_line)
-            elif state == "change":
-                # After changes, any context lines are post-context
-                hunk.line_group.post_context_lines.append(context_line)
-                return "post"
-            elif state == "post":
-                hunk.line_group.post_context_lines.append(context_line)
+            context_line = Line(content=line[1:], type=LineType.CONTEXT)
+            hunk.line_group.all_lines.append(context_line)
         elif line.startswith("-"):
-            left_line = LeftLine(content=line[1:])
-            hunk.line_group.left_lines.append(left_line)
-            if state != "change":
-                state = "change"
+            left_line = Line(content=line[1:], type=LineType.DELETED)
+            hunk.line_group.all_lines.append(left_line)
         elif line.startswith("+"):
-            right_line = RightLine(content=line[1:])
-            hunk.line_group.right_lines.append(right_line)
-            if state != "change":
-                state = "change"
+            right_line = Line(content=line[1:], type=LineType.ADDED)
+            hunk.line_group.all_lines.append(right_line)
         elif line.startswith("\\"):
             # Note lines are typically for things like "No newline at end of file"
-            note_line = NoteLine(content=line[1:].strip())
-            hunk.line_group.note_line = note_line
+            note_line = Line(content=line[2:], type=LineType.NOTE)
+            hunk.line_group.all_lines.append(note_line)
 
-        return state
+        return
 
-    def parse_diff(
+    def parse_commit(
         self,
         old_commit_hash: str,
         new_commit_hash: str,
         diff_text: str,
         commit_message: str,
         commit_date: datetime,
+        repo_location: Path,
     ) -> ParsedCommit:
+        """
+        Parse a diff message and return a ParsedCommit object
+        """
         return self.parse_git_diff(
-            old_commit_hash, new_commit_hash, diff_text, commit_message, commit_date
+            old_commit_hash,
+            new_commit_hash,
+            diff_text,
+            commit_message,
+            commit_date,
+            repo_location,
         )

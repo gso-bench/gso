@@ -7,13 +7,12 @@ from pathlib import Path
 from tqdm import tqdm
 from datetime import datetime
 from multiprocessing import Pool
-from ghapi.core import GhApi
 
 from r2e.llms.llm_args import LLMArgs
 from r2e.llms.completions import LLMCompletions
 
 from pyperf.data import PerformanceCommit, PerfAnalysis
-from pyperf.analysis.parser import DiffParser
+from pyperf.analysis.parser import CommitParser
 from pyperf.analysis.retriever import Retriever
 from pyperf.analysis.prompt import *
 from pyperf.analysis.utils import *
@@ -28,14 +27,15 @@ THRESHOLD = 200
 
 class PerfCommitAnalyzer:
     @staticmethod
-    def parse_diff_for_stats(commit: PerformanceCommit) -> dict[str, int]:
-        parser = DiffParser()
-        diff = parser.parse_diff(
+    def parse_diff_for_stats(commit: PerformanceCommit, repo_path: Path) -> dict[str, int]:
+        parser = CommitParser()
+        diff = parser.parse_commit(
             commit.old_commit_hash,
             commit.commit_hash,
             commit.diff_text,
             commit.message,
             commit.date,
+            repo_path
         )
 
         stats = {
@@ -47,10 +47,7 @@ class PerfCommitAnalyzer:
             "num_hunks": diff.num_hunks,
             "num_edited_lines": diff.num_edited_lines,
             "num_non_test_edited_lines": diff.num_non_test_edited_lines,
-            "is_bugfix": diff.is_bugfix,
-            "is_feature": diff.is_feature,
-            "is_refactor": diff.is_refactor,
-            "commit_year": diff.commit_date.year,
+            "commit_year": diff.commit_date.year
         }
 
         return stats
@@ -278,6 +275,9 @@ class PerfCommitAnalyzer:
         commits = [commit for commit in commits if commit is not None]
 
         print("# Candidate Commits:", len(commits))
+        
+        # test w 5
+        commits = commits[:5]
 
         # ask user if they want to proceed with LLM analysis on XX commits
         if not prompt_yes_no("Proceed with LLM analysis on these commits?"):
@@ -290,7 +290,7 @@ class PerfCommitAnalyzer:
 
         # get diff stats for each performance commit
         for commit in filtered:
-            commit.add_stats(PerfCommitAnalyzer.parse_diff_for_stats(commit))
+            commit.add_stats(PerfCommitAnalyzer.parse_diff_for_stats(commit, repo_path))
 
         return filtered
 
