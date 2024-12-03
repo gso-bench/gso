@@ -4,75 +4,320 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Optimization Problems</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <title>API Performance Analysis</title>
+    <!-- Add date adapter for Chart.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+    <script
+        src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@2.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+
     <style>
-        .summary {
-            background-color: #ecf0f1;
+        /* Previous styles remain same */
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            margin: 20px;
+            padding: 0;
+            background: #f5f5f5;
+        }
+
+        .header {
+            margin-bottom: 20px;
+        }
+
+        .repo-select {
+            padding: 8px;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+
+        .api-section {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .api-title {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        .chart-container {
+            margin-bottom: 30px;
+            height: 300px;
+        }
+
+        .commit-list {
+            margin-top: 20px;
+        }
+
+        .commit-item {
+            background: #f8f9fa;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+
+        .stat-item {
+            display: inline-block;
+            margin-right: 20px;
+            margin-bottom: 10px;
+        }
+
+        .toggle-section {
+            cursor: pointer;
+            color: #3498db;
+        }
+
+        .collapsible {
+            display: none;
+            padding: 10px;
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .show {
+            display: block;
+        }
+
+        .sort-select {
+            padding: 8px;
+            font-size: 16px;
+            margin-bottom: 20px;
         }
     </style>
 </head>
 
 <body>
-    <h1>Optimization Problems</h1>
+    <div class="header" style="position:sticky; top: 0; background: #f5f5f5; z-index: 1000;">
+        <h1>API Performance Analysis</h1>
+        <select id="repo-select" class="repo-select" onchange="loadRepoData(this.value)">
+            {% for repo in repos %}
+            <option value="{{ repo }}" {% if repo==default_repo %} selected{% endif %}>{{ repo }}</option>
+            {% endfor %}
+        </select>
+        <select id="sort-select" class="sort-select"
+            onchange="loadRepoData(document.getElementById('repo-select').value)">
+            <option value="date">Sort by Date</option>
+            <option value="speedup">Sort by Speedup</option>
+        </select>
+    </div>
 
-    <label for="repo-select" style="font-size: 20px;">Repo:</label>
-    <select id="repo-select" onchange="loadRepoData(this.value)">
-        {% for repo in repos %}
-        <option value="{{ repo }}" {% if repo==default_repo %} selected{% endif %}>{{ repo }}</option>
-        {% endfor %}
-    </select>
-
-    <h3>Optimization Problems</h3>
-    <div id="commits-container"></div>
+    <div id="api-container"></div>
 
     <script>
+        function calculateStats(tests, metric) {
+            const values = tests.map(t => t[metric]);
+            const mean = values.reduce((a, b) => a + b, 0) / values.length;
+            const variance = values.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / values.length;
+            const std = Math.sqrt(variance);
+            return { mean, std };
+        }
+
+        function createChart(containerId, apiData, sortBy = 'date') {
+            const ctx = document.getElementById(containerId).getContext('2d');
+
+            // Group tests by commit
+            const commitGroups = {};
+            apiData.problems.forEach(prob => {
+                if (!commitGroups[prob.commit]) {
+                    commitGroups[prob.commit] = {
+                        hash: prob.commit,
+                        date: prob.date,
+                        speedup: prob.speedup_factor,
+                        tests: []
+                    };
+                }
+                commitGroups[prob.commit].tests.push(prob);
+            });
+
+            // Sort commits based on the selected option
+            const sortedCommits = Object.values(commitGroups)
+                .sort((a, b) => sortBy === 'speedup' ? b.speedup - a.speedup : new Date(a.date) - new Date(b.date));
+
+            // Create data points
+            const baseData = sortedCommits.map((commit, idx) => {
+                const stats = calculateStats(commit.tests, 'base_mean');
+                return {
+                    x: idx,
+                    y: stats.mean,
+                    yMin: stats.mean - stats.std,
+                    yMax: stats.mean + stats.std,
+                    commit: commit.hash,
+                    std: stats.std
+                };
+            });
+
+            const targetData = sortedCommits.map((commit, idx) => {
+                const stats = calculateStats(commit.tests, 'target_mean');
+                return {
+                    x: idx,
+                    y: stats.mean,
+                    yMin: stats.mean - stats.std,
+                    yMax: stats.mean + stats.std,
+                    commit: commit.hash,
+                    std: stats.std
+                };
+            });
+
+            return new Chart(ctx, {
+                type: 'line',
+                data: {
+                    datasets: [
+                        {
+                            label: 'Commit Perf',
+                            data: baseData,
+                            borderColor: '#3498db',
+                            backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Latest Perf',
+                            data: targetData,
+                            borderColor: '#2ecc71',
+                            backgroundColor: 'rgba(46, 204, 113, 0.1)',
+                            fill: true,
+                            tension: 0.4,
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'nearest',
+                        intersect: false
+                    },
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            title: {
+                                display: true,
+                                text: 'Commits'
+                            },
+                            ticks: {
+                                callback: function (value) {
+                                    return sortedCommits[value]?.hash.substring(0, 7) || '';
+                                }
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Execution Time (s)'
+                            },
+                            min: 0
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    const point = context.raw;
+                                    return [
+                                        `${point.commit.substring(0, 7)}:`,
+                                        `Date: ${new Date(sortedCommits[point.x].date).toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`,
+                                        `Time: ${point.y.toFixed(6)}s (±${point.std.toFixed(6)})`
+                                    ];
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function replotChart(containerId, apiData) {
+            if (currentCharts[containerId]) {
+                currentCharts[containerId].destroy();
+            }
+            createChart(containerId, apiData);
+        }
+
+
         function loadRepoData(repoName) {
+            const sortBy = document.getElementById('sort-select').value;
             fetch(`/get_repo_data/${repoName}`)
                 .then(response => response.json())
                 .then(data => {
-                    console.log('Data length:', data.length);
-                    const probContainer = document.getElementById('commits-container');
-                    probContainer.innerHTML = '';
+                    const apiContainer = document.getElementById('api-container');
+                    apiContainer.innerHTML = '';
 
-                    data.forEach(prob => {
-                        const probElement = document.createElement('div');
-                        probElement.className = 'commit';
-                        probElement.innerHTML = `
-                            <h3>${prob.pid}</h3>
-                            <div>
-                                <span class="stat-item"><strong>API:&nbsp;</strong> ${prob.api} </span>
-                                <span class="stat-item"><strong>Commit:&nbsp;</strong> ${prob.commit} </span>
-                                <span class="stat-item"><strong>Test ID:&nbsp;</strong> ${prob.test_id} </span>
-                                <span class="stat-item"><strong>Base Mean:&nbsp;</strong> ${prob.base_mean.toFixed(6)} (± ${prob.base_std.toFixed(6)})</span>
-                                <span class="stat-item"><strong>Target Mean:&nbsp;</strong> ${prob.target_mean.toFixed(6)} (± ${prob.target_std.toFixed(6)})</span>
-                                <span class="stat-item"><strong>Optimization Percentage:&nbsp;</strong> ${prob.opt_perc.toFixed(3)} </span>
-                                <span class="stat-item"><strong>Speedup Factor:&nbsp;</strong> ${prob.speedup_factor.toFixed(3)} </span>
-                            </div>
-                            <h4 class="toggle-section" onclick="toggleSection(this)">Generated Test</h4>
-                            <div class="message collapsible">
-                                <pre>${prob.test}</pre>
-                            </div>
-                        `;
-                        probContainer.appendChild(probElement);
+                    // Group data by API
+                    const apiGroups = {};
+                    data.forEach(item => {
+                        if (!apiGroups[item.api]) {
+                            apiGroups[item.api] = {
+                                problems: []
+                            };
+                        }
+                        apiGroups[item.api].problems.push(item);
+                    });
+
+                    // Create sections for each API
+                    Object.entries(apiGroups).forEach(([api, apiData]) => {
+                        const apiSection = document.createElement('div');
+                        apiSection.className = 'api-section';
+
+                        const title = document.createElement('h2');
+                        title.className = 'api-title';
+                        title.textContent = `API: ${api}`;
+                        apiSection.appendChild(title);
+
+                        const chartContainer = document.createElement('div');
+                        chartContainer.className = 'chart-container';
+                        const canvas = document.createElement('canvas');
+                        const chartId = `chart-${api.replace(/\./g, '-')}`;
+                        canvas.id = chartId;
+                        chartContainer.appendChild(canvas);
+                        apiSection.appendChild(chartContainer);
+
+                        const problemsList = document.createElement('div');
+                        problemsList.className = 'commit-list';
+                        apiData.problems.forEach(prob => {
+                            const probElement = document.createElement('div');
+                            probElement.className = 'commit-item';
+                            probElement.innerHTML = `
+                                <div>
+                                    <span class="stat-item"><strong>Commit:&nbsp;</strong> ${prob.commit} </span>
+                                    <span class="stat-item"><strong>Test ID:&nbsp;</strong> ${prob.test_id} </span>
+                                    <span class="stat-item"><strong>Base:&nbsp;</strong> ${prob.base_mean.toFixed(6)} (± ${prob.base_std.toFixed(6)})</span>
+                                    <span class="stat-item"><strong>Target:&nbsp;</strong> ${prob.target_mean.toFixed(6)} (± ${prob.target_std.toFixed(6)})</span>
+                                    <span class="stat-item"><strong>Opt:&nbsp;</strong> ${prob.opt_perc.toFixed(3)}% </span>
+                                    <span class="stat-item"><strong>Speedup:&nbsp;</strong> ${prob.speedup_factor.toFixed(3)}x </span>
+                                </div>
+                                <h4 class="toggle-section" onclick="toggleSection(this)">Generated Test</h4>
+                                <div class="message collapsible">
+                                    <pre>${prob.test || 'Test not available'}</pre>
+                                </div>
+                            `;
+                            problemsList.appendChild(probElement);
+                        });
+                        apiSection.appendChild(problemsList);
+
+                        apiContainer.appendChild(apiSection);
+
+                        // Initialize chart after DOM element is added
+                        createChart(chartId, apiData, sortBy);
                     });
                 });
         }
 
-        // Load the default repo data when the page loads
+        function toggleSection(element) {
+            element.classList.toggle('active');
+            const collapsible = element.nextElementSibling;
+            collapsible.classList.toggle('show');
+        }
+
+        // Load initial data
         document.addEventListener('DOMContentLoaded', function () {
             const defaultRepo = document.getElementById('repo-select').value;
             if (defaultRepo) {
                 loadRepoData(defaultRepo);
             }
         });
-
-        // Toggle sections
-        function toggleSection(element) {
-            element.classList.toggle('active');
-            const collapsibleDiv = element.nextElementSibling;
-            collapsibleDiv.classList.toggle('show');
-        }
     </script>
 </body>
 
