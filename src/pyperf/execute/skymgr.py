@@ -130,6 +130,7 @@ class SkyManager:
         for identifier, files in file_groups.items():
             commit, test_file = identifier.split("_", 1)
             base_file = files.get("base")
+            commit_file = files.get("commit")
             target_file = files.get("target")
             meta_file = files.get("meta")
 
@@ -143,6 +144,10 @@ class SkyManager:
 
                 with open(target_file, "r") as f:
                     meta["target_result"] = f.read()
+                
+                if commit_file:
+                    with open(commit_file, "r") as f:
+                        meta["commit_result"] = f.read()
 
                 results.append(meta)
 

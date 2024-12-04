@@ -124,7 +124,7 @@
                 if (!commitGroups[prob.commit]) {
                     commitGroups[prob.commit] = {
                         hash: prob.commit,
-                        date: prob.date,
+                        date: new Date(prob.date),
                         speedup: prob.speedup_factor,
                         tests: []
                     };
@@ -132,56 +132,83 @@
                 commitGroups[prob.commit].tests.push(prob);
             });
 
-            // Sort commits based on the selected option
+            // Sort commits based on selected criterion
             const sortedCommits = Object.values(commitGroups)
-                .sort((a, b) => sortBy === 'speedup' ? b.speedup - a.speedup : new Date(a.date) - new Date(b.date));
+                .sort((a, b) => {
+                    if (sortBy === 'speedup') {
+                        return b.speedup - a.speedup;
+                    }
+                    return a.date - b.date;
+                });
 
-            // Create data points
-            const baseData = sortedCommits.map((commit, idx) => {
-                const stats = calculateStats(commit.tests, 'base_mean');
-                return {
-                    x: idx,
-                    y: stats.mean,
-                    yMin: stats.mean - stats.std,
-                    yMax: stats.mean + stats.std,
-                    commit: commit.hash,
-                    std: stats.std
-                };
+            // Create x-axis labels for all commits
+            const xLabels = [];
+            sortedCommits.forEach(commit => {
+                xLabels.push(`${commit.hash}^`);
+                xLabels.push(commit.hash);
             });
+            xLabels.push('main');
 
-            const targetData = sortedCommits.map((commit, idx) => {
-                const stats = calculateStats(commit.tests, 'target_mean');
+            // Create a dataset for each commit
+            const datasets = sortedCommits.map((commit, idx) => {
+                // Calculate statistics (NOTE: only first test considered)
+                const baseStats = {
+                    mean: commit.tests[0].base_mean,
+                    std: commit.tests[0].base_std
+                };
+                const commitStats = {
+                    mean: commit.tests[0].commit_mean,
+                    std: commit.tests[0].commit_std
+                };
+                const targetStats = {
+                    mean: commit.tests[0].target_mean,
+                    std: commit.tests[0].target_std
+                };
+
+                // Create data points with 'x' properties matching xLabels
+                const data = [];
+                const baseLabel = `${commit.hash}^`;
+                const commitLabel = commit.hash;
+                const mainLabel = 'main';
+
+                data.push({
+                    x: baseLabel,
+                    y: baseStats.mean,
+                    std: baseStats.std
+                });
+                data.push({
+                    x: commitLabel,
+                    y: commitStats.mean,
+                    std: commitStats.std
+                });
+                data.push({
+                    x: mainLabel,
+                    y: targetStats.mean,
+                    std: targetStats.std
+                });
+
+                const colors = ['#e74c3c', '#3498db', '#2ecc71', '#f1c40f', '#9b59b6'];
+
                 return {
-                    x: idx,
-                    y: stats.mean,
-                    yMin: stats.mean - stats.std,
-                    yMax: stats.mean + stats.std,
-                    commit: commit.hash,
-                    std: stats.std
+                    label: `${commit.hash.substring(0, 7)} (${commit.speedup.toFixed(2)}x)`,
+                    data: data,
+                    borderColor: colors[idx % colors.length],
+                    backgroundColor: `${colors[idx % colors.length]}33`,
+                    fill: false,
+                    tension: 0.4,
+                    showLine: true, // Connect the data points
+                    parsing: {
+                        xAxisKey: 'x',
+                        yAxisKey: 'y'
+                    },
+                    spanGaps: true
                 };
             });
 
             return new Chart(ctx, {
-                type: 'line',
+                type: 'scatter',
                 data: {
-                    datasets: [
-                        {
-                            label: 'Commit Perf',
-                            data: baseData,
-                            borderColor: '#3498db',
-                            backgroundColor: 'rgba(52, 152, 219, 0.1)',
-                            fill: true,
-                            tension: 0.4
-                        },
-                        {
-                            label: 'Latest Perf',
-                            data: targetData,
-                            borderColor: '#2ecc71',
-                            backgroundColor: 'rgba(46, 204, 113, 0.1)',
-                            fill: true,
-                            tension: 0.4,
-                        }
-                    ]
+                    datasets: datasets
                 },
                 options: {
                     responsive: true,
@@ -192,18 +219,15 @@
                     },
                     scales: {
                         x: {
-                            type: 'linear',
+                            type: 'category',
+                            labels: xLabels,
                             title: {
                                 display: true,
                                 text: 'Commits'
-                            },
-                            ticks: {
-                                callback: function (value) {
-                                    return sortedCommits[value]?.hash.substring(0, 7) || '';
-                                }
                             }
                         },
                         y: {
+                            type: 'linear',
                             title: {
                                 display: true,
                                 text: 'Execution Time (s)'
@@ -216,12 +240,19 @@
                             callbacks: {
                                 label: function (context) {
                                     const point = context.raw;
+                                    if (!point) return '';
                                     return [
-                                        `${point.commit.substring(0, 7)}:`,
-                                        `Date: ${new Date(sortedCommits[point.x].date).toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`,
+                                        `Commit: ${point.x}`,
                                         `Time: ${point.y.toFixed(6)}s (±${point.std.toFixed(6)})`
                                     ];
                                 }
+                            }
+                        },
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                                boxWidth: 6
                             }
                         }
                     }
@@ -235,7 +266,6 @@
             }
             createChart(containerId, apiData);
         }
-
 
         function loadRepoData(repoName) {
             const sortBy = document.getElementById('sort-select').value;
@@ -282,11 +312,12 @@
                             probElement.innerHTML = `
                                 <div>
                                     <span class="stat-item"><strong>Commit:&nbsp;</strong> ${prob.commit} </span>
-                                    <span class="stat-item"><strong>Test ID:&nbsp;</strong> ${prob.test_id} </span>
+                                    <span class="stat-item"><strong>Test:&nbsp;</strong> ${prob.test_id} </span>
+                                    <span class="stat-item"><strong>Opt:&nbsp;</strong> ${prob.opt_perc.toFixed(2)}% </span>
+                                    <span class="stat-item"><strong>Speedup:&nbsp;</strong> ${prob.speedup_factor.toFixed(2)}x </span></br>
                                     <span class="stat-item"><strong>Base:&nbsp;</strong> ${prob.base_mean.toFixed(6)} (± ${prob.base_std.toFixed(6)})</span>
+                                    <span class="stat-item"><strong>Commit:&nbsp;</strong> ${prob.commit_mean.toFixed(6)} (± ${prob.commit_std.toFixed(6)})</span>
                                     <span class="stat-item"><strong>Target:&nbsp;</strong> ${prob.target_mean.toFixed(6)} (± ${prob.target_std.toFixed(6)})</span>
-                                    <span class="stat-item"><strong>Opt:&nbsp;</strong> ${prob.opt_perc.toFixed(3)}% </span>
-                                    <span class="stat-item"><strong>Speedup:&nbsp;</strong> ${prob.speedup_factor.toFixed(3)}x </span>
                                 </div>
                                 <h4 class="toggle-section" onclick="toggleSection(this)">Generated Test</h4>
                                 <div class="message collapsible">

@@ -50,6 +50,10 @@ def speedup_summary(prob):
         base_result = ct["base_result"]
         base_times = parse_times(base_result)
         base_mean, base_std = compute_stats(base_times)
+        
+        comm_result = ct["commit_result"]
+        comm_times = parse_times(comm_result)
+        comm_mean, comm_std = compute_stats(comm_times)
 
         target_result = ct["target_result"]
         target_times = parse_times(target_result)
@@ -65,6 +69,8 @@ def speedup_summary(prob):
                 "test_id": ct["test_id"],
                 "base_mean": base_mean,
                 "base_std": base_std,
+                "commit_mean": comm_mean,
+                "commit_std": comm_std,
                 "target_mean": target_mean,
                 "target_std": target_std,
                 "opt_perc": opt_perc,
@@ -241,7 +247,7 @@ def main(exp_id: str, specific_api: str | None = None):
     print(f"  Max Opt: {summary['max_speedup']:.2f}%")
     print(f"  Min Opt: {summary['min_speedup']:.2f}%")
     print(
-        f"Speedup distribution:\n{df['opt_perc'].describe(percentiles=[0,0.05,0.1,0.2,0.4,0.5,0.6,0.8,0.9,0.95,1])}"
+        f"\nSpeedup distribution:\n{df['opt_perc'].describe(percentiles=[0,0.05,0.1,0.2,0.4,0.5,0.6,0.8,0.9,0.95,1])}"
     )
     print("=" * 35)
 
