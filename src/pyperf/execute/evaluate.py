@@ -51,9 +51,12 @@ def speedup_summary(prob):
         base_times = parse_times(base_result)
         base_mean, base_std = compute_stats(base_times)
         
-        comm_result = ct["commit_result"]
-        comm_times = parse_times(comm_result)
-        comm_mean, comm_std = compute_stats(comm_times)
+        if "commit_result" in ct:
+            comm_result = ct["commit_result"]
+            comm_times = parse_times(comm_result)
+            comm_mean, comm_std = compute_stats(comm_times)
+        else:
+            comm_mean, comm_std = base_mean, base_std
 
         target_result = ct["target_result"]
         target_times = parse_times(target_result)
