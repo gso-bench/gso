@@ -86,6 +86,37 @@
             font-size: 16px;
             margin-bottom: 20px;
         }
+
+        .share-button {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 2px;
+            margin-left: 8px;
+            vertical-align: middle;
+            opacity: 0.7;
+        }
+
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #2ecc71;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 4px;
+            display: none;
+            z-index: 1000;
+        }
+
+        /* Add styles for hidden textarea used in copy fallback */
+        .hidden-textarea {
+            position: absolute;
+            left: -9999px;
+            top: 0;
+        }
     </style>
 </head>
 
@@ -105,6 +136,7 @@
     </div>
 
     <div id="api-container"></div>
+    <textarea id="copy-textarea" class="hidden-textarea"></textarea>
 
     <script>
         function calculateStats(tests, metric) {
@@ -267,6 +299,33 @@
             createChart(containerId, apiData);
         }
 
+        function generateTestId(api, commit, testId) {
+            return `test-${api}-${commit}-${testId}`.replace(/\./g, '-');
+        }
+
+        function CopyTextToClipboard(text) {
+            const textArea = document.getElementById('copy-textarea');
+            textArea.value = text;
+            textArea.focus();
+            textArea.select();
+
+            try {
+                document.execCommand('copy');
+                showToast();
+            } catch (err) {
+                console.error('Fallback: Oops, unable to copy', err);
+                alert('Click to copy link: ' + text);
+            }
+        }
+
+        function shareTest(event, element, api, commit, testId) {
+            event.preventDefault();
+            event.stopPropagation();
+            const testDivId = generateTestId(api, commit, testId);
+            const url = `${window.location.origin}${window.location.pathname}#${testDivId}`;
+            CopyTextToClipboard(url);
+        }
+
         function loadRepoData(repoName) {
             const sortBy = document.getElementById('sort-select').value;
             fetch(`/get_repo_data/${repoName}`)
@@ -307,8 +366,10 @@
                         const problemsList = document.createElement('div');
                         problemsList.className = 'commit-list';
                         apiData.problems.forEach(prob => {
+                            const testDivId = generateTestId(api, prob.commit, prob.test_id);
                             const probElement = document.createElement('div');
                             probElement.className = 'commit-item';
+                            probElement.id = testDivId;
                             probElement.innerHTML = `
                                 <div>
                                     <span class="stat-item"><strong>Commit:&nbsp;</strong> ${prob.commit} </span>
@@ -319,7 +380,10 @@
                                     <span class="stat-item"><strong>Commit:&nbsp;</strong> ${prob.commit_mean.toFixed(6)} (± ${prob.commit_std.toFixed(6)})</span>
                                     <span class="stat-item"><strong>Target:&nbsp;</strong> ${prob.target_mean.toFixed(6)} (± ${prob.target_std.toFixed(6)})</span>
                                 </div>
-                                <h4 class="toggle-section" onclick="toggleSection(this)">Generated Test</h4>
+                                <h4 class="toggle-section" onclick="toggleSection(event, this)">
+                                    Generated Test
+                                    <button type="button" class="share-button" onclick="shareTest(event, this, '${api}', '${prob.commit}', '${prob.test_id}')">🔗</button>
+                                </h4>
                                 <div class="message collapsible">
                                     <pre>${prob.test || 'Test not available'}</pre>
                                 </div>
@@ -333,10 +397,27 @@
                         // Initialize chart after DOM element is added
                         createChart(chartId, apiData, sortBy);
                     });
+
+                    // Check for hash in URL and open corresponding test
+                    if (window.location.hash) {
+                        const testDiv = document.querySelector(window.location.hash);
+                        if (testDiv) {
+                            testDiv.scrollIntoView();
+                            const toggleButton = testDiv.querySelector('.toggle-section');
+                            if (toggleButton) {
+                                toggleButton.click();
+                            }
+                        }
+                    }
                 });
         }
 
-        function toggleSection(element) {
+        function toggleSection(event, element) {
+            // Check if the event originated from the share button
+            if (event.target && event.target.classList.contains('share-button')) {
+                // Do nothing if it's the share button
+                return;
+            }
             element.classList.toggle('active');
             const collapsible = element.nextElementSibling;
             collapsible.classList.toggle('show');

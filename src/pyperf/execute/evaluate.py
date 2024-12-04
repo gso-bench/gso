@@ -46,6 +46,7 @@ def speedup_summary(prob):
 
     for ct in run0_res:
         test = ct["test_file"]
+        commit = next((c for c in prob.commits if c.quick_hash() == ct["commit"]), None)
 
         base_result = ct["base_result"]
         base_times = parse_times(base_result)
@@ -64,6 +65,8 @@ def speedup_summary(prob):
 
         opt_perc = ((base_mean - target_mean) / base_mean) * 100
         speedup_factor = base_mean / target_mean
+        loc_changed = commit.stats.get("num_non_test_edited_lines", 0)
+        
         if base_mean > target_mean and opt_perc > 2:
             ct_stats = {
                 "pid": prob.pid,
@@ -78,6 +81,7 @@ def speedup_summary(prob):
                 "target_std": target_std,
                 "opt_perc": opt_perc,
                 "speedup_factor": speedup_factor,
+                "loc_changed": loc_changed,
             }
             key = f"{prob.pid}-{test}"
             stats.update({key: ct_stats})
@@ -100,6 +104,7 @@ def create_analysis_dataframe(problems) -> pd.DataFrame:
                     "base_std": stats["base_std"],
                     "target_std": stats["target_std"],
                     "opt_perc": stats["opt_perc"],
+                    "loc_changed": stats["loc_changed"],
                 }
             )
     return pd.DataFrame(rows)
@@ -253,6 +258,19 @@ def main(exp_id: str, specific_api: str | None = None):
         f"\nSpeedup distribution:\n{df['opt_perc'].describe(percentiles=[0,0.05,0.1,0.2,0.4,0.5,0.6,0.8,0.9,0.95,1])}"
     )
     print("=" * 35)
+    
+    
+    print("\nTop problems (by opt%):")
+    for i, row in df.nlargest(10, "opt_perc").iterrows():
+        print(
+            f"  {row['pid']}-{row['test_id']} ({row['commit']}): {row['opt_perc']:.2f}%"
+        )
+    
+    print("\nTop problems (by loc changed):")
+    for i, row in df.nlargest(10, "loc_changed").iterrows():
+        print(
+            f"  {row['pid']}-{row['test_id']} ({row['commit']}): {row['loc_changed']}"
+        )
 
     return df, summary
 
