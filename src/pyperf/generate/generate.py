@@ -2,8 +2,7 @@ import fire
 
 from r2e.llms.completions import LLMCompletions
 from r2e.multiprocess import run_tasks_in_parallel
-from pyperf.analysis.commits import PerfCommitAnalyzer
-from pyperf.data import Repo, Problem, PerformanceCommit
+from pyperf.data import Repo, Problem
 from pyperf.logger import logger
 from pyperf.constants import EXPS_DIR, ANALYSIS_APIS_DIR
 

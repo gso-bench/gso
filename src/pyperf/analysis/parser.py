@@ -96,8 +96,10 @@ class CommitParser:
             ["git", "--no-pager", "show", f"{old_commit_hash}:{old_path}"],
             cwd=repo_path,
             capture_output=True,
-            text=True,
+            text=False,
         ).stdout
+        old_file_content = old_file_content.decode("utf-8", errors="ignore")
+
         new_file_content = subprocess.run(
             ["git", "--no-pager", "show", f"{new_commit_hash}:{new_path}"],
             cwd=repo_path,
