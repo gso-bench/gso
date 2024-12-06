@@ -125,7 +125,7 @@ class PerfCommitAnalyzer:
         prompts = [PerfCommitAnalyzer.analysis_prompt(commit) for commit in commits]
 
         args = LLMArgs(
-            model_name="gpt-4o-mini",
+            model_name="gpt-4o",
             cache_batch_size=100,
             multiprocess=30,
             use_cache=True,
@@ -159,7 +159,7 @@ class PerfCommitAnalyzer:
     def retrieve_affected_files(commits: list[PerformanceCommit], repo_path: Path):
         retriever = Retriever(repo_path)
         llm_args = LLMArgs(
-            model_name="gpt-4o-mini",
+            model_name="gpt-4o",
             cache_batch_size=100,
             multiprocess=30,
             use_cache=True,
@@ -217,7 +217,7 @@ class PerfCommitAnalyzer:
         ]
 
         args = LLMArgs(
-            model_name="gpt-4o-mini",
+            model_name="gpt-4o",
             cache_batch_size=100,
             multiprocess=30,
             use_cache=True,
@@ -249,6 +249,7 @@ class PerfCommitAnalyzer:
             "--grep=speed up",
             "--grep=speedup",
             "--grep=is slow",
+            "--grep=faster"
         ]
 
         # use grep to cut down commits to process
