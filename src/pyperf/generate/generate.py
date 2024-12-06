@@ -48,6 +48,7 @@ class PerfExpGenerator:
             prepare,
             [(self.repo, prob) for prob in problems],
             use_progress_bar=True,
+            num_workers=16,
             progress_bar_desc="Preparing tests",
         )
 
@@ -87,6 +88,7 @@ class PerfExpGenerator:
             prepare,
             [(self.repo, prob) for prob in problems],
             use_progress_bar=True,
+            num_workers=16,
             progress_bar_desc="Preparing tests",
         )
 
