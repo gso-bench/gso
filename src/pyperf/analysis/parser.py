@@ -102,8 +102,9 @@ class CommitParser:
             ["git", "--no-pager", "show", f"{new_commit_hash}:{new_path}"],
             cwd=repo_path,
             capture_output=True,
-            text=True,
+            text=False,
         ).stdout
+        new_file_content = new_file_content.decode('utf-8', errors='ignore')
 
         header = FileDiffHeader(
             file=FileInfo(path=old_path),
