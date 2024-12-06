@@ -132,7 +132,7 @@ class PerfCommitAnalyzer:
         args = LLMArgs(
             model_name="gpt-4o",
             cache_batch_size=100,
-            multiprocess=30,
+            multiprocess=60,
             use_cache=True,
         )  # type: ignore
 
@@ -166,7 +166,7 @@ class PerfCommitAnalyzer:
         llm_args = LLMArgs(
             model_name="gpt-4o",
             cache_batch_size=100,
-            multiprocess=30,
+            multiprocess=60,
             use_cache=True,
         )  # type: ignore
         retriever.retrieve_affected_files(commits, llm_args)
@@ -224,7 +224,7 @@ class PerfCommitAnalyzer:
         args = LLMArgs(
             model_name="gpt-4o",
             cache_batch_size=100,
-            multiprocess=30,
+            multiprocess=60,
             use_cache=True,
         )  # type: ignore
 
@@ -294,7 +294,7 @@ class PerfCommitAnalyzer:
         print("# LLM Filtered Performance Commits:", len(filtered))
 
         # get diff stats for each performance commit
-        for commit in filtered:
+        for commit in tqdm(filtered, "Adding stats"):
             commit.add_stats(PerfCommitAnalyzer.parse_diff_for_stats(commit, repo_path))
 
         return filtered

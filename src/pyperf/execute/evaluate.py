@@ -277,7 +277,9 @@ def main(exp_id: str, specific_api: str | None = None):
 
     # print("\nErrored APIs:")
     # for p in err_problems:
-    #     commits = ", ".join([f"{c.quick_hash()} ({c.date.strftime("%m/%d/%Y")})" for c in p.commits])
+    #     commits = ", ".join(
+    #         [f"{c.quick_hash()} ({c.date.strftime("%m/%d/%Y")})" for c in p.commits]
+    #     )
     #     print(f"    {p.api} : {commits}")
 
     return df, summary
