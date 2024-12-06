@@ -144,7 +144,7 @@ class SkyManager:
 
                 with open(target_file, "r") as f:
                     meta["target_result"] = f.read()
-                
+
                 if commit_file:
                     with open(commit_file, "r") as f:
                         meta["commit_result"] = f.read()

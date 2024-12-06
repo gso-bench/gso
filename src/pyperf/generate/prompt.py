@@ -62,6 +62,7 @@ if __name__ == '__main__':
 4. For graph datasets, if appropriate use real-world datasets like social networks, road networks, etc.
 5. When using `load_dataset` API, use FULL dataset name with the `username/dataset` format: load_dataset('stanforldnlp/imdb'), load_dataset('rajpurkar/squad') etc. DO NOT use short names e.g.: load_dataset('imdb'), etc.
 6. For images, use real-world images if of appropriate size and scale. If not, create large synthetic images appropriate to the API. Note: Don't use `Image.open` with context managers and avoid mixing ranges and integers in operations.
+7. DO NOT LEAVE any placeholder inputs, code, urls, etc. DO NOT ask me to replace any values in the code. The test should be complete and runnable!
 
 # Output Format
 - The output must contain the following functions: `setup`, `experiment`, `store_result`, `load_result`, `check_equivalence`, and `run_test`.

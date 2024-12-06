@@ -27,7 +27,9 @@ THRESHOLD = 200
 
 class PerfCommitAnalyzer:
     @staticmethod
-    def parse_diff_for_stats(commit: PerformanceCommit, repo_path: Path) -> dict[str, int]:
+    def parse_diff_for_stats(
+        commit: PerformanceCommit, repo_path: Path
+    ) -> dict[str, int]:
         parser = CommitParser()
         diff = parser.parse_commit(
             commit.old_commit_hash,
@@ -35,7 +37,7 @@ class PerfCommitAnalyzer:
             commit.diff_text,
             commit.message,
             commit.date,
-            repo_path
+            repo_path,
         )
 
         stats = {
@@ -47,13 +49,15 @@ class PerfCommitAnalyzer:
             "num_hunks": diff.num_hunks,
             "num_edited_lines": diff.num_edited_lines,
             "num_non_test_edited_lines": diff.num_non_test_edited_lines,
-            "commit_year": diff.commit_date.year
+            "commit_year": diff.commit_date.year,
         }
 
         return stats
 
     @staticmethod
-    def process_commit(commit_hash: str, repo_path: Path, max_year: int) -> PerformanceCommit:
+    def process_commit(
+        commit_hash: str, repo_path: Path, max_year: int
+    ) -> PerformanceCommit:
         # commit subject
         subject = run_git_command(
             ["git", "show", "--no-patch", "--format=%s", commit_hash], cwd=repo_path
@@ -69,7 +73,7 @@ class PerfCommitAnalyzer:
             ["git", "show", "-s", "--format=%cd", commit_hash], cwd=repo_path
         )
         date = datetime.strptime(date_str, "%a %b %d %H:%M:%S %Y %z")
-        
+
         if max_year and date.year <= max_year:
             return None
 
@@ -95,6 +99,7 @@ class PerfCommitAnalyzer:
             date=date,
             files_changed=files_changed,
             diff_text=diff_text,
+            repo_path=repo_path,
         )
 
     ######################### LLM-based Commit Filtering #########################
@@ -249,7 +254,7 @@ class PerfCommitAnalyzer:
             "--grep=speed up",
             "--grep=speedup",
             "--grep=is slow",
-            "--grep=faster"
+            "--grep=faster",
         ]
 
         # use grep to cut down commits to process
@@ -267,7 +272,10 @@ class PerfCommitAnalyzer:
                 tqdm(
                     pool.starmap(
                         PerfCommitAnalyzer.process_commit,
-                        [(commit_hash, repo_path, max_year) for commit_hash in commit_hashes],
+                        [
+                            (commit_hash, repo_path, max_year)
+                            for commit_hash in commit_hashes
+                        ],
                     ),
                     total=len(commit_hashes),
                 )
@@ -328,7 +336,13 @@ class PerfCommitAnalyzer:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Fetch commits from a repository URL.")
     parser.add_argument("repo_url", type=str, help="The URL of the repository")
-    parser.add_argument("--max_year", type=int, required=False, default=None, help="Maximum year for commits")
+    parser.add_argument(
+        "--max_year",
+        type=int,
+        required=False,
+        default=None,
+        help="Maximum year for commits",
+    )
     parser.add_argument(
         "--no-grep",
         action="store_true",

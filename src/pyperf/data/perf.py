@@ -1,7 +1,8 @@
 import re
+import subprocess
 from datetime import datetime
 from pydantic import BaseModel, Field
-
+from pathlib import Path
 
 class PerformanceCommit(BaseModel):
     commit_hash: str
@@ -15,6 +16,7 @@ class PerformanceCommit(BaseModel):
     apis: list[str] = Field(default_factory=list)
     diff_text: str = ""
     llm_reason: str = ""
+    repo_path: Path = None
 
     @property
     def old_commit_hash(self) -> str:
@@ -22,10 +24,43 @@ class PerformanceCommit(BaseModel):
 
     @property
     def linked_pr(self) -> str:
-        # TODO(@manish): expand this to other patterns if necessary
+        # Find linked pr from commit message
         pr_pattern = r"\(#(\d+)\)"
         match = re.search(pr_pattern, self.subject)
-        return match.group(1) if match else None
+        if match:
+            return match.group(1)
+
+        # Find merged pr in nearby direct ancestry path
+        try:
+            cmd = [
+                "git",
+                "log",
+                "--merges",
+                "--ancestry-path",
+                "--pretty=%H %s",
+                "--reverse",
+                f"{self.commit_hash}^..HEAD"
+            ]
+            result = subprocess.run(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=True,
+                cwd=self.repo_path,
+            )
+            
+            merge_pattern = r"#(\d+)"
+            merge_commits = result.stdout.strip().split("\n")[:10]
+            for mc in merge_commits:
+                if "Merge pull request" in mc:
+                    match = re.search(merge_pattern, mc)
+                    if match:
+                        return match.group(1)
+        except Exception as e:
+            pass
+
+        return None
 
     # TODO: add a linked_issue property
     # @property

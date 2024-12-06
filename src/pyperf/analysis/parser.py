@@ -104,7 +104,7 @@ class CommitParser:
             capture_output=True,
             text=False,
         ).stdout
-        new_file_content = new_file_content.decode('utf-8', errors='ignore')
+        new_file_content = new_file_content.decode("utf-8", errors="ignore")
 
         header = FileDiffHeader(
             file=FileInfo(path=old_path),

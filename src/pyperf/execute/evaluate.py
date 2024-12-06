@@ -51,7 +51,7 @@ def speedup_summary(prob):
         base_result = ct["base_result"]
         base_times = parse_times(base_result)
         base_mean, base_std = compute_stats(base_times)
-        
+
         if "commit_result" in ct:
             comm_result = ct["commit_result"]
             comm_times = parse_times(comm_result)
@@ -66,7 +66,7 @@ def speedup_summary(prob):
         opt_perc = ((base_mean - target_mean) / base_mean) * 100
         speedup_factor = base_mean / target_mean
         loc_changed = commit.stats.get("num_non_test_edited_lines", 0)
-        
+
         if base_mean > target_mean and opt_perc > 2:
             ct_stats = {
                 "pid": prob.pid,
@@ -221,6 +221,7 @@ def main(exp_id: str, specific_api: str | None = None):
 
     num_valid = 0
     opt_problems = {}
+    err_problems = []
     opt_apis = set()
     for prob in problems:
         if prob.is_valid():
@@ -230,6 +231,9 @@ def main(exp_id: str, specific_api: str | None = None):
                 opt_problems[prob.pid] = stats
                 for _, v in stats.items():
                     opt_apis.add(v["api"])
+
+        else:
+            err_problems.append(prob)
 
     os.makedirs(output_dir, exist_ok=True)
     df = create_analysis_dataframe(opt_problems)
@@ -258,19 +262,23 @@ def main(exp_id: str, specific_api: str | None = None):
         f"\nSpeedup distribution:\n{df['opt_perc'].describe(percentiles=[0,0.05,0.1,0.2,0.4,0.5,0.6,0.8,0.9,0.95,1])}"
     )
     print("=" * 35)
-    
-    
+
     print("\nTop problems (by opt%):")
     for i, row in df.nlargest(10, "opt_perc").iterrows():
         print(
             f"  {row['pid']}-{row['test_id']} ({row['commit']}): {row['opt_perc']:.2f}%"
         )
-    
+
     print("\nTop problems (by loc changed):")
     for i, row in df.nlargest(10, "loc_changed").iterrows():
         print(
             f"  {row['pid']}-{row['test_id']} ({row['commit']}): {row['loc_changed']}"
         )
+
+    # print("\nErrored APIs:")
+    # for p in err_problems:
+    #     commits = ", ".join([f"{c.quick_hash()} ({c.date.strftime("%m/%d/%Y")})" for c in p.commits])
+    #     print(f"    {p.api} : {commits}")
 
     return df, summary
 

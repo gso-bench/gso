@@ -8,10 +8,12 @@ from pyperf.data import Problem, APICommitMap
 from pyperf.constants import EXPS_DIR
 
 
-class DateTimeEncoder(json.JSONEncoder):
+class CustomEncoder(json.JSONEncoder):
     def default(self, obj: any) -> any:
         if isinstance(obj, datetime):
             return obj.isoformat()
+        if isinstance(obj, Path):
+            return str(obj)
         return super().default(obj)
 
 
@@ -36,7 +38,7 @@ def save_problems(file_path, problems: list[Problem]):
     problems_data = [problem.dict() for problem in problems]
 
     with open(file_path, "w") as f:
-        json.dump(problems_data, f, indent=4, cls=DateTimeEncoder)
+        json.dump(problems_data, f, indent=4, cls=CustomEncoder)
 
 
 # Custom dumper to manage indentation
