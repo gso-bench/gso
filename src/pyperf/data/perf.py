@@ -4,6 +4,7 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 from pathlib import Path
 
+
 class PerformanceCommit(BaseModel):
     commit_hash: str
     subject: str
@@ -39,7 +40,7 @@ class PerformanceCommit(BaseModel):
                 "--ancestry-path",
                 "--pretty=%H %s",
                 "--reverse",
-                f"{self.commit_hash}^..HEAD"
+                f"{self.commit_hash}^..HEAD",
             ]
             result = subprocess.run(
                 cmd,
@@ -49,7 +50,7 @@ class PerformanceCommit(BaseModel):
                 check=True,
                 cwd=self.repo_path,
             )
-            
+
             merge_pattern = r"#(\d+)"
             merge_commits = result.stdout.strip().split("\n")[:10]
             for mc in merge_commits:

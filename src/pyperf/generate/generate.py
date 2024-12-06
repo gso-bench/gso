@@ -38,7 +38,7 @@ class PerfExpGenerator:
             Problem.create_prob(self.repo, api, commits, self.config)
             for api, commits in self.candidates.items()
         ]
-        
+
         # filter their commits to a maximum year and remove empty problems
         for prob in problems:
             prob.filter_commits(args.max_year)
