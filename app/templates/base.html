@@ -5,18 +5,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>API Performance Analysis</title>
-    <!-- Add date adapter for Chart.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
     <script
         src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@2.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
 
     <style>
-        /* Previous styles remain same */
+        @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&display=swap');
+
         body {
-            font-family: system-ui, -apple-system, sans-serif;
-            margin: 20px;
-            padding: 0;
+            font-family: "Lexend", sans-serif;
+            line-height: 1.6;
+            padding: 20px;
+            margin: 0 auto;
             background: #f5f5f5;
+            max-width: 1100px;
         }
 
         .header {
@@ -97,7 +99,6 @@
             opacity: 0.7;
         }
 
-
         .toast {
             position: fixed;
             bottom: 20px;
@@ -117,6 +118,50 @@
             left: -9999px;
             top: 0;
         }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 20px 0;
+            gap: 10px;
+        }
+
+        .pagination button {
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            background-color: white;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+
+        .pagination button:disabled {
+            background-color: #f5f5f5;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .pagination button:hover:not(:disabled) {
+            background-color: #f0f0f0;
+        }
+
+        .page-info {
+            margin: 0 15px;
+            color: #666;
+        }
+
+        .loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
     </style>
 </head>
 
@@ -128,17 +173,36 @@
             <option value="{{ repo }}" {% if repo==default_repo %} selected{% endif %}>{{ repo }}</option>
             {% endfor %}
         </select>
-        <select id="sort-select" class="sort-select"
-            onchange="loadRepoData(document.getElementById('repo-select').value)">
+        <select id="sort-select" class="sort-select" onchange="handleSortChange()">
             <option value="date">Sort by Date</option>
             <option value="speedup">Sort by Speedup</option>
         </select>
+    </div>
+
+    <div id="loading" class="loading" style="display: none;">
+        Loading data...
     </div>
 
     <div id="api-container"></div>
     <textarea id="copy-textarea" class="hidden-textarea"></textarea>
 
     <script>
+        let currentPage = 1;
+        let currentCharts = {};
+
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        function handleSortChange() {
+            const repoName = document.getElementById('repo-select').value;
+            loadRepoData(repoName, currentPage);
+        }
+
         function calculateStats(tests, metric) {
             const values = tests.map(t => t[metric]);
             const mean = values.reduce((a, b) => a + b, 0) / values.length;
@@ -326,92 +390,6 @@
             CopyTextToClipboard(url);
         }
 
-        function loadRepoData(repoName) {
-            const sortBy = document.getElementById('sort-select').value;
-            fetch(`/get_repo_data/${repoName}`)
-                .then(response => response.json())
-                .then(data => {
-                    const apiContainer = document.getElementById('api-container');
-                    apiContainer.innerHTML = '';
-
-                    // Group data by API
-                    const apiGroups = {};
-                    data.forEach(item => {
-                        if (!apiGroups[item.api]) {
-                            apiGroups[item.api] = {
-                                problems: []
-                            };
-                        }
-                        apiGroups[item.api].problems.push(item);
-                    });
-
-                    // Create sections for each API
-                    Object.entries(apiGroups).forEach(([api, apiData]) => {
-                        const apiSection = document.createElement('div');
-                        apiSection.className = 'api-section';
-
-                        const title = document.createElement('h2');
-                        title.className = 'api-title';
-                        title.textContent = `API: ${api}`;
-                        apiSection.appendChild(title);
-
-                        const chartContainer = document.createElement('div');
-                        chartContainer.className = 'chart-container';
-                        const canvas = document.createElement('canvas');
-                        const chartId = `chart-${api.replace(/\./g, '-')}`;
-                        canvas.id = chartId;
-                        chartContainer.appendChild(canvas);
-                        apiSection.appendChild(chartContainer);
-
-                        const problemsList = document.createElement('div');
-                        problemsList.className = 'commit-list';
-                        apiData.problems.forEach(prob => {
-                            const testDivId = generateTestId(api, prob.commit, prob.test_id);
-                            const probElement = document.createElement('div');
-                            probElement.className = 'commit-item';
-                            probElement.id = testDivId;
-                            probElement.innerHTML = `
-                                <div>
-                                    <span class="stat-item"><strong>Commit:&nbsp;</strong> ${prob.commit} </span>
-                                    <span class="stat-item"><strong>Test:&nbsp;</strong> ${prob.test_id} </span>
-                                    <span class="stat-item"><strong>Opt:&nbsp;</strong> ${prob.opt_perc.toFixed(2)}% </span>
-                                    <span class="stat-item"><strong>Speedup:&nbsp;</strong> ${prob.speedup_factor.toFixed(2)}x </span></br>
-                                    <span class="stat-item"><strong>Base:&nbsp;</strong> ${prob.base_mean.toFixed(6)} (± ${prob.base_std.toFixed(6)})</span>
-                                    <span class="stat-item"><strong>Commit:&nbsp;</strong> ${prob.commit_mean.toFixed(6)} (± ${prob.commit_std.toFixed(6)})</span>
-                                    <span class="stat-item"><strong>Target:&nbsp;</strong> ${prob.target_mean.toFixed(6)} (± ${prob.target_std.toFixed(6)})</span>
-                                </div>
-                                <h4 class="toggle-section" onclick="toggleSection(event, this)">
-                                    Generated Test
-                                    <button type="button" class="share-button" onclick="shareTest(event, this, '${api}', '${prob.commit}', '${prob.test_id}')">🔗</button>
-                                </h4>
-                                <div class="message collapsible">
-                                    <pre>${prob.test || 'Test not available'}</pre>
-                                </div>
-                            `;
-                            problemsList.appendChild(probElement);
-                        });
-                        apiSection.appendChild(problemsList);
-
-                        apiContainer.appendChild(apiSection);
-
-                        // Initialize chart after DOM element is added
-                        createChart(chartId, apiData, sortBy);
-                    });
-
-                    // Check for hash in URL and open corresponding test
-                    if (window.location.hash) {
-                        const testDiv = document.querySelector(window.location.hash);
-                        if (testDiv) {
-                            testDiv.scrollIntoView();
-                            const toggleButton = testDiv.querySelector('.toggle-section');
-                            if (toggleButton) {
-                                toggleButton.click();
-                            }
-                        }
-                    }
-                });
-        }
-
         function toggleSection(event, element) {
             // Check if the event originated from the share button
             if (event.target && event.target.classList.contains('share-button')) {
@@ -421,6 +399,113 @@
             element.classList.toggle('active');
             const collapsible = element.nextElementSibling;
             collapsible.classList.toggle('show');
+        }
+
+        async function loadRepoData(repoName, page = 1) {
+            showLoading();
+            const sortBy = document.getElementById('sort-select').value;
+
+            try {
+                const response = await fetch(`/get_repo_data/${repoName}?page=${page}&sort=${sortBy}`);
+                const data = await response.json();
+
+                if (data.error) {
+                    console.error(data.error);
+                    return;
+                }
+
+                // Clean up existing charts
+                Object.values(currentCharts).forEach(chart => chart.destroy());
+                currentCharts = {};
+
+                const apiContainer = document.getElementById('api-container');
+                apiContainer.innerHTML = '';
+
+                // Create sections for each API
+                Object.entries(data.apis).forEach(([api, problems]) => {
+                    const apiSection = document.createElement('div');
+                    apiSection.className = 'api-section';
+
+                    // Add API title and chart
+                    apiSection.innerHTML = `
+                        <h2 class="api-title">API: ${api}</h2>
+                        <div class="chart-container">
+                            <canvas id="chart-${api.replace(/\./g, '-')}"></canvas>
+                        </div>
+                        <div class="commit-list" id="commit-list-${api.replace(/\./g, '-')}"></div>
+                    `;
+
+                    // Add problems list
+                    const problemsList = apiSection.querySelector('.commit-list');
+                    problems.forEach(prob => {
+                        const testDivId = generateTestId(api, prob.commit, prob.test_id);
+                        problemsList.innerHTML += `
+                            <div class="commit-item" id="${testDivId}">
+                                <div>
+                                    <span class="stat-item"><strong>Commit:</strong> ${prob.commit}</span>
+                                    <span class="stat-item"><strong>Test:</strong> ${prob.test_id}</span>
+                                    <span class="stat-item"><strong>Opt:</strong> ${prob.opt_perc.toFixed(2)}%</span>
+                                    <span class="stat-item"><strong>Speedup:</strong> ${prob.speedup_factor.toFixed(2)}x</span>
+                                    <br/>
+                                    <span class="stat-item"><strong>Base:</strong> ${prob.base_mean.toFixed(6)} (± ${prob.base_std.toFixed(6)})</span>
+                                    <span class="stat-item"><strong>Commit:</strong> ${prob.commit_mean.toFixed(6)} (± ${prob.commit_std.toFixed(6)})</span>
+                                    <span class="stat-item"><strong>Target:</strong> ${prob.target_mean.toFixed(6)} (± ${prob.target_std.toFixed(6)})</span>
+                                </div>
+                                <h4 class="toggle-section" onclick="toggleSection(event, this)">
+                                    Generated Test
+                                    <button class="share-button" onclick="shareTest(event, this, '${api}', '${prob.commit}', '${prob.test_id}')">🔗</button>
+                                </h4>
+                                <div class="message collapsible">
+                                    <pre>${prob.test || 'Test not available'}</pre>
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    apiContainer.appendChild(apiSection);
+
+                    // Initialize chart
+                    const chartId = `chart-${api.replace(/\./g, '-')}`;
+                    currentCharts[chartId] = createChart(chartId, { problems }, sortBy);
+                });
+
+                // Add pagination controls
+                const paginationDiv = document.createElement('div');
+                paginationDiv.className = 'pagination';
+                paginationDiv.innerHTML = `
+                    <button onclick="loadRepoData('${repoName}', ${data.current_page - 1})" 
+                            ${data.current_page <= 1 ? 'disabled' : ''}>
+                        Previous
+                    </button>
+                    <span class="page-info">
+                        Page ${data.current_page} of ${data.total_pages}
+                        (${data.total_apis} APIs)
+                    </span>
+                    <button onclick="loadRepoData('${repoName}', ${data.current_page + 1})"
+                            ${!data.has_next ? 'disabled' : ''}>
+                        Next
+                    </button>
+                `;
+                apiContainer.appendChild(paginationDiv);
+
+                currentPage = data.current_page;
+
+                // Check for hash in URL and open corresponding test
+                if (window.location.hash) {
+                    const testDiv = document.querySelector(window.location.hash);
+                    if (testDiv) {
+                        testDiv.scrollIntoView();
+                        const toggleButton = testDiv.querySelector('.toggle-section');
+                        if (toggleButton) {
+                            toggleButton.click();
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading data:', error);
+            } finally {
+                hideLoading();
+            }
         }
 
         // Load initial data

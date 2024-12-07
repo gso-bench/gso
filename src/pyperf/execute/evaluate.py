@@ -26,6 +26,8 @@ def parse_times(time_str):
 def compute_stats(times):
     mean = np.mean(times)
     std_dev = np.std(times, ddof=1)
+    if np.isnan(mean):
+        return None, None
     return mean, std_dev
 
 
@@ -56,6 +58,8 @@ def speedup_summary(prob):
             comm_result = ct["commit_result"]
             comm_times = parse_times(comm_result)
             comm_mean, comm_std = compute_stats(comm_times)
+            if comm_mean is None:
+                comm_mean, comm_std = base_mean, base_std
         else:
             comm_mean, comm_std = base_mean, base_std
 
