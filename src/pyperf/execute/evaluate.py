@@ -238,6 +238,13 @@ def main(exp_id: str, specific_api: str | None = None):
 
         else:
             err_problems.append(prob)
+    
+    if len(opt_problems) == 0:
+        print("\n=== Performance Analysis Summary ===")
+        print(f"Total problems: {len(problems)}")
+        print(f"Valid problems: {num_valid} ({num_valid/len(problems)*100:.2f}%)")
+        print("No optimization problems found!!")
+        return None, None    
 
     os.makedirs(output_dir, exist_ok=True)
     df = create_analysis_dataframe(opt_problems)

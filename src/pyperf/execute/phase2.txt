@@ -55,7 +55,7 @@ for i in $(seq 0 $(($total_pairs - 1))); do
         \"commit_result\": \"$commit_result\",
         \"target_result\": \"$target_result\",
         \"base_commit\": \"${commit}^\",
-        \"target_commit\": \"main\",
+        \"target_commit\": \"${target_commit}\",
         \"timestamp\": \"$(date -u +"%Y-%m-%dT%H:%M:%SZ")\"
     }" > "$meta_file"
 
@@ -82,11 +82,6 @@ git checkout ${target_commit}
 $install_commands
 cd ..
 
-echo "Testing target commit: main"
-cd $repo_name
-git checkout main
-$install_commands
-cd ..
 
 # Run each test once for target commit
 for i in $(seq 0 $(($total_pairs - 1))); do

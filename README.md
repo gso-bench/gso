@@ -55,6 +55,7 @@ First pick an experiment ID, usually the repository name (say `repo`) -- you wil
 exp_id: "repo"
 repo_url: "https://github.com/username/repo"
 py_version: 3.9
+target_commit: "main"
 install_commands:
     - "uv venv --python 3.9"
     - "source .venv/bin/activate"
