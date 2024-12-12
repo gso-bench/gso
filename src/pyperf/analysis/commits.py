@@ -205,7 +205,7 @@ class PerfCommitAnalyzer:
         return [
             {
                 "role": "system",
-                "content": PERF_IDENTIFY_API_SYSTEM,
+                "content": PERF_IDENTIFY_API_SYSTEM + "\n\n" + PERF_IDENTIFY_API_DOCS
             },
             {"role": "user", "content": file_content_prompt},
             {
@@ -233,11 +233,13 @@ class PerfCommitAnalyzer:
         for commit, response in zip(commits, responses):
             response = response[0]
             try:
+                reasoning = response.split("[/REASON]")[0].split("[REASON]")[1].strip()
                 apis = response.split("[/APIS]")[0].split("[APIS]")[1].strip()
                 apis = [api.strip() for api in apis.split(",")]
             except:
                 apis = []
             commit.add_apis(apis)
+            commit.add_llm_api_reason(reasoning)
 
     ######################### Main Analysis #########################
 
@@ -350,8 +352,10 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
     configs = load_exp_config(args.yaml_path)
+
     args.repo_url = configs["repo_url"]
-    args.api_docs = configs["api_docs"]
+    if "api_docs" in configs:
+        PERF_IDENTIFY_API_DOCS = configs["api_docs"]
 
     analysis = PerfCommitAnalyzer.analyze_repository(args)
 
@@ -359,5 +363,3 @@ if __name__ == "__main__":
     ANALYSIS_APIS_DIR.mkdir(parents=True, exist_ok=True)
     PerfCommitAnalyzer.save_analysis(analysis, output_file)
 
-    # To load the analysis later
-    # loaded_analysis = PerfCommitAnalyzer.load_analysis(output_file)

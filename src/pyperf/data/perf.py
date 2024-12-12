@@ -17,6 +17,7 @@ class PerformanceCommit(BaseModel):
     apis: list[str] = Field(default_factory=list)
     diff_text: str = ""
     llm_reason: str = ""
+    llm_api_reason: str = ""
     repo_path: Path = None
 
     @property
@@ -79,6 +80,9 @@ class PerformanceCommit(BaseModel):
 
     def add_apis(self, apis: list[str]):
         self.apis = apis
+        
+    def add_llm_api_reason(self, reason: str):
+        self.llm_api_reason = reason
 
     def add_affected_paths(self, paths: list[str]):
         self.affected_paths.extend(paths)

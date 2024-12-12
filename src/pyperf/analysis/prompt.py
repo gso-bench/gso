@@ -19,6 +19,7 @@ Commit Message:
 {message}
 """
 
+PERF_IDENTIFY_API_DOCS = ""
 
 PERF_IDENTIFY_API_SYSTEM = """You are an expert python programmer who is annotating data for training and testing code language models.
 
