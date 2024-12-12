@@ -17,7 +17,7 @@ from pyperf.analysis.retriever import Retriever
 from pyperf.analysis.prompt import *
 from pyperf.analysis.utils import *
 from pyperf.constants import *
-
+from pyperf.utils.io import *
 
 GHAPI_TOKEN = os.environ.get("GHAPI_TOKEN")
 MAX_COMMIT_TOKENS = 20000
@@ -335,7 +335,7 @@ class PerfCommitAnalyzer:
 # Example usage
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Fetch commits from a repository URL.")
-    parser.add_argument("repo_url", type=str, help="The URL of the repository")
+    parser.add_argument("yaml_path", type=str, help="Path to the experiment YAML file.")
     parser.add_argument(
         "--max_year",
         type=int,
@@ -349,6 +349,9 @@ if __name__ == "__main__":
         help="Use grep to filter commits",
     )
     args = parser.parse_args()
+    configs = load_exp_config(args.yaml_path)
+    args.repo_url = configs["repo_url"]
+    args.api_docs = configs["api_docs"]
 
     analysis = PerfCommitAnalyzer.analyze_repository(args)
 

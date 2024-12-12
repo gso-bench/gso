@@ -34,20 +34,7 @@ Generating performance tests for python repositories
 
 ## Usage
 
-### 1. Commit Analysis Pipeline
-
-The [analysis/](/src/pyperf/analysis/) directory contains the performance commit analysis pipeline. It identifies and analyzes performance-related commits in Python repositories and then maps them to high-level APIs that are affected by the changes. More details in the [readme](/src/pyperf/analysis/README.md).
-
-Run the pipeline on any repository using the `commits.py` script:
-```bash
-python src/pyperf/analysis/commits.py https://github.com/username/repo
-python src/pyperf/analysis/apis.py repo
-```
-
-The commit analysis results are saved as a JSON file in `ANALYSIS_DIR/commits/repo_commits.json`. Then, the API analysis results are saved in `ANALYSIS_DIR/apis/repo_ac_map.json`.
-
-
-### 2. Configure experiments
+### 1. Configure experiments
 
 First pick an experiment ID, usually the repository name (say `repo`) -- you will use this ID to refer to the experiment in following steps. Experiments can be configured using a simple YAML file with the following structure:
 
@@ -62,8 +49,22 @@ install_commands:
     - "uv pip install -e ."
 ```
 
-You can add the repository URL and custom python version & installation commands. If `install_commands` is not provided, a
+You can add the repository URL and custom python version & installation commands. You can also provide `api_docs` (free form string) to specify to which APIs to focus on or any other custom documentation. If `install_commands` is not provided, a
 [default set](https://github.com/r2e-project/pyperf/blob/7b65c8fd7d41ae4d46e889d912e4fbc931871f39/src/pyperf/data/problem.py#L5-L6) is used.
+
+
+
+### 2. Commit Analysis Pipeline
+
+The [analysis/](/src/pyperf/analysis/) directory contains the performance commit analysis pipeline. It identifies and analyzes performance-related commits in Python repositories and then maps them to high-level APIs that are affected by the changes. More details in the [readme](/src/pyperf/analysis/README.md).
+
+Run the pipeline on any repository using the `commits.py` script:
+```bash
+python src/pyperf/analysis/commits.py /path/to/experiment.yaml
+python src/pyperf/analysis/apis.py repo
+```
+
+The commit analysis results are saved as a JSON file in `ANALYSIS_DIR/commits/repo_commits.json`. Then, the API analysis results are saved in `ANALYSIS_DIR/apis/repo_ac_map.json`. You can use the `--no-grep` flag to disable the grep-based filtering and the `--max_year` flag to filter commits by year.
 
 
 ### 3. Generate performance tests
