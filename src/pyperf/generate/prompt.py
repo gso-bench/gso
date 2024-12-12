@@ -18,6 +18,8 @@ The test will also include equivalence checks and storing reference results for 
     - Assume that the reference results are always correct. So the results of the `experiment` function should be equivalent to the reference results.
     - All equivalence checks should be done in this function in the form of python assertions.
     - Assert equivalence not just on direct results but any properties of the results that are important.
+    - Use appropriate assert methods with tolerance for floating-point numbers.
+    - Be careful with nested data structures deserialized from files. e.g., tuples are written and loaded as lists from json. ENSURE to convert asserted values to match the reference types BEFORE equivalence checking. 
     - All assertions must be between the reference result and the current result ONLY, assuming the reference result is correct.
     - DO NOT write any assertions with custom expected values. The reference result is the expected value.
     - DO NOT write any assertions comparing values within the current result itself. Only compare values/properties of the current result with corresponding ones in the reference result.
