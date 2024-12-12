@@ -21,6 +21,11 @@ class PerfExpGenerator:
         self.config = load_exp_config(args.yaml_path)
         self.exp_id = self.config["exp_id"]
         self.repo = Repo.from_url(self.config["repo_url"])
+        
+        # set repo-specific instructions
+        if self.config['repo_instr']:
+            self.repo.repo_instr = self.config['repo_instr']
+        
         self.candidates = self.get_commit_map(self.repo)
         self.exp_dir = EXPS_DIR / self.exp_id
 
