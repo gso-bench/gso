@@ -45,6 +45,7 @@ def print_prob_summary(prob):
 def speedup_summary(prob):
     run0_res = list(prob.results.values())[0]
     stats = {}
+    valid_commits, opt_commits = set(), set()
 
     for ct in run0_res:
         test = ct["test_file"]
@@ -89,7 +90,11 @@ def speedup_summary(prob):
             }
             key = f"{prob.pid}-{test}"
             stats.update({key: ct_stats})
-    return stats
+            valid_commits.add(commit.quick_hash())
+            opt_commits.add(commit.quick_hash())
+        else:
+            valid_commits.add(commit.quick_hash())
+    return stats, valid_commits, opt_commits
 
 
 def create_analysis_dataframe(problems) -> pd.DataFrame:
@@ -227,9 +232,17 @@ def main(exp_id: str, specific_api: str | None = None):
     opt_problems = {}
     err_problems = []
     opt_apis = set()
+    all_commits = set()
+    valid_commits_all = set()
+    opt_commits_all = set()
+    
     for prob in problems:
+        all_commits.update([c.quick_hash() for c in prob.commits if c.date.year >= 2016])
         if prob.is_valid():
-            stats = speedup_summary(prob)
+            stats, valid_commits, opt_commits = speedup_summary(prob)
+            valid_commits_all.update(valid_commits)
+            opt_commits_all.update(opt_commits)
+
             num_valid += 1
             if stats:
                 opt_problems[prob.pid] = stats
@@ -273,6 +286,11 @@ def main(exp_id: str, specific_api: str | None = None):
         f"\nSpeedup distribution:\n{df['opt_perc'].describe(percentiles=[0,0.05,0.1,0.2,0.4,0.5,0.6,0.8,0.9,0.95,1])}"
     )
     print("=" * 35)
+    
+    print("\nCommit Analysis:")
+    print(f"  Total commits: {len(all_commits)}")
+    print(f"  Total valid commits: {len(valid_commits_all)}")
+    print(f"  Total optimized commits: {len(opt_commits_all)}")
 
     print("\nTop problems (by opt%):")
     for i, row in df.nlargest(10, "opt_perc").iterrows():
