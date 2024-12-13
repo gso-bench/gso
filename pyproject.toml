@@ -20,6 +20,7 @@ dependencies = [
     "ghapi>=1.0.6",
     "skypilot>=0.5.0",
     "scipy>=1.14.1",
+    "google>=3.0.0",
 ]
 
 [build-system]
