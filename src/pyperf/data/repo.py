@@ -10,7 +10,7 @@ class Repo(BaseModel):
     repo_url: str
     repo_owner: str
     repo_name: str
-    repo_instr: str = None
+    repo_instr: str | None = Field(default=None)
 
     @property
     def local_repo_path(self):
