@@ -1,0 +1,36 @@
+exp_id: bullet3
+repo_url: "https://github.com/bulletphysics/bullet3"
+py_version: "3.9"
+target_commit: "master"
+install_commands:
+  - uv venv --python 3.9
+  - source .venv/bin/activate
+  - which python
+  - python --version
+  - uv pip install setuptools 
+  - python setup.py clean > /dev/null
+  - uv pip install .
+  - uv pip install requests dill numpy
+  - uv pip show pybullet
+api_docs: |
+  The APIs provided by PyBullet are as follows:
+
+  Core Simulation: connect, disconnect, bullet_client, setGravity, stepSimulation, performCollisionDetection, resetSimulation, setTimeStep, setPhysicsEngineParameter
+  Object Management: loadURDF, loadSDF, loadMJCF, saveState, saveBullet, restoreState, createCollisionShape, createVisualShape, createMultiBody, removeBody, getNumBodies, getBodyInfo, getBodyUniqueId
+  Robot Control: getNumJoints, getJointInfo, setJointMotorControl2, setJointMotorControlArray, getJointState, getJointStates, resetJointState, enableJointForceTorqueSensor, getLinkState, getLinkStates, getBaseVelocity, resetBaseVelocity, applyExternalForce, applyExternalTorque
+  Transform & Position: getBasePositionAndOrientation, resetBasePositionAndOrientation
+  Constraints: createConstraint, removeConstraint, changeConstraint, getNumConstraints, getConstraintUniqueId, getConstraintInfo, getConstraintState, getDynamicsInfo, changeDynamics
+  Deformables: loadSoftBody, createSoftBodyAnchor
+  Rendering & Visualization: computeViewMatrix, computeProjectionMatrix, getCameraImage, getVisualShapeData, changeVisualShape, loadTexture, addUserDebugLine, addUserDebugPoints, addUserDebugText, addUserDebugParameter, configureDebugVisualizer, getDebugVisualizerCamera, resetDebugVisualizerCamera
+  Collision Detection: getOverlappingObjects, getAABB, getContactPoints, getClosestPoints, rayTest, rayTestBatch, getCollisionShapeData
+  Advanced Robotics: calculateInverseDynamics, calculateInverseDynamics2, calculateJacobian, calculateMassMatrix, calculateInverseKinematics, calculateInverseKinematics2
+  VR & Input: getVREvents, setVRCameraState, getKeyboardEvents, getMouseEvents
+  Data & Logging: startStateLogging, stopStateLogging, addUserData, getUserData, removeUserData, syncUserData
+  Plugin System: loadPlugin, executePluginCommand
+
+  NOTE: ONLY consider the above Python APIs. The APIs provided by the underlying Bullet Physics engine are NOT to be considered.
+  NOTE: The performance of these APIs may not be directly affected by the changes in some commits. However examples using these APIs may be affected which we want to capture! e.g., updates to a solver may affect the setPhysicsEngineParameter API.
+repo_instr: |
+  1. IMPORTANT: We are testing `pybullet`, the python wrapper for `bullet3`. So use this import statement to start: `import pybullet as p`.
+  2. USE ONLY public PYTHON APIs from `pybullet`. Don't try to use any C++ `bullet3` classes directly!
+  3. Use `p.connect(p.DIRECT)` to connect to the simulation, load models (e.g., `p.loadURDF`) or create objects through creation functions (e.g., p.createCollisionShape, p.createMultiBody), and always clean up with p.disconnect().

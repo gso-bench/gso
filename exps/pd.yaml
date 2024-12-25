@@ -1,0 +1,12 @@
+exp_id: pandas
+repo_url: https://github.com/pandas-dev/pandas
+py_version: "3.10"
+install_commands:
+  - git clean -xfd
+  - uv venv --python 3.10
+  - source .venv/bin/activate
+  - which python
+  - python --version
+  - uv pip install .
+  - uv pip install requests dill "numpy<2.0"
+  - uv pip show pandas

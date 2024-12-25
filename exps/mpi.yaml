@@ -1,0 +1,17 @@
+exp_id: mpi4py
+repo_url: https://github.com/mpi4py/mpi4py
+py_version: "3.9"
+target_commit: "master"
+install_commands:
+  - uv venv --python 3.9
+  - source .venv/bin/activate
+  - which python
+  - python --version
+  - export CYTHON_FORCE_REGEN=1
+  - export MPIEXEC_TIMEOUT=20
+  - rm -rf build/ *.egg-info/
+  - python setup.py clean --all
+  - uv pip install setuptools
+  - uv pip install 'cython==3' && uv pip install . --no-build-isolation || uv pip install 'cython<3' && uv pip install . --no-build-isolation
+  - uv pip install numpy requests dill
+  - uv pip show mpi4py

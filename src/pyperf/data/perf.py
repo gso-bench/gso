@@ -18,7 +18,7 @@ class PerformanceCommit(BaseModel):
     diff_text: str = ""
     llm_reason: str = ""
     llm_api_reason: str = ""
-    repo_path: Path = None
+    repo_path: Path | None = Field(default=None)
 
     @property
     def old_commit_hash(self) -> str:
