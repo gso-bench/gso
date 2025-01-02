@@ -22,7 +22,7 @@ def load_repo_data(repo_name, page=1, per_page=APIS_PER_PAGE):
     
     for prob in all_problems:
         if prob.is_valid():
-            stats = speedup_summary(prob)
+            stats,_,_ = speedup_summary(prob)
             if stats:
                 for s in stats:
                     test = prob.get_test(stats[s]["commit"], stats[s]["test_id"])
@@ -31,9 +31,15 @@ def load_repo_data(repo_name, page=1, per_page=APIS_PER_PAGE):
                         None,
                     )
                     if commit:
+                        # lambda to get file type from path
+                        get_file_type = lambda x: x.split(".")[-1]
+                        
                         result = stats[s].copy()
                         result["test"] = test
                         result["date"] = commit.date.isoformat()
+                        result["repo_url"] = prob.repo.repo_url
+                        result["stats"] = commit.stats
+                        result["stats"]["ftypes"] = list(set(map(get_file_type, commit.files_changed)))
                         api_groups[result["api"]].append(result)
 
     # Sort problems within each API group

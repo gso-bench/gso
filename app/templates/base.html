@@ -442,7 +442,12 @@
                         problemsList.innerHTML += `
                             <div class="commit-item" id="${testDivId}">
                                 <div>
-                                    <span class="stat-item"><strong>Commit:</strong> ${prob.commit}</span>
+                                    <span class="stat-item"><strong>Commit:</strong> <a href="${prob.repo_url}/commit/${prob.commit}">${prob.commit}</a> (${new Date(prob.date).toLocaleDateString()})</span>
+                                    <span class="stat-item"><strong>FTypes:</strong> ${prob.stats.ftypes}</span>
+                                    <span class="stat-item"><strong>Files:</strong> ${prob.stats.num_non_test_files}</span>  
+                                    <span class="stat-item"><strong>Hunks:</strong> ${prob.stats.num_hunks}</span>
+                                    <span class="stat-item"><strong>LoC:</strong> ${prob.stats.num_edited_lines}</span>
+                                    <br/>
                                     <span class="stat-item"><strong>Test:</strong> ${prob.test_id}</span>
                                     <span class="stat-item"><strong>Opt:</strong> ${prob.opt_perc.toFixed(2)}%</span>
                                     <span class="stat-item"><strong>Speedup:</strong> ${prob.speedup_factor.toFixed(2)}x</span>
