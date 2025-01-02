@@ -6,7 +6,14 @@ The test will also include equivalence checks and storing reference results for 
 
 2. **Define a Real Workload**: Write a function `setup` that downloads/loads/creates/sets up data or scenarios that are typical use cases for the API. Ensure that any necessary files or data for the test are available or generated. If you have to download files do that via code too. Try to use real-world data over randomly generated as much as possible. If generating data, ensure it is of a realistic scale, complexity, and use a random seed for reproducibility.
 
-3. **Time a real-world experiment**: Write an `experiment` function that wraps a real-world experiment that uses the API under test. `experiment` function should NOT include ANY setup/download code. The test should represent a comprehensive but single real-world usage. That is it need not always be a time measurement of just one call to the API (e.g., timing an iterator). Write the test based on what affects real-world usage.
+3. **Time a real-world experiment**: Write an `experiment` function that wraps a real-world experiment that uses the API under test. 
+    - `experiment` function should NOT include ANY setup/download code. 
+    - The test should represent a comprehensive but single real-world usage. That is it need not always be a time measurement of just one call to the API (e.g., timing an iterator). 
+    - Write the test based on what affects real-world usage. 
+    - The experiment does not need to be limited to the API, but MUST use the API under test.
+    - Think of complex, interesting and challenging real-world example use cases of the repository in standalone scripts.
+    - Make it a comprehensive experiment and use several API combinations if necessary.
+
 
 4. **Storing and Loading Reference Results**: Write two custom functions `store_result` and `load_result` to store and load the results returned by the `experiment` function.
     - Use the appropriate serialization approach in these functions (e.g., dill, pickle, json, csv, image, custom, etc.) as per the data returned by the `experiment` function.
@@ -30,7 +37,18 @@ The test will also include equivalence checks and storing reference results for 
     - Setup the experiment data using the `setup` function.
     - Run and time the `experiment` function and get the execution_time and result.
     - Use a simple `timeit` call with a lambda to wrap the function. E.g., execution_time, results = timeit.timeit(lambda: experiment(<args>)). You can also add a `number` argument if you think the function is too short lived and is better tested as a cumulative over multiple calls. This decision should be made as per real-world usage.
-    - NOTE: ASSUME that the timeit template has been updated to return BOTH the execution time and the result of the experiment function.
+    - NOTE: ASSUME that the timeit template has been updated to return BOTH the execution time and the result of the experiment function. i.e., ASSUME the following is appended to the code:
+        ```
+        timeit.template = \"\"\"
+            def inner(_it, _timer{init}):
+                {setup}
+                _t0 = _timer()
+                for _i in _it:
+                    retval = {stmt}
+                _t1 = _timer()
+                return _t1 - _t0, retval
+            \"\"\"
+        ```
     Equivalence Testing:
     - If `reference` is True, store the result of the `experiment` function in a file. Use the `store_result` function. Use constants for the file name with the `prefix` passed in the `run_test` function. E.g., `store_result(result, f'{prefix}_result.json')`.
     - If `eqcheck` is True, load the reference result from the file and check if the result of the `experiment` function is equivalent to it. Use the `load_result` and `check_equivalence` functions.

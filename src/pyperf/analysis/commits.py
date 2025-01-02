@@ -205,7 +205,7 @@ class PerfCommitAnalyzer:
         return [
             {
                 "role": "system",
-                "content": PERF_IDENTIFY_API_SYSTEM + "\n\n" + PERF_IDENTIFY_API_DOCS
+                "content": PERF_IDENTIFY_API_SYSTEM + "\n\n" + PERF_IDENTIFY_API_DOCS,
             },
             {"role": "user", "content": file_content_prompt},
             {
@@ -362,4 +362,3 @@ if __name__ == "__main__":
     output_file = ANALYSIS_COMMITS_DIR / f"{analysis.repo_name}_commits.json"
     ANALYSIS_APIS_DIR.mkdir(parents=True, exist_ok=True)
     PerfCommitAnalyzer.save_analysis(analysis, output_file)
-

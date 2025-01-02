@@ -235,9 +235,11 @@ def main(exp_id: str, specific_api: str | None = None):
     all_commits = set()
     valid_commits_all = set()
     opt_commits_all = set()
-    
+
     for prob in problems:
-        all_commits.update([c.quick_hash() for c in prob.commits if c.date.year >= 2016])
+        all_commits.update(
+            [c.quick_hash() for c in prob.commits if c.date.year >= 2016]
+        )
         if prob.is_valid():
             stats, valid_commits, opt_commits = speedup_summary(prob)
             valid_commits_all.update(valid_commits)
@@ -251,13 +253,13 @@ def main(exp_id: str, specific_api: str | None = None):
 
         else:
             err_problems.append(prob)
-    
+
     if len(opt_problems) == 0:
         print("\n=== Performance Analysis Summary ===")
         print(f"Total problems: {len(problems)}")
         print(f"Valid problems: {num_valid} ({num_valid/len(problems)*100:.2f}%)")
         print("No optimization problems found!!")
-        return None, None    
+        return None, None
 
     os.makedirs(output_dir, exist_ok=True)
     df = create_analysis_dataframe(opt_problems)
@@ -286,7 +288,7 @@ def main(exp_id: str, specific_api: str | None = None):
         f"\nSpeedup distribution:\n{df['opt_perc'].describe(percentiles=[0,0.05,0.1,0.2,0.4,0.5,0.6,0.8,0.9,0.95,1])}"
     )
     print("=" * 35)
-    
+
     print("\nCommit Analysis:")
     print(f"  Total commits: {len(all_commits)}")
     print(f"  Total valid commits: {len(valid_commits_all)}")

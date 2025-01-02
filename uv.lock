@@ -2310,7 +2310,7 @@ wheels = [
 [[package]]
 name = "r2e"
 version = "0.1.0"
-source = { git = "https://github.com/r2e-project/r2e#acc48d4af2792c4c3c88cd62e007fddfcd41d31b" }
+source = { git = "https://github.com/r2e-project/r2e#7dc87d2bc01b0129e97319fc97a71234408ac7fe" }
 dependencies = [
     { name = "anthropic" },
     { name = "black" },

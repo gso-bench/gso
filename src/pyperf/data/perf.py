@@ -80,7 +80,7 @@ class PerformanceCommit(BaseModel):
 
     def add_apis(self, apis: list[str]):
         self.apis = apis
-        
+
     def add_llm_api_reason(self, reason: str):
         self.llm_api_reason = reason
 
