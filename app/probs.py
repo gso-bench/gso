@@ -41,6 +41,16 @@ def load_repo_data(repo_name, page=1, per_page=APIS_PER_PAGE):
                         result["stats"] = commit.stats
                         result["stats"]["ftypes"] = list(set(map(get_file_type, commit.files_changed)))
                         api_groups[result["api"]].append(result)
+    
+    
+    # Apply filters
+    filters = {
+        'non_python_only': request.args.get('non_python_only') == 'true',
+        'file_count_range': request.args.get('file_count_range'),
+        'loc_range': request.args.get('loc_range')
+    }
+    api_groups = filter_problems(api_groups, filters)
+    
 
     # Sort problems within each API group
     sort_by = request.args.get('sort', 'date')
@@ -74,6 +84,40 @@ def load_repo_data(repo_name, page=1, per_page=APIS_PER_PAGE):
     }
     
     return paginated_data
+
+def filter_problems(api_groups, filters):
+    filtered_groups = defaultdict(list)
+    
+    for api, problems in api_groups.items():
+        filtered_problems = problems
+        
+        if filters.get('non_python_only'):
+            ignore_list = ['py', 'rst', 'md', 'txt', 'yml', 'toml', 'gitignore']
+            filtered_problems = [
+                p for p in filtered_problems 
+                if any(ftype not in ignore_list for ftype in p['stats']['ftypes'])
+            ]
+            
+        file_count_range = filters.get('file_count_range')
+        if file_count_range:
+            min_files, max_files = map(int, file_count_range.split('-'))
+            filtered_problems = [
+                p for p in filtered_problems 
+                if min_files <= p['stats']['num_non_test_files'] <= max_files
+            ]
+            
+        loc_range = filters.get('loc_range')
+        if loc_range:
+            min_loc, max_loc = map(int, loc_range.split('-'))
+            filtered_problems = [
+                p for p in filtered_problems 
+                if min_loc <= p['stats']['num_edited_lines'] <= max_loc
+            ]
+            
+        if filtered_problems:  # Only add groups that have problems after filtering
+            filtered_groups[api] = filtered_problems
+            
+    return filtered_groups
 
 @app.route("/")
 def home():

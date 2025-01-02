@@ -25,9 +25,9 @@
             margin-bottom: 20px;
         }
 
-        .repo-select {
+        .my-select {
             padding: 8px;
-            font-size: 16px;
+            font-size: 13px;
             margin-bottom: 20px;
         }
 
@@ -81,12 +81,6 @@
 
         .show {
             display: block;
-        }
-
-        .sort-select {
-            padding: 8px;
-            font-size: 16px;
-            margin-bottom: 20px;
         }
 
         .share-button {
@@ -168,15 +162,38 @@
 <body>
     <div class="header" style="position:sticky; top: 0; background: #f5f5f5; z-index: 1000;">
         <h1>API Performance Analysis</h1>
-        <select id="repo-select" class="repo-select" onchange="loadRepoData(this.value)">
+        <select id="repo-select" class="my-select" onchange="loadRepoData(this.value)">
             {% for repo in repos %}
             <option value="{{ repo }}" {% if repo==default_repo %} selected{% endif %}>{{ repo }}</option>
             {% endfor %}
         </select>
-        <select id="sort-select" class="sort-select" onchange="handleSortChange()">
-            <option value="date">Sort by Date</option>
-            <option value="speedup">Sort by Speedup</option>
+        <select id="sort-select" class="my-select" onchange="handleSortChange()">
+            <option value="date">Commits by Date</option>
+            <option value="speedup">Commits by Speedup</option>
         </select>
+        <select id="file-type-filter" class="my-select">
+            <option value="false">All file types</option>
+            <option value="true">Non-Python Only</option>
+        </select>
+        <select id="file-count-filter" class="my-select">
+            <option value="">All file counts</option>
+            <option value="1-5">1-5 files</option>
+            <option value="6-10">6-10 files</option>
+            <option value="11-20">11-20 files</option>
+            <option value="21-999999">21+ files</option>
+        </select>
+        <select id="loc-filter" class="my-select">
+            <option value="">All LoC</option>
+            <option value="1-50">1-50 lines</option>
+            <option value="51-200">51-200 lines</option>
+            <option value="201-500">201-500 lines</option>
+            <option value="501-999999">501+ lines</option>
+        </select>
+        <button onclick="resetFilters()" class="p-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+            Reset Filters
+        </button>
+    </div>
+
     </div>
 
     <div id="loading" class="loading" style="display: none;">
@@ -401,12 +418,44 @@
             collapsible.classList.toggle('show');
         }
 
+        let currentFilters = {
+            non_python_only: 'false',
+            file_count_range: '',
+            loc_range: ''
+        };
+
+        function updateFilters(filterName, value) {
+            currentFilters[filterName] = value;
+            const repoName = document.getElementById('repo-select').value;
+            loadRepoData(repoName, 1);  // Reset to first page when filters change
+        }
+
+        function resetFilters() {
+            document.getElementById('file-type-filter').value = 'false';
+            document.getElementById('file-count-filter').value = '';
+            document.getElementById('loc-filter').value = '';
+            currentFilters = {
+                non_python_only: 'false',
+                file_count_range: '',
+                loc_range: ''
+            };
+            const repoName = document.getElementById('repo-select').value;
+            loadRepoData(repoName, 1);
+        }
+
         async function loadRepoData(repoName, page = 1) {
             showLoading();
             const sortBy = document.getElementById('sort-select').value;
 
+            // Build query string with filters
+            const queryParams = new URLSearchParams({
+                page: page,
+                sort: sortBy,
+                ...currentFilters
+            });
+
             try {
-                const response = await fetch(`/get_repo_data/${repoName}?page=${page}&sort=${sortBy}`);
+                const response = await fetch(`/get_repo_data/${repoName}?${queryParams}`);
                 const data = await response.json();
 
                 if (data.error) {
@@ -512,6 +561,19 @@
                 hideLoading();
             }
         }
+
+        // Add event listeners for filters
+        document.getElementById('file-type-filter').addEventListener('change', (e) => {
+            updateFilters('non_python_only', e.target.value);
+        });
+
+        document.getElementById('file-count-filter').addEventListener('change', (e) => {
+            updateFilters('file_count_range', e.target.value);
+        });
+
+        document.getElementById('loc-filter').addEventListener('change', (e) => {
+            updateFilters('loc_range', e.target.value);
+        });
 
         // Load initial data
         document.addEventListener('DOMContentLoaded', function () {
