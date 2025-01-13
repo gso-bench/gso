@@ -13,10 +13,14 @@ app = Flask(__name__)
 APIS_PER_PAGE = 5  # Number of APIs to show per page
 
 
-def parse_range(range_str):
+def parse_range(range_str, type=float):
     if "+" in range_str:
+        if type == int:
+            return int(range_str[:-1]), 9999999
         return float(range_str[:-1]), float("inf")
     if "-" in range_str:
+        if type == int:
+            return map(int, range_str.split("-"))
         return map(float, range_str.split("-"))
     raise ValueError(f"Invalid format: {range_str}")
 
@@ -115,7 +119,7 @@ def filter_problems(api_groups, filters):
 
         file_count_range = filters.get("file_count_range")
         if file_count_range:
-            min_files, max_files = map(int, parse_range(file_count_range))
+            min_files, max_files = parse_range(file_count_range, type=int)
             filtered_problems = [
                 p
                 for p in filtered_problems
@@ -124,7 +128,7 @@ def filter_problems(api_groups, filters):
 
         loc_range = filters.get("loc_range")
         if loc_range:
-            min_loc, max_loc = map(int, parse_range(loc_range))
+            min_loc, max_loc = parse_range(loc_range, type=int)
             filtered_problems = [
                 p
                 for p in filtered_problems
@@ -133,7 +137,7 @@ def filter_problems(api_groups, filters):
 
         speedup_range = filters.get("speedup_range")
         if speedup_range:
-            min_speedup, max_speedup = map(float, parse_range(speedup_range))
+            min_speedup, max_speedup = parse_range(speedup_range, type=float)
             filtered_problems = [
                 p
                 for p in filtered_problems
@@ -143,7 +147,7 @@ def filter_problems(api_groups, filters):
         commit_count_range = filters.get("commit_count_range")
         if commit_count_range:
             num_unique_commits = len(set(p["commit"] for p in filtered_problems))
-            min_commits, max_commits = map(int, parse_range(commit_count_range))
+            min_commits, max_commits = parse_range(commit_count_range, type=int)
             filtered_problems = (
                 []
                 if num_unique_commits < min_commits or num_unique_commits > max_commits
