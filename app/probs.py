@@ -13,6 +13,14 @@ app = Flask(__name__)
 APIS_PER_PAGE = 5  # Number of APIs to show per page
 
 
+def parse_range(range_str):
+    if "+" in range_str:
+        return float(range_str[:-1]), float("inf")
+    if "-" in range_str:
+        return map(float, range_str.split("-"))
+    raise ValueError(f"Invalid format: {range_str}")
+
+
 def get_repo_list():
     return [d for d in os.listdir(EXPS_DIR) if os.path.isdir(EXPS_DIR / d)]
 
@@ -55,6 +63,8 @@ def load_repo_data(repo_name, page=1, per_page=APIS_PER_PAGE):
         "non_python_only": request.args.get("non_python_only") == "true",
         "file_count_range": request.args.get("file_count_range"),
         "loc_range": request.args.get("loc_range"),
+        "commit_count_range": request.args.get("commit_count_range"),
+        "speedup_range": request.args.get("speedup_range"),
     }
     api_groups = filter_problems(api_groups, filters)
 
@@ -105,7 +115,7 @@ def filter_problems(api_groups, filters):
 
         file_count_range = filters.get("file_count_range")
         if file_count_range:
-            min_files, max_files = map(int, file_count_range.split("-"))
+            min_files, max_files = map(int, parse_range(file_count_range))
             filtered_problems = [
                 p
                 for p in filtered_problems
@@ -114,12 +124,31 @@ def filter_problems(api_groups, filters):
 
         loc_range = filters.get("loc_range")
         if loc_range:
-            min_loc, max_loc = map(int, loc_range.split("-"))
+            min_loc, max_loc = map(int, parse_range(loc_range))
             filtered_problems = [
                 p
                 for p in filtered_problems
                 if min_loc <= p["stats"]["num_edited_lines"] <= max_loc
             ]
+
+        speedup_range = filters.get("speedup_range")
+        if speedup_range:
+            min_speedup, max_speedup = map(float, parse_range(speedup_range))
+            filtered_problems = [
+                p
+                for p in filtered_problems
+                if min_speedup <= p["speedup_factor"] <= max_speedup
+            ]
+
+        commit_count_range = filters.get("commit_count_range")
+        if commit_count_range:
+            num_unique_commits = len(set(p["commit"] for p in filtered_problems))
+            min_commits, max_commits = map(int, parse_range(commit_count_range))
+            filtered_problems = (
+                []
+                if num_unique_commits < min_commits or num_unique_commits > max_commits
+                else filtered_problems
+            )
 
         if filtered_problems:  # Only add groups that have problems after filtering
             filtered_groups[api] = filtered_problems

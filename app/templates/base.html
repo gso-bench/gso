@@ -189,6 +189,19 @@
             <option value="201-500">201-500 lines</option>
             <option value="501-999999">501+ lines</option>
         </select>
+        <select id="speedup-filter" class="my-select">
+            <option value="">Any speedup</option>
+            <option value="1-2">1-2 x</option>
+            <option value="2-5">2-5 x</option>
+            <option value="5-10">5-10 x</option>
+            <option value="10+">10+ x</option>
+        </select>
+        <select id="commit-count-filter" class="my-select">
+            <option value="">Any commits</option>
+            <option value="1">1 commit</option>
+            <option value="2-5">2-5 commits</option>
+            <option value="5+">5+ commits</option>
+        </select>
         <button onclick="resetFilters()" class="p-2 bg-blue-500 text-white rounded hover:bg-blue-600">
             Reset Filters
         </button>
@@ -421,7 +434,9 @@
         let currentFilters = {
             non_python_only: 'false',
             file_count_range: '',
-            loc_range: ''
+            loc_range: '',
+            speedup_range: '',
+            commit_count_range: ''
         };
 
         function updateFilters(filterName, value) {
@@ -437,7 +452,9 @@
             currentFilters = {
                 non_python_only: 'false',
                 file_count_range: '',
-                loc_range: ''
+                loc_range: '',
+                speedup_range: '',
+                commit_count_range: ''
             };
             const repoName = document.getElementById('repo-select').value;
             loadRepoData(repoName, 1);
@@ -573,6 +590,14 @@
 
         document.getElementById('loc-filter').addEventListener('change', (e) => {
             updateFilters('loc_range', e.target.value);
+        });
+
+        document.getElementById('speedup-filter').addEventListener('change', (e) => {
+            updateFilters('speedup_range', e.target.value);
+        });
+
+        document.getElementById('commit-count-filter').addEventListener('change', (e) => {
+            updateFilters('commit_count_range', e.target.value);
         });
 
         // Load initial data
