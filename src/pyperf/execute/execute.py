@@ -34,6 +34,7 @@ class ExecutionManager:
         problems: list[Problem],
         machines: int,
         runs: int,
+        interactive: bool = False,
     ):
         self.exp_id = exp_id
         self.exp_dir = exp_dir
@@ -44,6 +45,7 @@ class ExecutionManager:
         self.tasks: dict[str, TaskState] = {}
         self.active_clusters: set[str] = set()
         self.completed_clusters: set[str] = set()
+        self.interactive = interactive
 
         self.lock = threading.Lock()
         self.thread_pool = ThreadPoolExecutor(max_workers=machines * 2)
@@ -80,7 +82,7 @@ class ExecutionManager:
                     f"{state.problem.pid}_task.yaml",
                     state.workspace,
                     cluster=cluster,
-                    interactive=False,
+                    interactive=self.interactive,
                 ),
             )
 
@@ -252,7 +254,7 @@ async def async_main(
     else:
         problems = all_problems
 
-    manager = ExecutionManager(exp_id, exp_dir, problems, machines, runs)
+    manager = ExecutionManager(exp_id, exp_dir, problems, machines, runs, interactive)
     manager.initialize_problems()
     try:
         await manager.run()
