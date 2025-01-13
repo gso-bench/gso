@@ -17,7 +17,7 @@ run_tests_for_commit() {
     echo "Running test $test_file $iterations times..."
     for i in $(seq 1 $iterations); do
         echo "  Iteration $i/$iterations"
-        python "$test_file" "$result_file" "$flag" --file_prefix "$prefix"
+        timeout 300s python "$test_file" "$result_file" "$flag" --file_prefix "$prefix"
     done
 }
 

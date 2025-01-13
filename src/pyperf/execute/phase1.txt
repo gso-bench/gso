@@ -46,7 +46,7 @@ for commit_hash in "${candidate_commits[@]}"; do
             # Create temp file for results
             tmp_file="phase1_results.txt"
             
-            if python "${test_file}" "$tmp_file" --reference --file_prefix "phase1_ref"; then
+            if timeout 300s python "${test_file}" "$tmp_file" --reference --file_prefix "phase1_ref"; then
                 echo "Test passed: ${test_file} for commit ${commit_hash}"
                 add_working_pair "${commit_hash}" "${test_file}"
             else
