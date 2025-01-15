@@ -68,6 +68,8 @@
         }
 
         .toggle-section {
+            padding-top: 2%;
+            font-weight: bold;
             cursor: pointer;
             color: #3498db;
         }
@@ -557,10 +559,10 @@
                             <span class="stat-item"><strong>Commit:</strong> ${prob.commit_mean.toFixed(6)} (± ${prob.commit_std.toFixed(6)})</span>
                             <span class="stat-item"><strong>Target:</strong> ${prob.target_mean.toFixed(6)} (± ${prob.target_std.toFixed(6)})</span>
                         </div>
-                        <h4 class="toggle-section" onclick="toggleSection(event, this)">
+                        <span class="toggle-section" onclick="toggleSection(event, this)">
                             Generated Test
                             <button class="share-button" onclick="shareTest(event, this, '${api}', '${prob.commit}', '${prob.test_id}')">🔗</button>
-                        </h4>
+                        </span>
                         <div class="message collapsible">
                             <pre>${prob.test || 'Test not available'}</pre>
                         </div>
