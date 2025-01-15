@@ -262,18 +262,31 @@
         function createChart(containerId, apiData, sortBy = 'date') {
             const ctx = document.getElementById(containerId).getContext('2d');
 
-            // Group tests by commit
+            // Group tests by commit and find the test with the highest speedup in each commit
             const commitGroups = {};
             apiData.problems.forEach(prob => {
-                if (!commitGroups[prob.commit]) {
-                    commitGroups[prob.commit] = {
-                        hash: prob.commit,
-                        date: new Date(prob.date),
+                const commitHash = prob.commit;
+                const date = new Date(prob.date);
+
+                if (!commitGroups[commitHash]) {
+                    // Initialize commit group with the current problem
+                    commitGroups[commitHash] = {
+                        hash: commitHash,
+                        date: date,
+                        maxSpeedupTest: prob,  // Store the test with the highest speedup
                         speedup: prob.speedup_factor,
-                        tests: []
+                        tests: [prob]
                     };
+                } else {
+                    // Add the problem to the tests array
+                    commitGroups[commitHash].tests.push(prob);
+
+                    // Update the maxSpeedupTest if this prob has higher speedup
+                    if (prob.speedup_factor > commitGroups[commitHash].maxSpeedupTest.speedup_factor) {
+                        commitGroups[commitHash].maxSpeedupTest = prob;
+                        commitGroups[commitHash].speedup = prob.speedup_factor;
+                    }
                 }
-                commitGroups[prob.commit].tests.push(prob);
             });
 
             // Sort commits based on selected criterion
@@ -293,20 +306,22 @@
             });
             xLabels.push('main');
 
-            // Create a dataset for each commit
+            // Create a dataset for each commit using the test with the highest speedup
             const datasets = sortedCommits.map((commit, idx) => {
-                // Calculate statistics (NOTE: only first test considered)
+                const prob = commit.maxSpeedupTest;  // Use the test with the highest speedup
+
+                // Extract statistics
                 const baseStats = {
-                    mean: commit.tests[0].base_mean,
-                    std: commit.tests[0].base_std
+                    mean: prob.base_mean,
+                    std: prob.base_std
                 };
                 const commitStats = {
-                    mean: commit.tests[0].commit_mean,
-                    std: commit.tests[0].commit_std
+                    mean: prob.commit_mean,
+                    std: prob.commit_std
                 };
                 const targetStats = {
-                    mean: commit.tests[0].target_mean,
-                    std: commit.tests[0].target_std
+                    mean: prob.target_mean,
+                    std: prob.target_std
                 };
 
                 // Create data points with 'x' properties matching xLabels
