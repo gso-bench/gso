@@ -480,23 +480,24 @@
 
         function renderCommitList(api, problems, sortBy) {
             const commitListDiv = document.getElementById(`commit-list-${api.replace(/\./g, '-')}`);
-     
+        
             // Clear existing commit items
             commitListDiv.innerHTML = '';
-     
+        
             // Group problems by commit
             const commitGroups = {};
             problems.forEach(prob => {
-                if (!commitGroups[prob.commit]) {
-                    commitGroups[prob.commit] = {
+                const commitKey = prob.commit;
+                if (!commitGroups[commitKey]) {
+                    commitGroups[commitKey] = {
                         ...prob,
                         problems: []
                     };
                 }
-                commitGroups[prob.commit].problems.push(prob);
+                commitGroups[commitKey].problems.push(prob);
             });
-     
-            // Sort commits based on selected criterion
+        
+            // Sort commits
             const sortedCommits = Object.values(commitGroups)
                 .sort((a, b) => {
                     if (sortBy === 'speedup') {
@@ -504,18 +505,34 @@
                     }
                     return new Date(a.date) - new Date(b.date);
                 });
-     
-            // Re-create commit items
-            sortedCommits.forEach(prob => {
-                const testDivId = generateTestId(api, prob.commit, prob.test_id);
-                commitListDiv.innerHTML += `
-                    <div class="commit-item" id="${testDivId}">
+        
+            // Render commits and their associated tests/problems
+            sortedCommits.forEach(commit => {
+                // Create a container for this commit
+                const commitDiv = document.createElement('div');
+                commitDiv.className = 'commit-item';
+        
+                // Header information for the commit
+                commitDiv.innerHTML = `
+                    <div>
+                        <span class="stat-item"><strong>Commit:</strong> <a href="${commit.repo_url}/commit/${commit.commit}">${commit.commit}</a> (${new Date(commit.date).toLocaleDateString()})</span>
+                        <span class="stat-item"><strong>FTypes:</strong> ${commit.stats.ftypes}</span>
+                        <span class="stat-item"><strong>Files:</strong> ${commit.stats.num_non_test_files}</span>  
+                        <span class="stat-item"><strong>Hunks:</strong> ${commit.stats.num_hunks}</span>
+                        <span class="stat-item"><strong>LoC:</strong> ${commit.stats.num_edited_lines}</span>
+                    </div>
+                `;
+        
+                // Loop over each test/problem associated with this commit
+                commit.problems.forEach(prob => {
+                    const testDivId = generateTestId(api, prob.commit, prob.test_id);
+        
+                    // Create a container for each test/problem
+                    const testDiv = document.createElement('div');
+                    testDiv.id = testDivId;
+        
+                    testDiv.innerHTML = `
                         <div>
-                            <span class="stat-item"><strong>Commit:</strong> <a href="${prob.repo_url}/commit/${prob.commit}">${prob.commit}</a> (${new Date(prob.date).toLocaleDateString()})</span>
-                            <span class="stat-item"><strong>FTypes:</strong> ${prob.stats.ftypes}</span>
-                            <span class="stat-item"><strong>Files:</strong> ${prob.stats.num_non_test_files}</span>  
-                            <span class="stat-item"><strong>Hunks:</strong> ${prob.stats.num_hunks}</span>
-                            <span class="stat-item"><strong>LoC:</strong> ${prob.stats.num_edited_lines}</span>
                             <br/>
                             <span class="stat-item"><strong>Test:</strong> ${prob.test_id}</span>
                             <span class="stat-item"><strong>Opt:</strong> ${prob.opt_perc.toFixed(2)}%</span>
@@ -532,11 +549,19 @@
                         <div class="message collapsible">
                             <pre>${prob.test || 'Test not available'}</pre>
                         </div>
-                    </div>
-                `;
+                    `;
+        
+                    // Append the test/problem to the commitDiv
+                    commitDiv.appendChild(testDiv);
+                });
+        
+                // Append the commitDiv to the commit list
+                commitListDiv.appendChild(commitDiv);
             });
         }
-
+        
+        let currentApiData = {}; // Global variable to store API data
+        
         async function loadRepoData(repoName, page = 1) {
             showLoading();
             const speedupMode = document.getElementById('speedup-mode-select').value;
@@ -563,6 +588,9 @@
 
                 const apiContainer = document.getElementById('api-container');
                 apiContainer.innerHTML = '';
+
+                // Store the API data globally
+                currentApiData = data.apis;
 
                 // Create sections for each API
                 Object.entries(data.apis).forEach(([api, problems]) => {
