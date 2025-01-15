@@ -167,9 +167,9 @@
             <option value="{{ repo }}" {% if repo==default_repo %} selected{% endif %}>{{ repo }}</option>
             {% endfor %}
         </select>
-        <select id="sort-select" class="my-select" onchange="handleSortChange()">
-            <option value="date">Commits by Date</option>
-            <option value="speedup">Commits by Speedup</option>
+        <select id="speedup-mode-select" class="my-select" onchange="handleSpeedupModeChange()">
+            <option value="target" selected>Rank by Base→Main Δ</option>
+            <option value="commit">Rank by Base→Commit Δ</option>
         </select>
         <select id="file-type-filter" class="my-select">
             <option value="false">All file types</option>
@@ -228,9 +228,27 @@
             document.getElementById('loading').style.display = 'none';
         }
 
-        function handleSortChange() {
+        function handleApiSortChange(api) {
+            const sortSelect = document.getElementById(`sort-select-${api.replace(/\./g, '-')}`);
+            const sortBy = sortSelect.value;
+     
+            // Get the problems for this API from the stored data
+            const problems = currentApiData[api];
+     
+            // Re-create the chart
+            const chartId = `chart-${api.replace(/\./g, '-')}`;
+            if (currentCharts[chartId]) {
+                currentCharts[chartId].destroy();
+            }
+            currentCharts[chartId] = createChart(chartId, { problems }, sortBy);
+     
+            // Re-render the commit list in sorted order
+            renderCommitList(api, problems, sortBy);
+        }
+
+        function handleSpeedupModeChange() {
             const repoName = document.getElementById('repo-select').value;
-            loadRepoData(repoName, currentPage);
+            loadRepoData(repoName, 1); // Reload data with new speedup_mode, reset to page 1
         }
 
         function calculateStats(tests, metric) {
@@ -460,14 +478,73 @@
             loadRepoData(repoName, 1);
         }
 
+        function renderCommitList(api, problems, sortBy) {
+            const commitListDiv = document.getElementById(`commit-list-${api.replace(/\./g, '-')}`);
+     
+            // Clear existing commit items
+            commitListDiv.innerHTML = '';
+     
+            // Group problems by commit
+            const commitGroups = {};
+            problems.forEach(prob => {
+                if (!commitGroups[prob.commit]) {
+                    commitGroups[prob.commit] = {
+                        ...prob,
+                        problems: []
+                    };
+                }
+                commitGroups[prob.commit].problems.push(prob);
+            });
+     
+            // Sort commits based on selected criterion
+            const sortedCommits = Object.values(commitGroups)
+                .sort((a, b) => {
+                    if (sortBy === 'speedup') {
+                        return b.speedup_factor - a.speedup_factor;
+                    }
+                    return new Date(a.date) - new Date(b.date);
+                });
+     
+            // Re-create commit items
+            sortedCommits.forEach(prob => {
+                const testDivId = generateTestId(api, prob.commit, prob.test_id);
+                commitListDiv.innerHTML += `
+                    <div class="commit-item" id="${testDivId}">
+                        <div>
+                            <span class="stat-item"><strong>Commit:</strong> <a href="${prob.repo_url}/commit/${prob.commit}">${prob.commit}</a> (${new Date(prob.date).toLocaleDateString()})</span>
+                            <span class="stat-item"><strong>FTypes:</strong> ${prob.stats.ftypes}</span>
+                            <span class="stat-item"><strong>Files:</strong> ${prob.stats.num_non_test_files}</span>  
+                            <span class="stat-item"><strong>Hunks:</strong> ${prob.stats.num_hunks}</span>
+                            <span class="stat-item"><strong>LoC:</strong> ${prob.stats.num_edited_lines}</span>
+                            <br/>
+                            <span class="stat-item"><strong>Test:</strong> ${prob.test_id}</span>
+                            <span class="stat-item"><strong>Opt:</strong> ${prob.opt_perc.toFixed(2)}%</span>
+                            <span class="stat-item"><strong>Speedup:</strong> ${prob.speedup_factor.toFixed(2)}x</span>
+                            <br/>
+                            <span class="stat-item"><strong>Base:</strong> ${prob.base_mean.toFixed(6)} (± ${prob.base_std.toFixed(6)})</span>
+                            <span class="stat-item"><strong>Commit:</strong> ${prob.commit_mean.toFixed(6)} (± ${prob.commit_std.toFixed(6)})</span>
+                            <span class="stat-item"><strong>Target:</strong> ${prob.target_mean.toFixed(6)} (± ${prob.target_std.toFixed(6)})</span>
+                        </div>
+                        <h4 class="toggle-section" onclick="toggleSection(event, this)">
+                            Generated Test
+                            <button class="share-button" onclick="shareTest(event, this, '${api}', '${prob.commit}', '${prob.test_id}')">🔗</button>
+                        </h4>
+                        <div class="message collapsible">
+                            <pre>${prob.test || 'Test not available'}</pre>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
         async function loadRepoData(repoName, page = 1) {
             showLoading();
-            const sortBy = document.getElementById('sort-select').value;
+            const speedupMode = document.getElementById('speedup-mode-select').value;
 
             // Build query string with filters
             const queryParams = new URLSearchParams({
                 page: page,
-                sort: sortBy,
+                speedup_mode: speedupMode,
                 ...currentFilters
             });
 
@@ -492,48 +569,31 @@
                     const apiSection = document.createElement('div');
                     apiSection.className = 'api-section';
 
+                    // Create a unique id for the sort-select for this API
+                    const sortSelectId = `sort-select-${api.replace(/\./g, '-')}`;
+
                     // Add API title and chart
                     apiSection.innerHTML = `
-                        <h2 class="api-title">API: ${api}</h2>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <h2 class="api-title">API: ${api}</h2>
+                            <select id="${sortSelectId}" class="my-select" onchange="handleApiSortChange('${api}')">
+                                <option value="date">Commits by Date</option>
+                                <option value="speedup">Commits by Speedup</option>
+                            </select>
+                        </div>
                         <div class="chart-container">
                             <canvas id="chart-${api.replace(/\./g, '-')}"></canvas>
                         </div>
                         <div class="commit-list" id="commit-list-${api.replace(/\./g, '-')}"></div>
                     `;
 
-                    // Add problems list
-                    const problemsList = apiSection.querySelector('.commit-list');
-                    problems.forEach(prob => {
-                        const testDivId = generateTestId(api, prob.commit, prob.test_id);
-                        problemsList.innerHTML += `
-                            <div class="commit-item" id="${testDivId}">
-                                <div>
-                                    <span class="stat-item"><strong>Commit:</strong> <a href="${prob.repo_url}/commit/${prob.commit}">${prob.commit}</a> (${new Date(prob.date).toLocaleDateString()})</span>
-                                    <span class="stat-item"><strong>FTypes:</strong> ${prob.stats.ftypes}</span>
-                                    <span class="stat-item"><strong>Files:</strong> ${prob.stats.num_non_test_files}</span>  
-                                    <span class="stat-item"><strong>Hunks:</strong> ${prob.stats.num_hunks}</span>
-                                    <span class="stat-item"><strong>LoC:</strong> ${prob.stats.num_edited_lines}</span>
-                                    <br/>
-                                    <span class="stat-item"><strong>Test:</strong> ${prob.test_id}</span>
-                                    <span class="stat-item"><strong>Opt:</strong> ${prob.opt_perc.toFixed(2)}%</span>
-                                    <span class="stat-item"><strong>Speedup:</strong> ${prob.speedup_factor.toFixed(2)}x</span>
-                                    <br/>
-                                    <span class="stat-item"><strong>Base:</strong> ${prob.base_mean.toFixed(6)} (± ${prob.base_std.toFixed(6)})</span>
-                                    <span class="stat-item"><strong>Commit:</strong> ${prob.commit_mean.toFixed(6)} (± ${prob.commit_std.toFixed(6)})</span>
-                                    <span class="stat-item"><strong>Target:</strong> ${prob.target_mean.toFixed(6)} (± ${prob.target_std.toFixed(6)})</span>
-                                </div>
-                                <h4 class="toggle-section" onclick="toggleSection(event, this)">
-                                    Generated Test
-                                    <button class="share-button" onclick="shareTest(event, this, '${api}', '${prob.commit}', '${prob.test_id}')">🔗</button>
-                                </h4>
-                                <div class="message collapsible">
-                                    <pre>${prob.test || 'Test not available'}</pre>
-                                </div>
-                            </div>
-                        `;
-                    });
-
                     apiContainer.appendChild(apiSection);
+                    
+                    // Create initial sortBy value
+                    let sortBy = 'date';
+
+                    // Render commit list
+                    renderCommitList(api, problems, sortBy);
 
                     // Initialize chart
                     const chartId = `chart-${api.replace(/\./g, '-')}`;

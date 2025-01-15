@@ -42,7 +42,7 @@ def print_prob_summary(prob):
     print("-" * 50)
 
 
-def speedup_summary(prob):
+def speedup_summary(prob, speedup_threshold=2, speedup_mode="target"):
     run0_res = list(prob.results.values())[0]
     stats = {}
     valid_commits, opt_commits = set(), set()
@@ -68,11 +68,21 @@ def speedup_summary(prob):
         target_times = parse_times(target_result)
         target_mean, target_std = compute_stats(target_times)
 
-        opt_perc = ((base_mean - target_mean) / base_mean) * 100
-        speedup_factor = base_mean / target_mean
+        if speedup_mode == "target":
+            before_mean, after_mean = base_mean, target_mean
+        elif speedup_mode == "commit":
+            before_mean, after_mean = base_mean, comm_mean
+
+        opt_perc = ((before_mean - after_mean) / before_mean) * 100
+        speedup_factor = before_mean / after_mean
         loc_changed = commit.stats.get("num_non_test_edited_lines", 0)
 
-        if base_mean > target_mean and opt_perc > 2:
+        if before_mean > after_mean and opt_perc > speedup_threshold:
+
+            if speedup_mode == "commit" and target_mean > comm_mean:
+                valid_commits.add(commit.quick_hash())
+                continue
+
             ct_stats = {
                 "pid": prob.pid,
                 "api": prob.api,

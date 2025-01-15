@@ -26,7 +26,13 @@ def parse_range(range_str, type=float):
 
 
 def get_repo_list():
-    return [d for d in os.listdir(EXPS_DIR) if os.path.isdir(EXPS_DIR / d)]
+    repo_dirs = [d for d in os.listdir(EXPS_DIR) if os.path.isdir(EXPS_DIR / d)]
+    repo_list = []
+    for repo in repo_dirs:
+        file_path = os.path.join(EXPS_DIR, f"{repo}", f"{repo}_results.json")
+        if os.path.exists(file_path):
+            repo_list.append(repo)
+    return repo_list
 
 
 def load_repo_data(repo_name, page=1, per_page=APIS_PER_PAGE):
@@ -34,9 +40,12 @@ def load_repo_data(repo_name, page=1, per_page=APIS_PER_PAGE):
     all_problems = load_problems(file_path)
     api_groups = defaultdict(list)
 
+    # Get speedup mode from request args, default to "target"
+    speedup_mode = request.args.get("speedup_mode", "target")
+
     for prob in all_problems:
         if prob.is_valid():
-            stats, _, _ = speedup_summary(prob)
+            stats, _, _ = speedup_summary(prob, speedup_mode=speedup_mode)
             if stats:
                 for s in stats:
                     test = prob.get_test(stats[s]["commit"], stats[s]["test_id"])
@@ -72,16 +81,20 @@ def load_repo_data(repo_name, page=1, per_page=APIS_PER_PAGE):
     }
     api_groups = filter_problems(api_groups, filters)
 
-    # Sort problems within each API group
-    sort_by = request.args.get("sort", "date")
+    # Compute mean speedup for each API
+    api_mean_speedups = {}
     for api in api_groups:
-        if sort_by == "speedup":
-            api_groups[api].sort(key=lambda x: x["speedup_factor"], reverse=True)
+        speedups = [prob["speedup_factor"] for prob in api_groups[api]]
+        if speedups:
+            mean_speedup = sum(speedups) / len(speedups)
+            api_mean_speedups[api] = mean_speedup
         else:
-            api_groups[api].sort(key=lambda x: x["date"], reverse=True)
+            api_mean_speedups[api] = 0
 
-    # Get sorted list of API names
-    api_names = sorted(api_groups.keys())
+    # Sort API names based on mean speedup
+    api_names = sorted(
+        api_groups.keys(), key=lambda api: api_mean_speedups[api], reverse=True
+    )
     total_apis = len(api_names)
     total_pages = ceil(total_apis / per_page)
 
