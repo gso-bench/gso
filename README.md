@@ -50,7 +50,7 @@ install_commands:
 ```
 
 You can add the repository URL and custom python version & installation commands. You can also specify `api_docs` and `repo_instr` (free form strings) to specify APIs to focus on during analysis and custom performance test generation tips. If `install_commands` is not provided, a
-[default set](https://github.com/r2e-project/pyperf/blob/7b65c8fd7d41ae4d46e889d912e4fbc931871f39/src/pyperf/data/problem.py#L5-L6) is used.
+[default set](https://github.com/r2e-project/pyperf/blob/7b65c8fd7d41ae4d46e889d912e4fbc931871f39/src/pyperf/data/problem.py#L5-L6) is used. See examples in the [experiments/](/exps/) directory.
 
 
 

@@ -7,6 +7,6 @@ install_commands:
   - source .venv/bin/activate
   - which python
   - python --version
-  - uv pip install .
+  - uv pip install . --reinstall
   - uv pip install requests dill "numpy<2.0"
   - uv pip show pandas
