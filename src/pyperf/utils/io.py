@@ -3,6 +3,7 @@ import yaml
 import shutil
 from datetime import datetime
 from pathlib import Path
+from argparse import ArgumentTypeError
 
 from pyperf.data import Problem, APICommitMap
 from pyperf.constants import EXPS_DIR
@@ -93,3 +94,17 @@ def load_exp_config(yaml_path, api=None) -> dict:
 
         resp["candidates"] = api_only
     return resp
+
+
+def str2bool(v):
+    """
+    Minor helper function to convert string to boolean
+    """
+    if isinstance(v, bool):
+        return v
+    if v.lower() in ("yes", "true", "t", "y", "1"):
+        return True
+    elif v.lower() in ("no", "false", "f", "n", "0"):
+        return False
+    else:
+        raise ArgumentTypeError("Boolean value expected.")
