@@ -35,7 +35,19 @@ def load_problems(file_path) -> list[Problem]:
 
 
 def save_problems(file_path, problems: list[Problem]):
-    problems_data = [problem.dict() for problem in problems]
+    existing_problems = {}
+    try:
+        with open(file_path, "r") as f:
+            existing_data = json.load(f)
+            existing_problems = {p["pid"]: p for p in existing_data}
+    except (FileNotFoundError, json.JSONDecodeError):
+        existing_problems = {}
+
+    # update/add new problems
+    for problem in problems:
+        existing_problems[problem.pid] = problem.dict()
+
+    problems_data = list(existing_problems.values())
 
     with open(file_path, "w") as f:
         json.dump(problems_data, f, indent=4, cls=CustomEncoder)

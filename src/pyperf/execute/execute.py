@@ -148,10 +148,16 @@ class ExecutionManager:
         for cluster in self.active_clusters:
             state = self.tasks[cluster]
             if not state.is_complete:
-                is_complete = await asyncio.get_event_loop().run_in_executor(
-                    self.thread_pool,
-                    functools.partial(SkyManager.is_complete, state.workspace, cluster),
-                )
+                try:
+                    is_complete = await asyncio.get_event_loop().run_in_executor(
+                        self.thread_pool,
+                        functools.partial(
+                            SkyManager.is_complete, state.workspace, cluster
+                        ),
+                    )
+                except Exception as e:
+                    print(f"WARNING: error is_complete: {cluster} Assuming complete")
+                    is_complete = True
 
                 if is_complete:
                     state.is_complete = True
