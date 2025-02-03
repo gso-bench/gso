@@ -21,6 +21,32 @@ class PyPerfInstance:
         return key
 
     @property
+    def install_repo_script(self):
+        env_name = "testbed"
+        repo_directory = f"/{env_name}"
+        repo_setup = [
+            f"git clone -o origin https://github.com/{self.repo} {repo_directory}",
+            f"chmod -R 777 {repo_directory}",  # nonroot user can run tests
+            f"cd {repo_directory}",
+            f"git reset --hard {self.base_commit}",
+            # Remove remote so agent can't see newer commits
+            f"git remote remove origin",
+        ]
+
+        return (
+            "\n".join(
+                ["#!/bin/bash", "set -euxo pipefail"]
+                + repo_setup
+                + self.install_commands
+            )
+            + "\n"
+        )
+
+    @property
+    def eval_script(self):
+        raise NotImplementedError("Eval script not implemented yet")
+
+    @property
     def platform(self):
         if self.arch == "x86_64":
             return "linux/x86_64"

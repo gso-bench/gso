@@ -25,3 +25,4 @@ PHASE1_TEMPLATE = current_dir / "execute" / "phase1.txt"
 PHASE2_TEMPLATE = current_dir / "execute" / "phase2.txt"
 
 DATASET_DIR = PYPERF_BUCKET_DIR / "datasets"
+INSTANCE_IMAGE_BUILD_DIR = Path("logs/build_images/instances")
