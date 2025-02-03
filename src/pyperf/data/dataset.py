@@ -43,10 +43,6 @@ class PyPerfInstance:
         )
 
     @property
-    def eval_script(self):
-        raise NotImplementedError("Eval script not implemented yet")
-
-    @property
     def platform(self):
         if self.arch == "x86_64":
             return "linux/x86_64"

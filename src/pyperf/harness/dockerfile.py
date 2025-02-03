@@ -39,11 +39,19 @@ RUN adduser --disabled-password --gecos 'dog' nonroot
 
 WORKDIR /testbed/
 
+# Copy and setup the repo
 COPY ./setup_repo.sh /root/
 RUN sed -i -e 's/\r$//' /root/setup_repo.sh
 RUN /bin/bash /root/setup_repo.sh
 
+# Copy the test and eval scripts to parent of testbed
+COPY ./eval.sh /
+COPY ./pyperf_test.py /
+
 WORKDIR /testbed/
+
+# Automatically activate the env within the testbed directory
+RUN echo "source .venv/bin/activate" >> /root/.bashrc
 """
 
 

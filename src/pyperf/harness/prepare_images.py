@@ -11,6 +11,7 @@ def main(
     split,
     instance_ids,
     max_workers,
+    force_rebuild,
     push_to_registry,
     open_file_limit,
     dockerhub_username,
@@ -31,6 +32,7 @@ def main(
     successful, failed = build_instance_images(
         dataset=dataset,
         max_workers=max_workers,
+        force_rebuild=force_rebuild,
         push_to_registry=push_to_registry,
         dockerhub_id=dockerhub_id,
     )
@@ -55,6 +57,12 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--max_workers", type=int, default=4, help="Max workers for parallel processing"
+    )
+    parser.add_argument(
+        "--force_rebuild",
+        type=str2bool,
+        default=False,
+        help="Force rebuild all images",
     )
     parser.add_argument(
         "--push_to_registry",

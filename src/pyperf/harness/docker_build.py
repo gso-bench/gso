@@ -11,6 +11,7 @@ from pyperf.constants import INSTANCE_IMAGE_BUILD_DIR
 from pyperf.utils.multiprocess import run_tasks_in_parallel_iter
 from pyperf.harness.utils import setup_logger, close_logger
 from pyperf.harness.dockerfile import get_dockerfile_instance
+from pyperf.harness.evalscript import get_eval_script
 from pyperf.harness.docker_utils import (
     image_exists_on_dockerhub,
     push_to_dockerhub,
@@ -28,6 +29,7 @@ class BuildPushConfig:
     instance_id: str
     dockerhub_id: str
     push_to_registry: bool
+    force_rebuild: bool
 
 
 def build_image(
@@ -141,7 +143,7 @@ def build_and_push_mp_helper(config: BuildPushConfig) -> str:
         pass
 
     # build instance image
-    if not image_exists:
+    if config.force_rebuild or (not image_exists):
         build_image(
             image_name=config.image_name,
             setup_scripts=config.setup_scripts,
@@ -163,6 +165,7 @@ def build_and_push_mp_helper(config: BuildPushConfig) -> str:
 def build_instance_images(
     dataset: list,
     max_workers: int = 4,
+    force_rebuild: bool = False,
     push_to_registry: bool = False,
     dockerhub_id: str = "",
 ) -> tuple:
@@ -173,9 +176,9 @@ def build_instance_images(
         client (docker.DockerClient): Docker client to use for building the images
         dataset (list): List of test insts or dataset to build images for
         max_workers (int): Maximum number of workers to use for building images
+        force_rebuild (bool): Whether to force rebuild the images
         push_to_registry (bool): Whether to push images to DockerHub registry
         dockerhub_id (str): ID for DockerHub image names
-        force_rebuild (bool): Whether to force rebuild the images
     """
     print(f"Total instance images to build: {len(dataset)}")
     successful, failed = [], []
@@ -196,12 +199,17 @@ def build_instance_images(
             BuildPushConfig(
                 image_name=instance_image_name,
                 instance_id=inst.instance_id,
-                setup_scripts={"setup_repo.sh": inst.install_repo_script},
+                setup_scripts={
+                    "setup_repo.sh": inst.install_repo_script,
+                    "pyperf_test.py": inst.test_script,
+                    "eval.sh": get_eval_script(inst.install_commands),
+                },
                 dockerfile=get_dockerfile_instance(inst.platform, inst.arch),
                 platform=inst.platform,
                 build_dir=instance_build_dir,
                 dockerhub_id=dockerhub_id,
                 push_to_registry=push_to_registry,
+                force_rebuild=force_rebuild,
             )
         )
 
