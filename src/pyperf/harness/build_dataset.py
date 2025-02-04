@@ -11,7 +11,12 @@ from pyperf.execute.evaluate import speedup_summary, create_analysis_dataframe
 from pyperf.utils.io import str2bool, load_problems
 
 DEBUG_FLAG = True
-TEST_PROBLEMS = ["pandas-dataframegroupby.idxmin"]
+TEST_PROBLEMS = [
+    "pandas-dataframegroupby.skew",
+    "pandas-dataframegroupby.idxmin",
+    "pandas-merge_ordered",
+    "pandas-index._getitem_slice",
+]
 
 
 def create_instance(prob: Problem, commit_hash: str, test_id: str):
@@ -82,7 +87,7 @@ def build_dataset(problems, pick_best_test):
     return dataset
 
 
-def main(exp_id, pick_best_test, push_to_hf):
+def main(exp_id, pick_best_test, push_to_hf, hf_username):
     if exp_id is None:
         raise NotImplementedError("Building dataset for all exps not supported yet")
 
@@ -105,7 +110,9 @@ def main(exp_id, pick_best_test, push_to_hf):
 
     if push_to_hf:
         hf_dataset = Dataset.from_pandas(dataset_df)
-        hf_dataset.push_to_hub(f"manishs/{dataset_name}", split="test", private=True)
+        hf_dataset.push_to_hub(
+            f"{hf_username}/{dataset_name}", split="test", private=True
+        )
 
 
 if __name__ == "__main__":
@@ -121,6 +128,12 @@ if __name__ == "__main__":
         "--push_to_hf",
         action="store_true",
         help="Push a HuggingFace dataset to hub",
+    )
+    parser.add_argument(
+        "--hf_username",
+        type=str,
+        help="HuggingFace username",
+        default=None,
     )
 
     args = parser.parse_args()
