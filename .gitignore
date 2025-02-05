@@ -165,6 +165,5 @@ cython_debug/
 logs
 install_logs
 plots/
-analyze.py
 tmp/
-experiment.yaml
+eval_outputs
