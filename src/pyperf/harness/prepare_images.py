@@ -3,7 +3,7 @@ import resource
 from argparse import ArgumentParser
 
 from pyperf.utils.io import load_pyperf_dataset, str2bool
-from pyperf.harness.docker_build import build_instance_images
+from pyperf.harness.docker.docker_build import build_instance_images
 
 
 def main(

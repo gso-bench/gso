@@ -10,9 +10,9 @@ from pathlib import Path
 from pyperf.constants import INSTANCE_IMAGE_BUILD_DIR
 from pyperf.utils.multiprocess import run_tasks_in_parallel_iter
 from pyperf.harness.utils import setup_logger, close_logger
-from pyperf.harness.dockerfile import get_dockerfile_instance
+from pyperf.harness.docker.dockerfile import get_dockerfile_instance
 from pyperf.harness.evalscript import get_eval_script
-from pyperf.harness.docker_utils import (
+from pyperf.harness.docker.docker_utils import (
     image_exists_on_dockerhub,
     push_to_dockerhub,
     remove_image,
