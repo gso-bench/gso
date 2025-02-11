@@ -32,13 +32,37 @@ class EvaluationError(Exception):
         )
 
 
+def setup_eval_dir(instance, model_name_or_path, run_id):
+    log_dir = (
+        RUN_EVALUATION_LOG_DIR / run_id / model_name_or_path / instance.instance_id
+    )
+    log_dir.mkdir(parents=True, exist_ok=True)
+
+    report_path = log_dir / "report.json"
+    log_file = log_dir / "run_instance.log"
+
+    # link image build dir in log dir
+    build_dir = INSTANCE_IMAGE_BUILD_DIR / instance.instance_image_key.replace(
+        ":", "__"
+    )
+    image_build_link = log_dir / "image_build_dir"
+    if not image_build_link.exists():
+        try:
+            image_build_link.symlink_to(build_dir.absolute(), target_is_directory=True)
+        except Exception as e:
+            print(f"Error linking image build dir: {str(e)}")
+            pass
+
+    return log_dir, report_path, log_file
+
+
 def grade_instance(
     instance: PyPerfInstance,
     pred: dict,
     rm_image: bool,
     run_id: str,
     timeout: int | None = None,
-    rewrite_reports: bool = False,
+    reformat_reports: bool = False,
 ):
     """
     Run a single instance with the given prediction.
@@ -49,20 +73,19 @@ def grade_instance(
         rm_image (bool): Whether to remove the image after running
         run_id (str): Run ID
         timeout (int): Timeout for running tests
-        rewrite_reports (bool): True if eval run is just to reformat existing report
+        reformat_reports (bool): True if eval run is just to reformat existing report
     """
     client = docker.from_env()
 
     # Set up logging directory
     instance_id = instance.instance_id
     model_name_or_path = pred.get("model_name_or_path", "None").replace("/", "__")
-    log_dir = RUN_EVALUATION_LOG_DIR / run_id / model_name_or_path / instance_id
-    log_dir.mkdir(parents=True, exist_ok=True)
+    log_dir, report_path, log_file = setup_eval_dir(
+        instance, model_name_or_path, run_id
+    )
+    logger = setup_logger(instance_id, log_file)
 
-    # Set up report file
-    report_path = log_dir / "report.json"
-
-    if rewrite_reports:
+    if reformat_reports:
         test_output_path = log_dir / "test_output.txt"
         if not test_output_path.exists():
             raise ValueError(f"Test output file {test_output_path} does not exist")
@@ -76,27 +99,6 @@ def grade_instance(
         with open(report_path, "w") as f:
             f.write(json.dumps(report, indent=4))
         return instance_id, report
-
-    if report_path.exists():
-        return instance_id, json.loads(report_path.read_text())
-
-    # Link the image build dir in the log dir
-    build_dir = INSTANCE_IMAGE_BUILD_DIR / instance.instance_image_key.replace(
-        ":", "__"
-    )
-    image_build_link = log_dir / "image_build_dir"
-    if not image_build_link.exists():
-        try:
-            # link the image build dir in the log dir
-            image_build_link.symlink_to(build_dir.absolute(), target_is_directory=True)
-        except Exception as e:
-            # some error, idk why
-            print(f"Error linking image build dir: {str(e)}")
-            pass
-
-    # Set up logger
-    log_file = log_dir / "run_instance.log"
-    logger = setup_logger(instance_id, log_file)
 
     # Run the instance
     container = None

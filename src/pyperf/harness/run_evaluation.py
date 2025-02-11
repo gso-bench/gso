@@ -20,7 +20,7 @@ class GradeInstanceTask:
     rm_image: bool
     run_id: str
     timeout: int | None = None
-    rewrite_reports: bool = False
+    reformat_reports: bool = False
 
 
 def grad_instance_mp(task: GradeInstanceTask):
@@ -30,7 +30,7 @@ def grad_instance_mp(task: GradeInstanceTask):
         task.rm_image,
         task.run_id,
         task.timeout,
-        task.rewrite_reports,
+        task.reformat_reports,
     )
 
 
@@ -40,7 +40,7 @@ def run_instances(
     max_workers: int,
     run_id: str,
     timeout: int,
-    rewrite_reports: bool = False,
+    reformat_reports: bool = False,
 ):
     """
     Run all instances for the given predictions in parallel.
@@ -51,7 +51,7 @@ def run_instances(
         max_workers (int): Maximum number of workers
         run_id (str): Run ID
         timeout (int): Timeout for running tests
-        rewrite_reports (bool): Whether to rewrite reports for instances that have already been run
+        reformat_reports (bool): Whether to rewrite reports for instances that have already been run
     """
     client = docker.from_env()
 
@@ -82,7 +82,7 @@ def run_instances(
             rm_image=False,  # TODO: use rm_image to make space once we have dynamic pulling
             run_id=run_id,
             timeout=timeout,
-            rewrite_reports=rewrite_reports,
+            reformat_reports=reformat_reports,
         )
         for instance in instances
     ]
@@ -125,7 +125,7 @@ def main(
     open_file_limit,
     timeout,
     run_id,
-    rewrite_reports,
+    reformat_reports,
     report_dir=".",
 ):
     """Run eval harness for a given dataset and predictions."""
@@ -141,7 +141,7 @@ def main(
 
     # filter dataset to predictions
     dataset = get_dataset_from_preds(
-        dataset_name, split, instance_ids, predictions, run_id, rewrite_reports
+        dataset_name, split, instance_ids, predictions, run_id, reformat_reports
     )
     full_dataset = load_pyperf_dataset(dataset_name, split)
 
@@ -160,7 +160,7 @@ def main(
             max_workers,
             run_id,
             timeout,
-            rewrite_reports=rewrite_reports,
+            reformat_reports=reformat_reports,
         )
 
     # clean_images(client, existing_images, clean)
@@ -205,9 +205,9 @@ if __name__ == "__main__":
         help="Directory to store the reports",
     )
     parser.add_argument(
-        "--rewrite_reports",
+        "--reformat_reports",
         action="store_true",
-        help="Rewrite reports for instances that have already been run",
+        help="Reformat and rewrite reports for instances that have already been run",
     )
     parser.add_argument(
         "--max_workers", type=int, default=4, help="Max workers for parallel processing"
