@@ -91,6 +91,7 @@ def get_dataset_from_preds(
         for k, v in predictions.items()
         if v["model_patch"] == "" or v["model_patch"] is None
     }
+    print(f"Found {len(empty_patch_ids)} instances with empty patches.")
 
     # filter dataset to only instances with predictions
     dataset = [
