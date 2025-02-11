@@ -29,6 +29,14 @@ uv run src/pyperf/harness/prepare_images.py --dataset_name <dataset_name> --push
 
 # Running PyPerf Evaluations
 
+<details>
+<summary>Prerequisite: You need to have all the docker images built and available.</summary>
+```bash
+./src/pyperf/harness/pull_images.sh -r slimshetty/pyperf-pandas -s
+```
+TODO: pull images as and when needed
+</details></br>
+
 Your system's predictions should be a jsonl file with one line per task containing the following fields:
 ```python
 {

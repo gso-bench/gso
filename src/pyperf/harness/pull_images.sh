@@ -9,19 +9,21 @@ usage() {
     echo "Options:"
     echo "  -r REPOSITORY    Docker Hub repository (e.g., slimshetty/pyperf) (required)"
     echo "  -i IMAGE_NAMES   Comma-separated list of image tags (optional)"
+    echo "  -s              Create short aliases without repository prefix (optional)"
     echo "  -h              Display this help message"
     echo
     echo "Examples:"
-    echo "  $0 -r slimshetty/pyperf"
-    echo "  $0 -r slimshetty/pyperf -i \"latest,1.0.0,dev\""
+    echo "  $0 -r slimshetty/pyperf -s"
+    echo "  $0 -r slimshetty/pyperf -i \"latest,1.0.0,dev\" -s"
     exit 1
 }
 
 # Parse command line arguments
-while getopts "r:i:h" opt; do
+while getopts "r:i:sh" opt; do
     case $opt in
         r) REPO="$OPTARG";;
         i) TAGS="$OPTARG";;
+        s) CREATE_SHORT_ALIASES=true;;
         h) usage;;
         ?) usage;;
     esac
@@ -51,7 +53,7 @@ if [ -z "$TAGS" ]; then
     fi
 fi
 
-# Pull images for each tag
+# Pull images and create aliases if requested
 echo "Pulling images from $REPO"
 IFS=',' read -ra TAG_ARRAY <<< "$TAGS"
 for tag in "${TAG_ARRAY[@]}"; do
@@ -59,6 +61,18 @@ for tag in "${TAG_ARRAY[@]}"; do
     tag=$(echo "$tag" | xargs)
     echo "Pulling $REPO:$tag"
     docker pull "$REPO:$tag"
+    
+    # Create short alias if requested
+    if [ "$CREATE_SHORT_ALIASES" = true ]; then
+        echo "Creating short alias: $tag"
+        docker tag "$REPO:$tag" "$tag"
+        echo "You can now use '$tag' instead of '$REPO:$tag'"
+    fi
 done
 
 echo "Image pull complete!"
+if [ "$CREATE_SHORT_ALIASES" = true ]; then
+    echo "Short aliases have been created. You can use them directly in your Python code."
+    echo "Example Python usage:"
+    echo "    client.containers.run('$tag', ...)"
+fi
