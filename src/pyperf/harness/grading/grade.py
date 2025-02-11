@@ -7,6 +7,7 @@ from pyperf.data.dataset import PyPerfInstance
 from pyperf.constants import RUN_EVALUATION_LOG_DIR, INSTANCE_IMAGE_BUILD_DIR
 from pyperf.harness.utils import setup_logger, close_logger
 from pyperf.harness.grading.metrics import get_eval_report
+from pyperf.harness.evalscript import get_eval_script
 from pyperf.harness.environment.docker_build import create_container
 from pyperf.harness.environment.docker_utils import (
     cleanup_container,
@@ -112,15 +113,17 @@ def grade_instance(
         patch_file = Path(log_dir / "patch.diff")
         patch_file.write_text(pred["model_patch"] or "")
         logger.info(
-            f"Intermediate patch for {instance_id} written to {patch_file}, now applying to container..."
+            f"Intermediate patch for {instance_id} written to {patch_file}, copying to container..."
         )
         copy_to_container(container, patch_file, PurePosixPath("/tmp/patch.diff"))
 
-        # HACK: add a source ./venv/bin/activate to the eval.sh script
-        # TODO: move this to eval.sh during build!
-        hack_cmd = "sed -i '/echo \"Running performance test before patch...\"/i source .venv/bin/activate' /eval.sh"
-        hack_output, _, _ = exec_run_with_timeout(container, hack_cmd, timeout)
-        logger.info(f"Hack command output: {hack_output}")
+        # copy latest eval script to container
+        eval_file = Path(log_dir / "eval.sh")
+        eval_file.write_text(get_eval_script(instance.install_commands))
+        logger.info(
+            f"Eval script for {instance_id} written to {eval_file}; copying to container..."
+        )
+        copy_to_container(container, eval_file, PurePosixPath("/eval.sh"))
 
         # Run eval script, write output to logs
         test_output, timed_out, total_runtime = exec_run_with_timeout(

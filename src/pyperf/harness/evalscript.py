@@ -47,6 +47,7 @@ run_tests_for_commit() {
 
 def get_eval_script(install_commands) -> str:
     eval_commands = [
+        "source .venv/bin/activate",
         'echo "Running performance test before patch..."',
         'run_tests_for_commit "/pyperf_test.py" "base.txt" "--reference" "pyperf"',
         'echo "Applying patch..."',
