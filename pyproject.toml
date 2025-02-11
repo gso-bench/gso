@@ -23,6 +23,7 @@ dependencies = [
     "google>=3.0.0",
     "datasets>=3.2.0",
     "huggingface-hub>=0.27.0",
+    "docker>=7.1.0",
 ]
 
 [build-system]
