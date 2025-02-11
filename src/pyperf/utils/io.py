@@ -54,6 +54,35 @@ def load_pyperf_dataset(
     return [PyPerfInstance(**instance) for instance in dataset]
 
 
+def load_pyperf_predictions(predictions_path: str, dataset_name: str, split: str):
+    if predictions_path == "gold":
+        raise NotImplementedError("Loading gold predictions not implemented yet")
+
+    if predictions_path.endswith(".json"):
+        with open(predictions_path, "r") as f:
+            predictions = json.load(f)
+            if isinstance(predictions, dict):
+                predictions = list(predictions.values())
+            if not isinstance(predictions, list):
+                raise ValueError(
+                    "Predictions must be a list[prediction] or a dictionary[instance_id: prediction]"
+                )
+    elif predictions_path.endswith(".jsonl"):
+        with open(predictions_path, "r") as f:
+            predictions = [json.loads(line) for line in f]
+    else:
+        raise ValueError("Predictions path must be .json or .jsonl")
+
+    # Validate that each prediction has an instance_id
+    for pred in predictions:
+        if not isinstance(pred, dict):
+            raise ValueError(f"Each prediction must be a dictionary, got {type(pred)}")
+        if "instance_id" not in pred:
+            raise ValueError(f"Each prediction must contain '{'instance_id'}'")
+
+    return predictions
+
+
 ############## INTERMEDIATE DATA ##############
 
 

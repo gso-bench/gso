@@ -3,10 +3,13 @@ import time
 import subprocess
 import docker
 import docker.errors
+import logging
+import traceback
 from datetime import timedelta
 from dataclasses import dataclass
 from pathlib import Path
 
+from pyperf.data.dataset import PyPerfInstance
 from pyperf.constants import INSTANCE_IMAGE_BUILD_DIR
 from pyperf.utils.multiprocess import run_tasks_in_parallel_iter
 from pyperf.harness.utils import setup_logger, close_logger
@@ -16,6 +19,7 @@ from pyperf.harness.docker.docker_utils import (
     image_exists_on_dockerhub,
     push_to_dockerhub,
     remove_image,
+    cleanup_container,
 )
 
 
@@ -241,3 +245,48 @@ def build_instance_images(
         print(f"{len(failed)} instance images failed to build.")
 
     return successful, failed
+
+
+def create_container(
+    instance: PyPerfInstance,
+    client: docker.DockerClient,
+    run_id: str,
+    logger: logging.Logger,
+):
+    """
+    Create a container for an instance using it's image.
+    NOTE: expects the image to already be built and available locally.
+
+    Args:
+        instance (PyPerfInstance): PyPerfInstance to build the instance image and container for
+        client (docker.DockerClient): Docker client for building image + creating the container
+        run_id (str): Run ID identifying process, used for the container name
+        logger (logging.Logger): Logger to use for logging the build process
+    """
+    # create the container
+    container = None
+    try:
+        # Create the container
+        logger.info(f"Creating container for {instance.instance_id}...")
+
+        # Define arguments for running the container
+        run_args = instance.docker_specs.get("run_args", {})
+        cap_add = run_args.get("cap_add", [])
+
+        container = client.containers.create(
+            image=instance.instance_image_key,
+            name=instance.get_instance_container_name(run_id),
+            user="root",
+            detach=True,
+            command="tail -f /dev/null",
+            platform=instance.platform,
+            cap_add=cap_add,
+        )
+        logger.info(f"Container for {instance.instance_id} created: {container.id}")
+        return container
+    except Exception as e:
+        # If an error occurs, clean up the container and raise an exception
+        logger.error(f"Error creating container for {instance.instance_id}: {e}")
+        logger.info(traceback.format_exc())
+        cleanup_container(client, container, logger)
+        raise Exception(f"Error creating container for {instance.instance_id}: {e}")
