@@ -50,3 +50,8 @@ class PyPerfInstance:
             return "linux/arm64/v8"
         else:
             raise ValueError(f"Invalid architecture: {self.arch}")
+
+    def get_instance_container_name(self, run_id=None):
+        if not run_id:
+            return f"pyperf.eval.{self.instance_id}"
+        return f"pyperf.eval.{self.instance_id.lower()}.{run_id}"

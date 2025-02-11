@@ -271,7 +271,7 @@ def create_container(
         logger.info(f"Creating container for {instance.instance_id}...")
 
         # Define arguments for running the container
-        run_args = instance.docker_specs.get("run_args", {})
+        run_args = {}
         cap_add = run_args.get("cap_add", [])
 
         container = client.containers.create(
