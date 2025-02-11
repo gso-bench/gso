@@ -57,6 +57,7 @@ def grade_instance(
     instance_id = instance.instance_id
     model_name_or_path = pred.get("model_name_or_path", "None").replace("/", "__")
     log_dir = RUN_EVALUATION_LOG_DIR / run_id / model_name_or_path / instance_id
+    log_dir.mkdir(parents=True, exist_ok=True)
 
     # Set up report file
     report_path = log_dir / "report.json"
@@ -88,12 +89,12 @@ def grade_instance(
         try:
             # link the image build dir in the log dir
             image_build_link.symlink_to(build_dir.absolute(), target_is_directory=True)
-        except:
+        except Exception as e:
             # some error, idk why
+            print(f"Error linking image build dir: {str(e)}")
             pass
 
     # Set up logger
-    log_dir.mkdir(parents=True, exist_ok=True)
     log_file = log_dir / "run_instance.log"
     logger = setup_logger(instance_id, log_file)
 
