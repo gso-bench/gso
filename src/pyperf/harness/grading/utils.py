@@ -8,7 +8,7 @@ def get_dataset_from_preds(
     instance_ids: list,
     predictions: dict,
     run_id: str,
-    rewrite_reports: bool,
+    reformat_reports: bool,
     exclude_completed: bool = True,
 ):
     """
@@ -19,6 +19,7 @@ def get_dataset_from_preds(
     # load dataset
     dataset = load_pyperf_dataset(dataset_name, split)
     dataset_ids = {i.instance_id for i in dataset}
+    print(f"Loaded {len(dataset)} instances from {dataset_name}/{split}.")
 
     if instance_ids:
         # check that all instance IDs have predictions
@@ -40,7 +41,7 @@ def get_dataset_from_preds(
     if instance_ids:
         dataset = [i for i in dataset if i.instance_id in instance_ids]
 
-    if rewrite_reports:
+    if reformat_reports:
         # we only return instances that have existing test outputs
         test_output_ids = set()
         for instance in dataset:
