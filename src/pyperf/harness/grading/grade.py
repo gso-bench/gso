@@ -91,10 +91,7 @@ def grade_instance(
         if not test_output_path.exists():
             raise ValueError(f"Test output file {test_output_path} does not exist")
         report = get_eval_report(
-            instance=instance,
-            prediction=pred,
-            test_log_path=test_output_path,
-            include_tests_status=True,
+            instance=instance, prediction=pred, test_log_path=test_output_path
         )
         # Write report to report.json
         with open(report_path, "w") as f:
@@ -145,14 +142,11 @@ def grade_instance(
         # Get report from test output
         logger.info(f"Grading answer for {instance_id}...")
         report = get_eval_report(
-            instance=instance,
-            prediction=pred,
-            test_log_path=test_output_path,
-            include_tests_status=True,
+            instance=instance, prediction=pred, test_log_path=test_output_path
         )
         logger.info(
-            f"report: {report}\n"
-            f"Result for {instance_id}: resolved: {report[instance_id]['resolved']}"
+            f"Report for {instance_id}: {report}\n"
+            # f"Result for {instance_id}: resolved: {report[instance_id]['resolved']}"
         )
 
         # Write report to report.json
