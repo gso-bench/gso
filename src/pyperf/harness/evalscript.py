@@ -34,7 +34,7 @@ apply_patch() {{
         echo "{passed}"
         applied=true
     elif git apply --verbose --ignore-space-change --reject "$patch_file" 2>&1; then
-        echo "Successfully applied patch using git apply --verbose --reject"
+        echo "Successfully applied patch using git apply --verbose --ignore-space-change --reject"
         echo "{passed}"
         applied=true
     elif patch --batch --fuzz=5 -p1 -i "$patch_file" 2>&1; then
