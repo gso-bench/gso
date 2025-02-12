@@ -8,6 +8,7 @@ from pyperf.utils.io import load_pyperf_dataset, load_pyperf_predictions
 from pyperf.harness.environment.docker_utils import list_images
 from pyperf.harness.grading.utils import get_dataset_from_preds
 from pyperf.harness.grading.grade import grade_instance
+from pyperf.harness.grading.report import make_run_report
 from pyperf.utils.multiprocess import run_tasks_in_parallel_iter
 from pyperf.constants import RUN_EVALUATION_LOG_DIR
 from pyperf.data.dataset import PyPerfInstance
@@ -164,7 +165,7 @@ def main(
         )
 
     # clean_images(client, existing_images, clean)
-    # return make_run_report(predictions, full_dataset, run_id, client)
+    return make_run_report(predictions, full_dataset, run_id, client)
 
 
 if __name__ == "__main__":

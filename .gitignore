@@ -167,3 +167,4 @@ install_logs
 plots/
 tmp/
 eval_outputs
+*.report.json
