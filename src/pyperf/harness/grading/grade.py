@@ -144,10 +144,7 @@ def grade_instance(
         report = get_eval_report(
             instance=instance, prediction=pred, test_log_path=test_output_path
         )
-        logger.info(
-            f"Report for {instance_id}: {report}\n"
-            # f"Result for {instance_id}: resolved: {report[instance_id]['resolved']}"
-        )
+        logger.info(f"Report: {report}")
 
         # Write report to report.json
         with open(report_path, "w") as f:
