@@ -29,7 +29,11 @@ apply_patch() {{
         echo "Successfully applied patch using git apply --verbose"
         echo "{passed}"
         applied=true
-    elif git apply --verbose --reject "$patch_file" 2>&1; then
+    elif git apply --verbose --ignore-space-change "$patch_file" 2>&1; then
+        echo "Successfully applied patch using git apply --verbose --ignore-space-change"
+        echo "{passed}"
+        applied=true
+    elif git apply --verbose --ignore-space-change --reject "$patch_file" 2>&1; then
         echo "Successfully applied patch using git apply --verbose --reject"
         echo "{passed}"
         applied=true
