@@ -30,7 +30,8 @@ def make_run_report(
     error_ids = set()  # Instances that could not be evaluated due to errors
     completed_ids = set()  # Instances that were run evaluated
     passed_ids = set()  # Instances where tests passed
-    failed_ids = set()  # Instances where tests failed
+    patch_failed_ids = set()  # Instances where patch failed to apply
+    test_failed_ids = set()  # Instances where tests failed to pass
     improved_base = set()  # Instances that improved over base
     improved_commit = set()  # Instances that improved over commit
     improved_main = set()  # Instances that improved over main
@@ -76,11 +77,16 @@ def make_run_report(
                 empty_patch_ids.add(instance_id)
                 continue
 
+            # Check patch application success
+            if not instance_report["patch_successfully_applied"]:
+                patch_failed_ids.add(instance_id)
+                continue
+
             # Check test success
             if instance_report["test_passed"]:
                 passed_ids.add(instance_id)
             else:
-                failed_ids.add(instance_id)
+                test_failed_ids.add(instance_id)
 
             # Track performance improvements
             if instance_report["improved_base"]:
@@ -102,7 +108,8 @@ def make_run_report(
             "completed_instances": len(completed_ids),
             "incomplete_instances": len(incomplete_ids),
             "passed_instances": len(passed_ids),
-            "failed_instances": len(failed_ids),
+            "patch_failed_instances": len(patch_failed_ids),
+            "test_failed_instances": len(test_failed_ids),
             "empty_patch_instances": len(empty_patch_ids),
             "error_instances": len(error_ids),
             "improved_over_base": len(improved_base),
@@ -112,7 +119,8 @@ def make_run_report(
         "instance_sets": {
             "completed_ids": sorted(completed_ids),
             "passed_ids": sorted(passed_ids),
-            "failed_ids": sorted(failed_ids),
+            "patch_failed_ids": sorted(patch_failed_ids),
+            "test_failed_ids": sorted(test_failed_ids),
             "incomplete_ids": sorted(incomplete_ids),
             "empty_patch_ids": sorted(empty_patch_ids),
             "error_ids": sorted(error_ids),
@@ -155,7 +163,8 @@ def make_run_report(
     print(f"Incomplete incomplete: {report['summary']['incomplete_instances']}")
     print("-" * 10)
     print(f"Instances that passed: {report['summary']['passed_instances']}")
-    print(f"Instances that failed: {report['summary']['failed_instances']}")
+    print(f"Instances with failed tests: {report['summary']['test_failed_instances']}")
+    print(f"Instances with failed patch: {report['summary']['patch_failed_instances']}")
     print(f"Instances with empty patches: {report['summary']['empty_patch_instances']}")
     print(f"Instances with errors: {report['summary']['error_instances']}")
     print("-" * 10)
