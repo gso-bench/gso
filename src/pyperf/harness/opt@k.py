@@ -159,21 +159,25 @@ def merge_reports(report_files, k):
             report["summary"][summary_key] = instance_set_key
 
     # Print summary
+    summary = report["summary"]
+    opt_base = summary["improved_over_base"] / summary["total_instances"]
+    opt_commit = summary["improved_over_commit"] / summary["total_instances"]
+    opt_main = summary["improved_over_main"] / summary["total_instances"]
     print("\n=== Evaluation Summary ===")
-    print(f"Total instances: {report['summary']['total_instances']}")
-    print(f"Instances submitted: {report['summary']['total_predictions']}")
-    print(f"Instances completed: {report['summary']['completed_instances']}")
-    print(f"Incomplete incomplete: {report['summary']['incomplete_instances']}")
+    print(f"Total instances: {summary['total_instances']}")
+    print(f"Instances submitted: {summary['total_predictions']}")
+    print(f"Instances completed: {summary['completed_instances']}")
+    print(f"Incomplete incomplete: {summary['incomplete_instances']}")
     print("-" * 10)
-    print(f"Instances that passed: {report['summary']['passed_instances']}")
-    print(f"Instances with failed tests: {report['summary']['test_failed_instances']}")
-    print(f"Instances with failed patch: {report['summary']['patch_failed_instances']}")
-    print(f"Instances with empty patches: {report['summary']['empty_patch_instances']}")
-    print(f"Instances with errors: {report['summary']['error_instances']}")
+    print(f"Instances that passed: {summary['passed_instances']}")
+    print(f"Instances with failed tests: {summary['test_failed_instances']}")
+    print(f"Instances with failed patch: {summary['patch_failed_instances']}")
+    print(f"Instances with empty patches: {summary['empty_patch_instances']}")
+    print(f"Instances with errors: {summary['error_instances']}")
     print("-" * 10)
-    print(f"Instances better than base: {report['summary']['improved_over_base']}")
-    print(f"Instances better than commit: {report['summary']['improved_over_commit']}")
-    print(f"Instances better than main: {report['summary']['improved_over_main']}")
+    print(f"Opt(base)@{k}: {summary['improved_over_base']} ({opt_base*100:.2f}%) ")
+    print(f"Opt(commit)@{k}: {summary['improved_over_commit']} ({opt_commit*100:.2f}%)")
+    print(f"Opt(main)@{k}: {summary['improved_over_main']} ({opt_main*100:.2f}%) ")
 
     return report
 
