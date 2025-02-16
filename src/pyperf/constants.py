@@ -27,3 +27,7 @@ PHASE2_TEMPLATE = current_dir / "execute" / "phase2.txt"
 DATASET_DIR = PYPERF_BUCKET_DIR / "datasets"
 INSTANCE_IMAGE_BUILD_DIR = Path("logs/build_images/instances")
 RUN_EVALUATION_LOG_DIR = Path("logs/run_evaluation")
+
+# --------- Grading Constants ---------
+
+OPTIM_THRESH = 15  # min % speedup to consider a patch as optimized

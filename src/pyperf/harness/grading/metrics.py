@@ -2,6 +2,7 @@ import re
 import numpy as np
 from enum import Enum
 
+from pyperf.constants import OPTIM_THRESH
 from pyperf.data.dataset import PyPerfInstance
 from pyperf.harness.evalscript import (
     APPLY_PATCH_FAIL,
@@ -13,8 +14,6 @@ from pyperf.harness.evalscript import (
     START_PATCH_OUTPUT,
     END_PATCH_OUTPUT,
 )
-
-OPTIM_THRESH = 25  # min % speedup to consider a patch as optimized
 
 
 class TestStatus(Enum):
