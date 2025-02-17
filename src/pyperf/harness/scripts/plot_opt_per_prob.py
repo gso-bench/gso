@@ -83,7 +83,7 @@ instances = [p.split("__")[1] for p in instances]  # Remove org name
 instances = [p[:12] for p in instances]  # Truncate for readability
 
 
-# Set up bar positions
+plt.figure(figsize=(10, 6))
 x = np.arange(len(instances))
 width = 0.1  # Width of bars
 fig, ax = plt.subplots(figsize=(10, 6))
@@ -103,5 +103,5 @@ ax.set_xticks(x)
 ax.set_xticklabels(instances)
 ax.legend()
 plt.tight_layout()
-plt.savefig("plots/opt_per_prob.png")
+plt.savefig("plots/opt_per_prob.png", dpi=300, bbox_inches="tight")
 plt.close()
