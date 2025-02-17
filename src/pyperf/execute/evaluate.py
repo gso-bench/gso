@@ -79,9 +79,9 @@ def speedup_summary(prob, speedup_threshold=2, speedup_mode="target"):
 
         if before_mean > after_mean and opt_perc > speedup_threshold:
 
-            if speedup_mode == "commit" and target_mean > comm_mean:
-                valid_commits.add(commit.quick_hash())
-                continue
+            # if speedup_mode == "commit" and target_mean > comm_mean:
+            #     valid_commits.add(commit.quick_hash())
+            #     continue
 
             ct_stats = {
                 "pid": prob.pid,
@@ -123,6 +123,7 @@ def create_analysis_dataframe(problems) -> pd.DataFrame:
                     "base_std": stats["base_std"],
                     "target_std": stats["target_std"],
                     "opt_perc": stats["opt_perc"],
+                    "speedup_factor": stats["speedup_factor"],
                     "loc_changed": stats["loc_changed"],
                 }
             )
