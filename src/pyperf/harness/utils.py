@@ -24,3 +24,9 @@ def close_logger(logger):
     for handler in logger.handlers:
         handler.close()
         logger.removeHandler(handler)
+
+
+def natural_sort_key(s):
+    import re
+
+    return [int(c) if c.isdigit() else c for c in re.split("(\d+)", s)]

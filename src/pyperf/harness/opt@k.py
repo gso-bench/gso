@@ -1,12 +1,13 @@
-#!/usr/bin/env python3
 import json
 import subprocess
 from pathlib import Path
 import argparse
 import glob
 
+from pyperf.harness.utils import natural_sort_key
 
-def run_evaluation(pred_path, dataset_name, timeout, run_id):
+
+def run_evaluation(pred_path, dataset_name, timeout, run_id, reformat_reports=False):
     """Run evaluation script and return path to generated report."""
     cmd = [
         "uv",
@@ -21,6 +22,9 @@ def run_evaluation(pred_path, dataset_name, timeout, run_id):
         "--run_id",
         run_id,
     ]
+
+    if reformat_reports:
+        cmd.append("--reformat_reports")
 
     output = subprocess.check_output(cmd, text=True)
     report_path = next(
@@ -59,6 +63,15 @@ def merge_reports(report_files, k):
         "improved_base_ids",
         "improved_commit_ids",
         "improved_main_ids",
+    ]
+
+    SPEEDUP_VALUES = [
+        "opt_perc_base",
+        "opt_perc_commit",
+        "opt_perc_main",
+        "speedup_base",
+        "speedup_commit",
+        "speedup_main",
     ]
 
     report = {
@@ -220,11 +233,16 @@ def main():
         required=True,
         help="Space separated list of prediction paths",
     )
+    parser.add_argument(
+        "--reformat_reports",
+        action="store_true",
+        help="Reformat and rewrite reports for instances that have already been run",
+    )
 
     args = parser.parse_args()
 
     # Use the paths as provided by bash, take first k
-    prediction_paths = sorted(args.prediction_paths)[: args.k]
+    prediction_paths = sorted(args.prediction_paths, key=natural_sort_key)[: args.k]
     print(f"Found {len(args.prediction_paths)} predictions, using first k={args.k}:")
 
     # Run evaluations and collect report paths
@@ -232,7 +250,11 @@ def main():
     for pred_path in prediction_paths:
         print(f"\nRunning evaluation for: {pred_path}")
         report_path = run_evaluation(
-            pred_path, args.dataset_name, args.timeout, args.run_id
+            pred_path,
+            args.dataset_name,
+            args.timeout,
+            args.run_id,
+            args.reformat_reports,
         )
         report_files.append(report_path)
 
@@ -241,7 +263,7 @@ def main():
     merged_results = merge_reports(report_files, args.k)
 
     # Save report results
-    output_file = f"{args.model_name}.pass@{args.k}.{args.run_id}.report.json"
+    output_file = f"{args.model_name}.opt@{args.k}.{args.run_id}.report.json"
     with open(output_file, "w") as f:
         json.dump(merged_results, f, indent=2)
     print(f"\nResults saved to {output_file}")

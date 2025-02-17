@@ -30,4 +30,4 @@ RUN_EVALUATION_LOG_DIR = Path("logs/run_evaluation")
 
 # --------- Grading Constants ---------
 
-OPTIM_THRESH = 15  # min % speedup to consider a patch as optimized
+OPTIM_THRESH = 25  # min % speedup to consider a patch as optimized

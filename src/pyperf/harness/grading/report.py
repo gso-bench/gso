@@ -35,6 +35,7 @@ def make_run_report(
     improved_base = set()  # Instances that improved over base
     improved_commit = set()  # Instances that improved over commit
     improved_main = set()  # Instances that improved over main
+    opt_stats = {}
 
     # Process each instance
     for instance in full_dataset:
@@ -91,6 +92,7 @@ def make_run_report(
             # Track performance improvements
             if instance_report["improved_base"]:
                 improved_base.add(instance_id)
+                opt_stats[instance_id] = instance_report["opt_stats"]
             if instance_report["improved_commit"]:
                 improved_commit.add(instance_id)
             if instance_report["improved_main"]:
@@ -128,6 +130,7 @@ def make_run_report(
             "improved_commit_ids": sorted(improved_commit),
             "improved_main_ids": sorted(improved_main),
         },
+        "opt_stats": opt_stats,
         "schema_version": 1,
     }
 
