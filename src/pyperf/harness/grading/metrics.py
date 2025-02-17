@@ -13,6 +13,10 @@ from pyperf.harness.evalscript import (
     END_BASE_OUTPUT,
     START_PATCH_OUTPUT,
     END_PATCH_OUTPUT,
+    START_COMMIT_OUTPUT,
+    END_COMMIT_OUTPUT,
+    START_MAIN_OUTPUT,
+    END_MAIN_OUTPUT,
 )
 
 
@@ -57,13 +61,12 @@ def parse_logs(content):
         "main_times": None,
     }
 
-    # parse base output between START_BASE_OUTPUT and END_BASE_OUTPUT
     time_map["base_times"] = parse_times(content, START_BASE_OUTPUT, END_BASE_OUTPUT)
-
-    # parse patch output between START_PATCH_OUTPUT and END_PATCH_OUTPUT
     time_map["patch_times"] = parse_times(content, START_PATCH_OUTPUT, END_PATCH_OUTPUT)
-
-    # TODO: parse commit and main outputs
+    time_map["commit_times"] = parse_times(
+        content, START_COMMIT_OUTPUT, END_COMMIT_OUTPUT
+    )
+    time_map["main_times"] = parse_times(content, START_MAIN_OUTPUT, END_MAIN_OUTPUT)
 
     return time_map
 
@@ -113,8 +116,8 @@ def get_opt_status(time_map) -> dict:
 
     base_mean, base_std_dev = compute_stats(time_map["base_times"])
     patch_mean, patch_std_dev = compute_stats(time_map["patch_times"])
-    # commit_mean, commit_std_dev = compute_stats(time_map["commit_times"])
-    # main_mean, main_std_dev = compute_stats(time_map["main_times"])
+    commit_mean, commit_std_dev = compute_stats(time_map["commit_times"])
+    main_mean, main_std_dev = compute_stats(time_map["main_times"])
 
     time_stats.update(
         {
@@ -122,12 +125,16 @@ def get_opt_status(time_map) -> dict:
             "base_std": base_std_dev,
             "patch_mean": patch_mean,
             "patch_std": patch_std_dev,
+            "commit_mean": commit_mean,
+            "commit_std": commit_std_dev,
+            "main_mean": main_mean,
+            "main_std": main_std_dev,
         }
     )
 
     patch_base_opt, patch_base_speedup = speedup(base_mean, patch_mean)
-    # patch_commit_opt, patch_commit_speedup = speedup(commit_mean, patch_mean)
-    # patch_main_opt, patch_main_speedup = speedup(main_mean, patch_mean)
+    patch_com_opt, patch_com_speedup = speedup(commit_mean, patch_mean)
+    patch_main_opt, patch_main_speedup = speedup(main_mean, patch_mean)
 
     if base_mean > patch_mean and patch_base_opt >= OPTIM_THRESH:
         opt_status.update({"improved_base": True})
@@ -135,20 +142,19 @@ def get_opt_status(time_map) -> dict:
             {"opt_perc_base": patch_base_opt, "speedup_base": patch_base_speedup}
         )
 
-    # if commit_mean > patch_mean and patch_commit_opt >= OPTIM_THRESH:
-    #     opt_status.update({"improved_commit": True})
-    #     opt_stats.update(
-    #         {
-    #             "opt_perc_commit": patch_commit_opt,
-    #             "speedup_commit": patch_commit_speedup,
-    #         }
-    #     )
+        # if patch improves over base, then check how it compares to commit/main
 
-    # if main_mean > patch_mean and patch_main_opt >= OPTIM_THRESH:
-    #     opt_status.update({"improved_main": True})
-    #     opt_stats.update(
-    #         {"opt_perc_main": patch_main_opt, "speedup_main": patch_main_speedup}
-    #     )
+        if commit_mean > patch_mean and patch_com_opt >= OPTIM_THRESH:
+            opt_status.update({"improved_commit": True})
+            opt_stats.update(
+                {"opt_perc_commit": patch_com_opt, "speedup_commit": patch_com_speedup}
+            )
+
+        if main_mean > patch_mean and patch_main_opt >= OPTIM_THRESH:
+            opt_status.update({"improved_main": True})
+            opt_stats.update(
+                {"opt_perc_main": patch_main_opt, "speedup_main": patch_main_speedup}
+            )
 
     return {**opt_status, "time_stats": time_stats, "opt_stats": opt_stats}
 

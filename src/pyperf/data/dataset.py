@@ -21,11 +21,19 @@ class PyPerfInstance:
         return key
 
     @property
+    def opt_commit(self):
+        return self.base_commit.rstrip("^")
+
+    @property
+    def repo_url(self):
+        return f"https://github.com/{self.repo}"
+
+    @property
     def install_repo_script(self):
         env_name = "testbed"
         repo_directory = f"/{env_name}"
         repo_setup = [
-            f"git clone -o origin https://github.com/{self.repo} {repo_directory}",
+            f"git clone -o origin {self.repo_url} {repo_directory}",
             f"chmod -R 777 {repo_directory}",  # nonroot user can run tests
             f"cd {repo_directory}",
             f"git reset --hard {self.base_commit}",
@@ -40,6 +48,17 @@ class PyPerfInstance:
                 + self.install_commands
             )
             + "\n"
+        )
+
+    @property
+    def reset_repo_commands(self):
+        return "\n".join(
+            [
+                f"git remote add origin {self.repo_url}",  # add remote back
+                "git fetch origin",  # fetch all branches
+                "git clean -xfd",  # clean up untracked files
+                "git reset --hard origin/main",  # reset to main
+            ]
         )
 
     @property

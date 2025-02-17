@@ -157,7 +157,6 @@ def main(
     resource.setrlimit(resource.RLIMIT_NOFILE, (open_file_limit, open_file_limit))
     client = docker.from_env()
 
-    existing_images = list_images(client)
     print(f"Running {len(dataset)} unevaluated instances...")
     if not dataset:
         print("No instances to run.")
@@ -171,7 +170,6 @@ def main(
             reformat_reports=reformat_reports,
         )
 
-    # clean_images(client, existing_images, clean)
     return make_run_report(predictions, full_dataset, run_id, client)
 
 

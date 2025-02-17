@@ -10,6 +10,10 @@ START_BASE_OUTPUT = ">>>>> Start Base Output"
 END_BASE_OUTPUT = ">>>>> End Base Output"
 START_PATCH_OUTPUT = ">>>>> Start Patch Output"
 END_PATCH_OUTPUT = ">>>>> End Patch Output"
+START_COMMIT_OUTPUT = ">>>>> Start Commit Output"
+END_COMMIT_OUTPUT = ">>>>> End Commit Output"
+START_MAIN_OUTPUT = ">>>>> Start Main Output"
+END_MAIN_OUTPUT = ">>>>> End Main Output"
 
 
 APPLY_PATCH_HELPER = """
@@ -97,13 +101,18 @@ install_repo() {{
 """
 
 
-def get_eval_script(install_commands) -> str:
+def get_eval_script(instance) -> str:
+    install_commands = instance.install_commands
+    opt_commit = instance.opt_commit
+    reset_repo_commands = instance.reset_repo_commands
+
     # Avoid deleting result files
     if "git clean -xfd" in install_commands:
         install_commands.remove("git clean -xfd")
 
     eval_commands = [
         "source .venv/bin/activate",
+        # ----------- base and patch perf testing ------------
         'echo "Running performance test before patch..."',
         'run_tests_for_commit "/pyperf_test.py" "base.txt" "--reference" "pyperf"',
         'echo "Applying patch..."',
@@ -118,6 +127,25 @@ def get_eval_script(install_commands) -> str:
         f'echo "{START_PATCH_OUTPUT}"',
         "cat result.txt",
         f'echo "{END_PATCH_OUTPUT}"',
+        # ----------- reset the repo to remote origin ------------
+        f"{reset_repo_commands}",
+        # ----------- commit and main perf testing ------------
+        'echo "Installing repo..."',
+        "install_repo",
+        'echo "Running performance test for main..."',
+        'run_tests_for_commit "/pyperf_test.py" "main.txt" "--reference" "pyperf"',
+        f'echo "{START_MAIN_OUTPUT}"',
+        "cat main.txt",
+        f'echo "{END_MAIN_OUTPUT}"',
+        'echo "Checking out commit..."',
+        f"git checkout {opt_commit}",
+        'echo "Installing repo..."',
+        "install_repo",
+        'echo "Running performance test for commit..."',
+        'run_tests_for_commit "/pyperf_test.py" "commit.txt" "--reference" "pyperf"',
+        f'echo "{START_COMMIT_OUTPUT}"',
+        "cat commit.txt",
+        f'echo "{END_COMMIT_OUTPUT}"',
     ]
 
     return (

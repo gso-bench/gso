@@ -116,7 +116,7 @@ def grade_instance(
 
         # copy latest eval script to container
         eval_file = Path(log_dir / "eval.sh")
-        eval_file.write_text(get_eval_script(instance.install_commands))
+        eval_file.write_text(get_eval_script(instance))
         logger.info(
             f"Eval script for {instance_id} written to {eval_file}; copying to container..."
         )

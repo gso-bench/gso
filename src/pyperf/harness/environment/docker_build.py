@@ -207,7 +207,7 @@ def build_instance_images(
                 setup_scripts={
                     "setup_repo.sh": inst.install_repo_script,
                     "pyperf_test.py": inst.test_script,
-                    "eval.sh": get_eval_script(inst.install_commands),
+                    "eval.sh": get_eval_script(inst),
                 },
                 dockerfile=get_dockerfile_instance(inst.platform, inst.arch),
                 platform=inst.platform,
