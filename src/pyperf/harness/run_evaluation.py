@@ -127,6 +127,7 @@ def main(
     timeout,
     run_id,
     reformat_reports,
+    rerun_all=False,
     report_dir=".",
 ):
     """Run eval harness for a given dataset and predictions."""
@@ -142,7 +143,13 @@ def main(
 
     # filter dataset to predictions
     dataset = get_dataset_from_preds(
-        dataset_name, split, instance_ids, predictions, run_id, reformat_reports
+        dataset_name,
+        split,
+        instance_ids,
+        predictions,
+        run_id,
+        reformat_reports,
+        exclude_completed=not rerun_all,
     )
     full_dataset = load_pyperf_dataset(dataset_name, split)
 
@@ -209,6 +216,11 @@ if __name__ == "__main__":
         "--reformat_reports",
         action="store_true",
         help="Reformat and rewrite reports for instances that have already been run",
+    )
+    parser.add_argument(
+        "--rerun_all",
+        action="store_true",
+        help="Rerun all instances, even if they have already been run. Default: False",
     )
     parser.add_argument(
         "--max_workers", type=int, default=4, help="Max workers for parallel processing"
