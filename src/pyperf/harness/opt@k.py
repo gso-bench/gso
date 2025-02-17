@@ -65,15 +65,6 @@ def merge_reports(report_files, k):
         "improved_main_ids",
     ]
 
-    SPEEDUP_VALUES = [
-        "opt_perc_base",
-        "opt_perc_commit",
-        "opt_perc_main",
-        "speedup_base",
-        "speedup_commit",
-        "speedup_main",
-    ]
-
     report = {
         "summary": {
             key: 0
@@ -99,6 +90,7 @@ def merge_reports(report_files, k):
     report["summary"]["k"] = k
 
     instance_status = {}  # instance_id -> best status across runs
+    instance_opt_stats = {}  # instance_id -> best opt_perc_base across runs
 
     def get_instance_status(instance_id, current_sets):
         """Determine status for an instance based on its presence in status sets."""
@@ -128,6 +120,17 @@ def merge_reports(report_files, k):
                 if new_priority > current_priority:
                     instance_status[instance_id] = status
 
+                # Update opt stats
+                if status == "passed":
+                    current_opt_stats = instance_opt_stats.get(instance_id, {})
+                    new_opt_stats = current_report["opt_stats"].get(instance_id, {})
+                    if new_opt_stats and (
+                        not current_opt_stats
+                        or new_opt_stats["opt_perc_base"]
+                        > current_opt_stats["opt_perc_base"]
+                    ):
+                        instance_opt_stats[instance_id] = new_opt_stats
+
             # Merge docker images and improvement tracking
             report["docker_status"]["instance_images"].update(
                 current_report["docker_status"].get("instance_images", set())
@@ -140,6 +143,9 @@ def merge_reports(report_files, k):
         report["instance_sets"]["completed_ids"].add(instance_id)
         if status:
             report["instance_sets"][f"{status}_ids"].add(instance_id)
+
+    # Populate opt stats
+    report["opt_stats"] = instance_opt_stats
 
     # Convert sets to sorted lists
     for key in report["instance_sets"]:
