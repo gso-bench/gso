@@ -7,24 +7,16 @@ from pyperf.harness.build_dataset import *
 from pyperf.utils.io import load_problems, load_pyperf_dataset
 from pyperf.constants import EXPS_DIR
 
-
-def get_exec_results_helper(problems, speedup_mode="target"):
-    valid_problems = [p for p in problems if p.is_valid()]
-    opt_stats = {}
-    for prob in valid_problems:
-        stats, _, _ = speedup_summary(
-            prob, speedup_threshold=2, speedup_mode=speedup_mode
-        )
-        if stats:
-            opt_stats[prob.pid] = stats
-
-    opt_problems_df = create_analysis_dataframe(opt_stats)
-    opt_problems_df = get_most_optimized_commit_test_pairs(opt_problems_df)
-    opt_problems_df = opt_problems_df[["key", "pid", "speedup_factor"]]
-    return opt_problems_df
+speedup_mode = "Factor"
+# speedup_mode = "Percentage"
 
 
-# Add value labels on top of bars
+def speedup(before_mean, after_mean, mode) -> float:
+    if mode == "Factor":
+        return before_mean / after_mean
+    return ((before_mean - after_mean) / before_mean) * 100
+
+
 def autolabel(bars):
     for bar in bars:
         height = bar.get_height()
@@ -40,43 +32,25 @@ def autolabel(bars):
 
 
 os.makedirs("plots", exist_ok=True)
-exp_id = "pandas"
-dataset_name = "pyperf_pandas_dataset.jsonl"
-
-
-exp_dir = EXPS_DIR / f"{exp_id}"
-problems = load_problems(exp_dir / f"{exp_id}_results.json")
-dataset = load_pyperf_dataset(dataset_name, "test")
-dataset_apis = [
-    f"{exp_id}-{i.api.lower()}" for i in dataset if i.api is not None and i.api != ""
-]
-problems = [p for p in problems if p.pid in dataset_apis]
-
-
 eval_report = "~/pyperf/claude.opt@10.test.report.json"
 opt_stats = json.load(open(os.path.expanduser(eval_report)))["opt_stats"]
 
-# Extract problem names and speedups
+# Extract speedups
 instances = list(opt_stats.keys())
-speedups_base = [
-    opt_stats[p]["speedup_base"] if opt_stats[p]["speedup_base"] is not None else 0
+speedups_model = [
+    speedup(opt_stats[p]["base_mean"], opt_stats[p]["patch_mean"], speedup_mode)
     for p in instances
 ]
 
-commit_opt_df = get_exec_results_helper(problems, speedup_mode="commit")
-main_opt_df = get_exec_results_helper(problems, speedup_mode="target")
-speedups_main, speedups_commit = [], []
+speedups_commit = [
+    speedup(opt_stats[p]["base_mean"], opt_stats[p]["commit_mean"], speedup_mode)
+    for p in instances
+]
 
-for inst in instances:
-    commit = inst.split("-")[-1]  # get ccca5df from pandas-dev__pandas-ccca5df
-    matches = main_opt_df[main_opt_df["key"].str.contains(commit)]
-    speedup = matches["speedup_factor"].iloc[0] if not matches.empty else 0
-    speedups_main.append(float(speedup))
-
-    matches = commit_opt_df[commit_opt_df["key"].str.contains(commit)]
-    speedup = matches["speedup_factor"].iloc[0] if not matches.empty else 0
-    speedups_commit.append(float(speedup))
-
+speedups_main = [
+    speedup(opt_stats[p]["base_mean"], opt_stats[p]["main_mean"], speedup_mode)
+    for p in instances
+]
 
 # Clean up problem names for display
 instances = [p.split("__")[1] for p in instances]  # Remove org name
@@ -89,7 +63,7 @@ width = 0.1  # Width of bars
 fig, ax = plt.subplots(figsize=(10, 6))
 
 # Create bars
-bars1 = ax.bar(x - width, speedups_base, width, label="Base", color="#1f77b4")
+bars1 = ax.bar(x - width, speedups_model, width, label="Model", color="#1f77b4")
 bars2 = ax.bar(x, speedups_commit, width, label="Commit", color="#ff7f0e")
 bars3 = ax.bar(x + width, speedups_main, width, label="Main", color="#2ca02c")
 autolabel(bars1)
@@ -97,8 +71,8 @@ autolabel(bars2)
 autolabel(bars3)
 
 # Customize plot
-ax.set_ylabel("Speedup Factor")
-ax.set_title("Speedup across Commits")
+ax.set_ylabel(f"Speedup ({speedup_mode})")
+ax.set_title("Speedup achieved per problem")
 ax.set_xticks(x)
 ax.set_xticklabels(instances)
 ax.legend()
