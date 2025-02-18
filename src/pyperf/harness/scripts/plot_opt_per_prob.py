@@ -10,6 +10,10 @@ from pyperf.constants import EXPS_DIR
 speedup_mode = "Factor"
 # speedup_mode = "Percentage"
 
+os.makedirs("plots", exist_ok=True)
+eval_report = "~/pyperf/claude.opt@10.test.report.json"
+opt_stats = json.load(open(os.path.expanduser(eval_report)))["opt_stats"]
+
 
 def speedup(before_mean, after_mean, mode) -> float:
     if mode == "Factor":
@@ -30,10 +34,6 @@ def autolabel(bars):
                 va="bottom",
             )
 
-
-os.makedirs("plots", exist_ok=True)
-eval_report = "~/pyperf/claude.opt@10.test.report.json"
-opt_stats = json.load(open(os.path.expanduser(eval_report)))["opt_stats"]
 
 # Extract speedups
 instances = list(opt_stats.keys())
