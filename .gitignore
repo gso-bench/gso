@@ -164,6 +164,7 @@ cython_debug/
 # Project specific
 logs
 install_logs
+reports/
 plots/
 tmp/
 eval_outputs
