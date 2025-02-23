@@ -2,7 +2,7 @@ import docker
 import json
 from pathlib import Path
 
-from pyperf.constants import RUN_EVALUATION_LOG_DIR
+from pyperf.constants import RUN_EVALUATION_LOG_DIR, EVALUATION_REPORTS_DIR
 from pyperf.harness.environment.docker_utils import list_images
 
 
@@ -155,7 +155,8 @@ def make_run_report(
         .get("model_name_or_path", "None")
         .replace("/", "__")
     )
-    report_file = Path(f"{model_name}.{run_id}.report.json")
+    EVALUATION_REPORTS_DIR.mkdir(parents=True, exist_ok=True)
+    report_file = EVALUATION_REPORTS_DIR / Path(f"{model_name}.{run_id}.report.json")
 
     with open(report_file, "w") as f:
         json.dump(report, f, indent=4)

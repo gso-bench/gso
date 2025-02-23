@@ -5,6 +5,7 @@ import argparse
 import glob
 
 from pyperf.harness.utils import natural_sort_key
+from pyperf.constants import EVALUATION_REPORTS_DIR
 
 
 def run_evaluation(pred_path, dataset_name, timeout, run_id, reformat_reports=False):
@@ -269,7 +270,12 @@ def main():
     merged_results = merge_reports(report_files, args.k)
 
     # Save report results
-    output_file = f"{args.model_name}.opt@{args.k}.{args.run_id}.report.json"
+    EVALUATION_REPORTS_DIR.mkdir(parents=True, exist_ok=True)
+    opt_reports_dir = EVALUATION_REPORTS_DIR / Path("opt_k_reports")
+    opt_reports_dir.mkdir(parents=True, exist_ok=True)
+    output_file = opt_reports_dir / Path(
+        f"{args.model_name}.opt@{args.k}.{args.run_id}.report.json"
+    )
     with open(output_file, "w") as f:
         json.dump(merged_results, f, indent=2)
     print(f"\nResults saved to {output_file}")

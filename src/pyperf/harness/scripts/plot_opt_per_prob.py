@@ -11,7 +11,7 @@ speedup_mode = "Factor"
 # speedup_mode = "Percentage"
 
 os.makedirs("plots", exist_ok=True)
-eval_report = "~/pyperf/claude.opt@10.test.report.json"
+eval_report = "~/pyperf/reports/opt_k_reports/claude.opt@10.test.report.json"
 opt_stats = json.load(open(os.path.expanduser(eval_report)))["opt_stats"]
 
 
@@ -79,3 +79,4 @@ ax.legend()
 plt.tight_layout()
 plt.savefig("plots/opt_per_prob.png", dpi=300, bbox_inches="tight")
 plt.close()
+print("Plot saved as plots/opt_per_prob.png")
