@@ -8,7 +8,7 @@ uv run src/pyperf/harness/build_dataset.py --exp_id pandas --push_to_hf --hf_use
 <details>
 <summary>The dataset created contains the following fields per task:</summary>
 
-```json
+```
 {
     "instance_id": "str",               # pyperf task instance ID
     "repo": "str",                      # repository name
