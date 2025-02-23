@@ -1,21 +1,36 @@
 
-# Building PyPerf huggingface dataset
+# 1. Building PyPerf HF dataset
 
 ```bash
 uv run src/pyperf/harness/build_dataset.py --exp_id pandas --push_to_hf --hf_username <hf_username>
 ```
 
-You can use the local dataset or the huggingface dataset to solve tasks in the PyPerf benchmark. The dataset contains the following fields per task:
+<details>
+<summary>The dataset created contains the following fields per task:</summary>
+
 ```json
 {
-    TODO: complete this
+    "instance_id": "str",               # pyperf task instance ID
+    "repo": "str",                      # repository name
+    "base_commit": "str",               # base commit hash
+    "test_script": "str",               # test script to run
+    "api": "str",                       # API to optimize (optional)
+    "hints_text": "str",                # NL desc. of task (optional)
+    "setup_commands": "List[str]",      # setup commands for VMs
+    "install_commands": "List[str]",    # install commands for repo
+    "created_at": "str",                # gt commit timestamp
+    "arch": "str",                      # architecture
+    "instance_image_tag": "str",        # docker image tag for task
 }
 ```
 
+</details>
 
-# Building PyPerf Docker images
 
-To push the dockers to dockerhub, you need to login first. Then run the following to build the docker images and push to dockerhub:
+
+# 2. Building PyPerf Docker images
+
+To push the dockers to dockerhub, you need to login first. Then run the following to build the images and push to dockerhub:
 ```bash
 docker login
 
@@ -27,13 +42,11 @@ uv run src/pyperf/harness/prepare_images.py --dataset_name <dataset_name> --push
 
 
 
-# Running PyPerf Evaluations
+# 3. Running Evaluations
 
 <details>
 <summary>Prerequisite: You need to have all the docker images built and available.</summary>
-```bash
-./src/pyperf/harness/pull_images.sh -r slimshetty/pyperf-pandas -s
-```
+<pre>./src/pyperf/harness/pull_images.sh -r slimshetty/pyperf-pandas -s</pre>
 TODO: pull images as and when needed
 </details></br>
 
