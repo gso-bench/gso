@@ -12,10 +12,18 @@ from pyperf.utils.io import str2bool, load_problems
 
 DEBUG_FLAG = True
 TEST_PROBLEMS = [
-    "pandas-dataframegroupby.skew",
-    "pandas-dataframegroupby.idxmin",
-    "pandas-merge_ordered",
-    "pandas-index._getitem_slice",
+    # --- v0.0.1 ---
+    "pandas-index._getitem_slice",  # 9b4cffc
+    "pandas-merge_ordered",  # 061c2e9
+    "pandas-dataframegroupby.skew",  # 233bd83
+    "pandas-dataframegroupby.idxmin",  # ccca5df
+    # --- v0.0.2 ---
+    "pandas-period.strftime",  # 2cdca01
+    "pandas-pandas.concat",  # b661313,
+    "pandas-datetimeindex.isocalendar",  # 1ae00c6
+    "pandas-groupby.quantile",  # e8961f1
+    "pandas-seriesgroupby.ffill",  # 84aca21
+    "pandas-merge_asof",  # 2f4c93e
 ]
 
 
