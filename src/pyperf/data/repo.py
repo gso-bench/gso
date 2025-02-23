@@ -21,6 +21,10 @@ class Repo(BaseModel):
 
         return local_repo_path
 
+    @property
+    def full_name(self):
+        return f"{self.repo_owner}/{self.repo_name}"
+
     # constructor from url
     @classmethod
     def from_url(cls, url: str):

@@ -164,7 +164,8 @@ cython_debug/
 # Project specific
 logs
 install_logs
+reports/
 plots/
-analyze.py
 tmp/
-experiment.yaml
+eval_outputs
+*.report.json
