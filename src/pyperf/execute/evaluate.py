@@ -226,7 +226,7 @@ def create_performance_summary(df: pd.DataFrame) -> Dict:
     return summary
 
 
-def main(exp_id: str, specific_api: str | None = None):
+def main(exp_id: str, specific_api: str | None = None, top_k: int = 10):
     """Updated main function incorporating enhanced analysis."""
     exp_dir = EXPS_DIR / f"{exp_id}"
     output_dir = "plots"
@@ -305,24 +305,21 @@ def main(exp_id: str, specific_api: str | None = None):
     print(f"  Total valid commits: {len(valid_commits_all)}")
     print(f"  Total optimized commits: {len(opt_commits_all)}")
 
-    print("\nTop problems (by opt%):")
-    for i, row in df.nlargest(10, "opt_perc").iterrows():
+    best_results = (
+        df.groupby(["pid", "commit"])
+        .agg({"opt_perc": "max", "speedup_factor": "max", "loc_changed": "first"})
+        .reset_index()
+    )
+
+    print("\nTop problems by Opt (best result per pid-commit):")
+    for i, row in best_results.nlargest(top_k, "opt_perc").iterrows():
         print(
-            f"  {row['pid']}-{row['test_id']} ({row['commit']}): {row['opt_perc']:.2f}%"
+            f"  {row['pid']} ({row['commit']}): {row['opt_perc']:.2f}% | {row['speedup_factor']:.2f}x"
         )
 
-    print("\nTop problems (by loc changed):")
-    for i, row in df.nlargest(10, "loc_changed").iterrows():
-        print(
-            f"  {row['pid']}-{row['test_id']} ({row['commit']}): {row['loc_changed']}"
-        )
-
-    # print("\nErrored APIs:")
-    # for p in err_problems:
-    #     commits = ", ".join(
-    #         [f"{c.quick_hash()} ({c.date.strftime("%m/%d/%Y")})" for c in p.commits]
-    #     )
-    #     print(f"    {p.api} : {commits}")
+    print("\nTop problems by LoC (best result per pid-commit):")
+    for i, row in best_results.nlargest(top_k, "loc_changed").iterrows():
+        print(f"  {row['pid']} ({row['commit']}): {row['loc_changed']}")
 
     return df, summary
 
@@ -331,5 +328,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Analyze performance results")
     parser.add_argument("-e", "--exp_id", type=str, help="Experiment ID", required=True)
     parser.add_argument("-a", "--api", type=str, help="Specific API", required=False)
+    parser.add_argument(
+        "-k", "--top_k", type=int, help="Top results to show", default=10
+    )
     args = parser.parse_args()
-    df, summary = main(args.exp_id, args.api)
+    df, summary = main(args.exp_id, args.api, args.top_k)
