@@ -61,7 +61,12 @@ def get_most_optimized_commit_test_pairs(df):
     Filter out the commit-test pair with highest optimization percentage for each problem.
     """
     # Group by problem and get the row with maximum opt_perc
-    return df.loc[df.groupby("pid")["opt_perc"].idxmax()]
+    num_commits = df["commit"].nunique()
+    if num_commits == 1:
+        return df.loc[df.groupby("pid")["opt_perc"].idxmax()]
+    else:
+        df["score"] = df["opt_perc"] * df["loc_changed"]
+        return df.loc[df.groupby("pid")["score"].idxmax()]
 
 
 def build_dataset(problems, pick_best_test):
