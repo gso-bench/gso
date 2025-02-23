@@ -12,6 +12,12 @@ from pyperf.constants import EXPS_DIR
 from pyperf.utils.io import load_problems
 
 
+def has_non_python_changes(commit):
+    """Check if commit includes changes to non-Python files."""
+    ignore_list = ["py", "rst", "md", "txt", "yml", "toml", "gitignore"]
+    return any(file.split(".")[-1] not in ignore_list for file in commit.files_changed)
+
+
 def parse_times(time_str):
     pattern = r"Execution time:\s+([\d\.]+)s"
     times = []
@@ -42,7 +48,9 @@ def print_prob_summary(prob):
     print("-" * 50)
 
 
-def speedup_summary(prob, speedup_threshold=2, speedup_mode="target"):
+def speedup_summary(
+    prob, speedup_threshold=2, speedup_mode="target", non_python_only=False
+):
     run0_res = list(prob.results.values())[0]
     stats = {}
     valid_commits, opt_commits = set(), set()
@@ -50,6 +58,9 @@ def speedup_summary(prob, speedup_threshold=2, speedup_mode="target"):
     for ct in run0_res:
         test = ct["test_file"]
         commit = next((c for c in prob.commits if c.quick_hash() == ct["commit"]), None)
+
+        if non_python_only and not has_non_python_changes(commit):
+            continue
 
         base_result = ct["base_result"]
         base_times = parse_times(base_result)
@@ -226,7 +237,12 @@ def create_performance_summary(df: pd.DataFrame) -> Dict:
     return summary
 
 
-def main(exp_id: str, specific_api: str | None = None, top_k: int = 10):
+def main(
+    exp_id: str,
+    specific_api: str | None = None,
+    top_k: int = 10,
+    non_python_only: bool = False,
+):
     """Updated main function incorporating enhanced analysis."""
     exp_dir = EXPS_DIR / f"{exp_id}"
     output_dir = "plots"
@@ -252,7 +268,9 @@ def main(exp_id: str, specific_api: str | None = None, top_k: int = 10):
             [c.quick_hash() for c in prob.commits if c.date.year >= 2016]
         )
         if prob.is_valid():
-            stats, valid_commits, opt_commits = speedup_summary(prob)
+            stats, valid_commits, opt_commits = speedup_summary(
+                prob, non_python_only=non_python_only
+            )
             valid_commits_all.update(valid_commits)
             opt_commits_all.update(opt_commits)
 
@@ -261,7 +279,6 @@ def main(exp_id: str, specific_api: str | None = None, top_k: int = 10):
                 opt_problems[prob.pid] = stats
                 for _, v in stats.items():
                     opt_apis.add(v["api"])
-
         else:
             err_problems.append(prob)
 
@@ -331,5 +348,10 @@ if __name__ == "__main__":
     parser.add_argument(
         "-k", "--top_k", type=int, help="Top results to show", default=10
     )
+    parser.add_argument(
+        "--non-python-only",
+        action="store_true",
+        help="Only use commits with non-Python code changes",
+    )
     args = parser.parse_args()
-    df, summary = main(args.exp_id, args.api, args.top_k)
+    df, summary = main(args.exp_id, args.api, args.top_k, args.non_python_only)
