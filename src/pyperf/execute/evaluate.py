@@ -240,6 +240,8 @@ def create_performance_summary(df: pd.DataFrame) -> Dict:
 def main(
     exp_id: str,
     specific_api: str | None = None,
+    speedup_threshold: int = 2,
+    speedup_mode: str = "target",
     top_k: int = 10,
     non_python_only: bool = False,
 ):
@@ -269,7 +271,10 @@ def main(
         )
         if prob.is_valid():
             stats, valid_commits, opt_commits = speedup_summary(
-                prob, non_python_only=non_python_only
+                prob,
+                speedup_threshold=speedup_threshold,
+                speedup_mode=speedup_mode,
+                non_python_only=non_python_only,
             )
             valid_commits_all.update(valid_commits)
             opt_commits_all.update(opt_commits)
@@ -346,6 +351,16 @@ if __name__ == "__main__":
     parser.add_argument("-e", "--exp_id", type=str, help="Experiment ID", required=True)
     parser.add_argument("-a", "--api", type=str, help="Specific API", required=False)
     parser.add_argument(
+        "-t", "--speedup_threshold", type=int, help="Speedup threshold", default=2
+    )
+    parser.add_argument(
+        "-m",
+        "--speedup_mode",
+        type=str,
+        help="Speedup mode (target or commit)",
+        default="target",
+    )
+    parser.add_argument(
         "-k", "--top_k", type=int, help="Top results to show", default=10
     )
     parser.add_argument(
@@ -354,4 +369,11 @@ if __name__ == "__main__":
         help="Only use commits with non-Python code changes",
     )
     args = parser.parse_args()
-    df, summary = main(args.exp_id, args.api, args.top_k, args.non_python_only)
+    df, summary = main(
+        args.exp_id,
+        args.api,
+        args.speedup_threshold,
+        args.speedup_mode,
+        args.top_k,
+        args.non_python_only,
+    )
