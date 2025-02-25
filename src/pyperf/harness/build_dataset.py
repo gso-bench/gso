@@ -10,20 +10,19 @@ from pyperf.data.perf import PerformanceCommit
 from pyperf.execute.evaluate import speedup_summary, create_analysis_dataframe
 from pyperf.utils.io import str2bool, load_problems
 
-DEBUG_FLAG = True
 TEST_PROBLEMS = [
     # --- v0.0.1 ---
-    "pandas-index._getitem_slice",  # 9b4cffc
-    "pandas-merge_ordered",  # 061c2e9
-    "pandas-dataframegroupby.skew",  # 233bd83
-    "pandas-dataframegroupby.idxmin",  # ccca5df
+    ("pandas-index._getitem_slice", "9b4cffc"),
+    ("pandas-merge_ordered", "061c2e9"),
+    ("pandas-dataframegroupby.skew", "233bd83"),
+    ("pandas-dataframegroupby.idxmin", "ccca5df"),
     # --- v0.0.2 ---
-    "pandas-period.strftime",  # 2cdca01
-    "pandas-pandas.concat",  # b661313,
-    "pandas-datetimeindex.isocalendar",  # 1ae00c6
-    "pandas-groupby.quantile",  # e8961f1
-    "pandas-seriesgroupby.ffill",  # 84aca21
-    "pandas-merge_asof",  # 2f4c93e
+    ("pandas-period.strftime", "2cdca01"),
+    ("pandas-groupby.quantile", "e8961f1"),
+    ("pandas-seriesgroupby.ffill", "84aca21"),
+    ("pandas-merge_asof", "2f4c93e"),
+    ("pandas-pandas.concat", "b661313"),  # NOTE: easy to beat commit
+    ("pandas-datetimeindex.isocalendar", "1ae00c6"),  # NOTE: easy to beat commit
 ]
 
 
@@ -48,29 +47,12 @@ def create_instance(prob: Problem, commit_hash: str, test_id: str):
     }
 
 
-def get_most_optimized_tests_per_commit(df):
-    """
-    Filter out the tests with highest optimization percentage for each commit of each problem.
-    """
-    # Group by problem and commit, then get the row with maximum opt_perc
-    return df.loc[df.groupby(["pid", "commit"])["opt_perc"].idxmax()]
-
-
-def get_most_optimized_commit_test_pairs(df):
-    """
-    Filter out the commit-test pair with highest optimization percentage for each problem.
-    """
-    # Group by problem and get the row with maximum opt_perc
-    num_commits = df["commit"].nunique()
-    if num_commits == 1:
-        return df.loc[df.groupby("pid")["opt_perc"].idxmax()]
-    else:
-        df["score"] = df["opt_perc"] * df["loc_changed"]
-        return df.loc[df.groupby("pid")["score"].idxmax()]
-
-
-def build_dataset(problems, pick_best_test):
+def build_dataset(problems):
     print(f"Loaded problems: {len(problems)}")
+
+    test_pid_commits = {pid: commit for pid, commit in TEST_PROBLEMS}
+    problems = [p for p in problems if p.pid in test_pid_commits]
+    print(f"Filtered problems: {len(problems)}")
 
     valid_problems = [p for p in problems if p.is_valid()]
     print(f"Valid problems: {len(valid_problems)}")
@@ -81,11 +63,18 @@ def build_dataset(problems, pick_best_test):
         if stats:
             opt_stats[prob.pid] = stats
 
+    # create dataframe and filter to test commits
     opt_problems_df = create_analysis_dataframe(opt_stats)
-    if pick_best_test:
-        opt_problems_df = get_most_optimized_tests_per_commit(opt_problems_df)
-    else:
-        opt_problems_df = get_most_optimized_commit_test_pairs(opt_problems_df)
+    mask = opt_problems_df.apply(
+        lambda r: r["commit"] == test_pid_commits.get(r["pid"]), axis=1
+    )
+    opt_problems_df = opt_problems_df[mask]
+
+    # pick the best test per problem-commit pair
+    opt_problems_df = opt_problems_df.loc[
+        opt_problems_df.groupby("pid")["opt_perc"].idxmax()
+    ]
+    assert len(opt_problems_df) == len(test_pid_commits), "Missing problems?"
 
     # Create dataset instances for selected (problem, commit, test)
     dataset = []
@@ -100,18 +89,15 @@ def build_dataset(problems, pick_best_test):
     return dataset
 
 
-def main(exp_id, pick_best_test, push_to_hf, hf_username):
+def main(exp_id, push_to_hf, hf_username):
     if exp_id is None:
         raise NotImplementedError("Building dataset for all exps not supported yet")
 
     exp_dir = EXPS_DIR / f"{exp_id}"
     problems = load_problems(exp_dir / f"{exp_id}_results.json")
 
-    if DEBUG_FLAG:
-        problems = [p for p in problems if p.pid in TEST_PROBLEMS]
-
     # Build dataset
-    dataset = build_dataset(problems, pick_best_test)
+    dataset = build_dataset(problems)
 
     # Save dataset to jsonl file
     DATASET_DIR.mkdir(parents=True, exist_ok=True)
@@ -131,12 +117,6 @@ def main(exp_id, pick_best_test, push_to_hf, hf_username):
 if __name__ == "__main__":
     parser = ArgumentParser(description="Analyze performance results")
     parser.add_argument("--exp_id", type=str, help="Experiment ID", default=None)
-    parser.add_argument(
-        "--pick_best_test",
-        type=str2bool,
-        help="Pick the best test per commit; default: pick the best commit-test pair per problem",
-        default=False,
-    )
     parser.add_argument(
         "--push_to_hf",
         action="store_true",
