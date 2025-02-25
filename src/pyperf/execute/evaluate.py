@@ -49,7 +49,11 @@ def print_prob_summary(prob):
 
 
 def speedup_summary(
-    prob, speedup_threshold=2, speedup_mode="target", non_python_only=False
+    prob,
+    speedup_threshold=2,
+    speedup_mode="target",
+    non_python_only=False,
+    python_only=False,
 ):
     run0_res = list(prob.results.values())[0]
     stats = {}
@@ -60,6 +64,8 @@ def speedup_summary(
         commit = next((c for c in prob.commits if c.quick_hash() == ct["commit"]), None)
 
         if non_python_only and not has_non_python_changes(commit):
+            continue
+        elif python_only and has_non_python_changes(commit):
             continue
 
         base_result = ct["base_result"]
@@ -221,6 +227,9 @@ def plot_execution_times_distribution(df: pd.DataFrame, output_dir: str):
     plt.close()
 
 
+######### Printing Functions #########
+
+
 #########  Performance Summary #########
 
 
@@ -241,9 +250,11 @@ def main(
     exp_id: str,
     specific_api: str | None = None,
     speedup_threshold: int = 2,
+    loc_threshold: int = None,
     speedup_mode: str = "target",
     top_k: int = 10,
     non_python_only: bool = False,
+    python_only: bool = False,
 ):
     """Updated main function incorporating enhanced analysis."""
     exp_dir = EXPS_DIR / f"{exp_id}"
@@ -275,6 +286,7 @@ def main(
                 speedup_threshold=speedup_threshold,
                 speedup_mode=speedup_mode,
                 non_python_only=non_python_only,
+                python_only=python_only,
             )
             valid_commits_all.update(valid_commits)
             opt_commits_all.update(opt_commits)
@@ -327,21 +339,33 @@ def main(
     print(f"  Total valid commits: {len(valid_commits_all)}")
     print(f"  Total optimized commits: {len(opt_commits_all)}")
 
-    best_results = (
+    best = (
         df.groupby(["pid", "commit"])
         .agg({"opt_perc": "max", "speedup_factor": "max", "loc_changed": "first"})
         .reset_index()
     )
 
     print("\nTop problems by Opt (best result per pid-commit):")
-    for i, row in best_results.nlargest(top_k, "opt_perc").iterrows():
+    for i, row in best.nlargest(top_k, "opt_perc").iterrows():
         print(
             f"  {row['pid']} ({row['commit']}): {row['opt_perc']:.2f}% | {row['speedup_factor']:.2f}x"
         )
 
     print("\nTop problems by LoC (best result per pid-commit):")
-    for i, row in best_results.nlargest(top_k, "loc_changed").iterrows():
+    for i, row in best.nlargest(top_k, "loc_changed").iterrows():
         print(f"  {row['pid']} ({row['commit']}): {row['loc_changed']}")
+
+    if loc_threshold:
+        print("\nTop commits by Opt > t & LoC > l:")
+        top = best[best["loc_changed"] > loc_threshold]
+        top_commits = top.nlargest(top_k, "loc_changed")["commit"].unique()
+        for commit in top_commits:
+            max_loc = top[top["commit"] == commit]["loc_changed"].max()
+            print(f"  {commit} ({max_loc} lines):")
+            for _, row in top[top["commit"] == commit].iterrows():
+                print(
+                    f"      {row['pid']} ({row['opt_perc']:.2f}% | {row['speedup_factor']:.2f}x)"
+                )
 
     return df, summary
 
@@ -352,6 +376,9 @@ if __name__ == "__main__":
     parser.add_argument("-a", "--api", type=str, help="Specific API", required=False)
     parser.add_argument(
         "-t", "--speedup_threshold", type=int, help="Speedup threshold", default=2
+    )
+    parser.add_argument(
+        "-l", "--loc_threshold", type=int, help="Lines of code threshold", default=None
     )
     parser.add_argument(
         "-m",
@@ -368,12 +395,19 @@ if __name__ == "__main__":
         action="store_true",
         help="Only use commits with non-Python code changes",
     )
+    parser.add_argument(
+        "--python-only",
+        action="store_true",
+        help="Only use commits with Python code changes",
+    )
     args = parser.parse_args()
     df, summary = main(
         args.exp_id,
         args.api,
         args.speedup_threshold,
+        args.loc_threshold,
         args.speedup_mode,
         args.top_k,
         args.non_python_only,
+        args.python_only,
     )
