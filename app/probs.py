@@ -35,7 +35,7 @@ def get_repo_list():
     return repo_list
 
 
-def load_repo_data(repo_name, page=1, per_page=APIS_PER_PAGE):
+def load_repo_data(repo_name, page=1, per_page=APIS_PER_PAGE, search_query=None):
     file_path = os.path.join(EXPS_DIR, f"{repo_name}", f"{repo_name}_results.json")
     all_problems = load_problems(file_path)
     api_groups = defaultdict(list)
@@ -71,12 +71,21 @@ def load_repo_data(repo_name, page=1, per_page=APIS_PER_PAGE):
                         )
                         api_groups[result["api"]].append(result)
 
+    # Apply search filter after generating api_groups but before other filters
+    if search_query and search_query.strip():
+        search_query = search_query.lower()
+        api_groups = {
+            api: problems
+            for api, problems in api_groups.items()
+            if search_query in api.lower()
+        }
+
     # Apply filters
     filters = {
         "non_python_only": request.args.get("non_python_only") == "true",
         "file_count_range": request.args.get("file_count_range"),
         "loc_range": request.args.get("loc_range"),
-        "commit_count_range": request.args.get("commit_count_range"),
+        # "commit_count_range": request.args.get("commit_count_range"),
         "speedup_range": request.args.get("speedup_range"),
     }
     api_groups = filter_problems(api_groups, filters)
@@ -183,7 +192,8 @@ def home():
 @app.route("/get_repo_data/<repo_name>")
 def get_repo_data(repo_name):
     page = int(request.args.get("page", 1))
-    data = load_repo_data(repo_name, page=page)
+    search_query = request.args.get("search", "")
+    data = load_repo_data(repo_name, page=page, search_query=search_query)
     if data:
         return jsonify(data)
     return jsonify({"error": "Repo not found"}), 404

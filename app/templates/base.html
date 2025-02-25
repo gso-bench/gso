@@ -198,12 +198,9 @@
             <option value="5-10">5-10 x</option>
             <option value="10+">10+ x</option>
         </select>
-        <select id="commit-count-filter" class="my-select">
-            <option value="">Any commits</option>
-            <option value="1">1 commit</option>
-            <option value="2-5">2-5 commits</option>
-            <option value="5+">5+ commits</option>
-        </select>
+        <div class="search-container" style="display: inline-block; margin-left: 10px; margin-right: 10px;">
+            <input type="text" id="api-search" placeholder="Search APIs..." class="my-select">
+        </div>
         <button onclick="resetFilters()" class="p-2 bg-blue-500 text-white rounded hover:bg-blue-600">
             Reset Filters
         </button>
@@ -484,6 +481,8 @@
             document.getElementById('file-type-filter').value = 'false';
             document.getElementById('file-count-filter').value = '';
             document.getElementById('loc-filter').value = '';
+            document.getElementById('api-search').value = '';
+            currentSearchQuery = '';
             currentFilters = {
                 non_python_only: 'false',
                 file_count_range: '',
@@ -578,15 +577,17 @@
         }
         
         let currentApiData = {}; // Global variable to store API data
-        
+        let currentSearchQuery = ""; // Global variable to store search query
+
         async function loadRepoData(repoName, page = 1) {
             showLoading();
             const speedupMode = document.getElementById('speedup-mode-select').value;
 
-            // Build query string with filters
+            // Build query string with filters and search
             const queryParams = new URLSearchParams({
                 page: page,
                 speedup_mode: speedupMode,
+                search: currentSearchQuery,
                 ...currentFilters
             });
 
@@ -684,6 +685,20 @@
             }
         }
 
+        function handleSearch() {
+            const searchInput = document.getElementById('api-search');
+            currentSearchQuery = searchInput.value.trim();
+            const repoName = document.getElementById('repo-select').value;
+            loadRepoData(repoName, 1); // Reset to first page when search changes
+        }
+        
+        // Add event listeners for search
+        document.getElementById('api-search').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                handleSearch();
+            }
+        });
+
         // Add event listeners for filters
         document.getElementById('file-type-filter').addEventListener('change', (e) => {
             updateFilters('non_python_only', e.target.value);
@@ -699,10 +714,6 @@
 
         document.getElementById('speedup-filter').addEventListener('change', (e) => {
             updateFilters('speedup_range', e.target.value);
-        });
-
-        document.getElementById('commit-count-filter').addEventListener('change', (e) => {
-            updateFilters('commit_count_range', e.target.value);
         });
 
         // Load initial data
