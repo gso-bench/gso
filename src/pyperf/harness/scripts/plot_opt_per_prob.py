@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 import json
 import numpy as np
 
-from pyperf.harness.build_dataset import *
 
 speedup_mode = "Factor"
 # eval_report = "~/pyperf/reports/opt_k_reports/claude.opt@10.test.report.json"

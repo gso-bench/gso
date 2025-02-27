@@ -9,21 +9,7 @@ from pyperf.data.dataset import PyPerfInstance
 from pyperf.data.perf import PerformanceCommit
 from pyperf.execute.evaluate import speedup_summary, create_analysis_dataframe
 from pyperf.utils.io import str2bool, load_problems
-
-TEST_PROBLEMS = [
-    # --- v0.0.1 ---
-    ("pandas-index._getitem_slice", "9b4cffc"),
-    ("pandas-merge_ordered", "061c2e9"),
-    ("pandas-dataframegroupby.skew", "233bd83"),
-    ("pandas-dataframegroupby.idxmin", "ccca5df"),
-    # --- v0.0.2 ---
-    ("pandas-period.strftime", "2cdca01"),
-    ("pandas-groupby.quantile", "e8961f1"),
-    ("pandas-seriesgroupby.ffill", "84aca21"),
-    ("pandas-merge_asof", "2f4c93e"),
-    ("pandas-pandas.concat", "b661313"),  # NOTE: easy to beat commit
-    ("pandas-datetimeindex.isocalendar", "1ae00c6"),  # NOTE: easy to beat commit
-]
+from pyperf.collect.pids import TEST_PROBLEMS
 
 
 def create_instance(prob: Problem, commit_hash: str, test_id: str):
@@ -76,6 +62,10 @@ def build_dataset(problems):
     ]
     assert len(opt_problems_df) == len(test_pid_commits), "Missing problems?"
 
+    avg_loc = opt_problems_df["loc_changed"].mean()
+    avg_opt_perc = opt_problems_df["opt_perc"].mean()
+    avg_speedup_factor = opt_problems_df["speedup_factor"].mean()
+
     # Create dataset instances for selected (problem, commit, test)
     dataset = []
     for _, row in opt_problems_df.iterrows():
@@ -84,7 +74,11 @@ def build_dataset(problems):
         inst = PyPerfInstance(**inst_dict)
         dataset.append(inst)
 
-    print(f"Created dataset of size: {len(dataset)}")
+    print("Created dataset!\n\n------ Dataset Summary ------")
+    print(f"Size: {len(dataset)}")
+    print(f"Avg LOC: {avg_loc:.2f}")
+    print(f"Avg Opt%: {avg_opt_perc:.2f}%")
+    print(f"Avg speedup: {avg_speedup_factor:.2f}X")
 
     return dataset
 
@@ -99,19 +93,19 @@ def main(exp_id, push_to_hf, hf_username):
     # Build dataset
     dataset = build_dataset(problems)
 
-    # Save dataset to jsonl file
-    DATASET_DIR.mkdir(parents=True, exist_ok=True)
-    dataset_df = pd.DataFrame([asdict(inst) for inst in dataset])
-    dataset_name = f"pyperf_{exp_id}" if exp_id else "pyperf"
-    dataset_df.to_json(
-        DATASET_DIR / f"{dataset_name}_dataset.jsonl", orient="records", lines=True
-    )
+    # # Save dataset to jsonl file
+    # DATASET_DIR.mkdir(parents=True, exist_ok=True)
+    # dataset_df = pd.DataFrame([asdict(inst) for inst in dataset])
+    # dataset_name = f"pyperf_{exp_id}" if exp_id else "pyperf"
+    # dataset_df.to_json(
+    #     DATASET_DIR / f"{dataset_name}_dataset.jsonl", orient="records", lines=True
+    # )
 
-    if push_to_hf:
-        hf_dataset = Dataset.from_pandas(dataset_df)
-        hf_dataset.push_to_hub(
-            f"{hf_username}/{dataset_name}", split="test", private=True
-        )
+    # if push_to_hf:
+    #     hf_dataset = Dataset.from_pandas(dataset_df)
+    #     hf_dataset.push_to_hub(
+    #         f"{hf_username}/{dataset_name}", split="test", private=True
+    #     )
 
 
 if __name__ == "__main__":

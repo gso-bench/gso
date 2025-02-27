@@ -255,6 +255,7 @@ def main(
     top_k: int = 10,
     non_python_only: bool = False,
     python_only: bool = False,
+    top_by: str = "opt",
 ):
     """Updated main function incorporating enhanced analysis."""
     exp_dir = EXPS_DIR / f"{exp_id}"
@@ -345,18 +346,20 @@ def main(
         .reset_index()
     )
 
-    print("\nTop problems by Opt (best result per pid-commit):")
-    for i, row in best.nlargest(top_k, "opt_perc").iterrows():
-        print(
-            f"  {row['pid']} ({row['commit']}): {row['opt_perc']:.2f}% | {row['speedup_factor']:.2f}x"
-        )
+    if top_by == "opt":
+        print("\nTop problems by Opt (best result per pid-commit):")
+        for i, row in best.nlargest(top_k, "opt_perc").iterrows():
+            print(
+                f"  {row['pid']} ({row['commit']}): {row['opt_perc']:.2f}% | {row['speedup_factor']:.2f}x"
+            )
 
-    print("\nTop problems by LoC (best result per pid-commit):")
-    for i, row in best.nlargest(top_k, "loc_changed").iterrows():
-        print(f"  {row['pid']} ({row['commit']}): {row['loc_changed']}")
+    if top_by == "loc":
+        print("\nTop problems by LoC (best result per pid-commit):")
+        for i, row in best.nlargest(top_k, "loc_changed").iterrows():
+            print(f"  {row['pid']} ({row['commit']}): {row['loc_changed']}")
 
-    if loc_threshold:
-        print("\nTop commits by Opt > t & LoC > l:")
+    if loc_threshold is not None and top_by == "loc_opt":
+        print(f"\nTop commits by Opt > {speedup_threshold}% & LoC > {loc_threshold}:")
         top = best[best["loc_changed"] > loc_threshold]
         top_commits = top.nlargest(top_k, "loc_changed")["commit"].unique()
         for commit in top_commits:
@@ -400,7 +403,12 @@ if __name__ == "__main__":
         action="store_true",
         help="Only use commits with Python code changes",
     )
+    parser.add_argument("--top_by", choices=["loc", "opt", "loc_opt"], default="opt")
     args = parser.parse_args()
+
+    if args.top_by == "loc_opt" and args.loc_threshold is None:
+        raise ValueError("loc_threshold must be provided for top_by='loc_opt'")
+
     df, summary = main(
         args.exp_id,
         args.api,
@@ -410,4 +418,5 @@ if __name__ == "__main__":
         args.top_k,
         args.non_python_only,
         args.python_only,
+        args.top_by,
     )
