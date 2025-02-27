@@ -93,19 +93,19 @@ def main(exp_id, push_to_hf, hf_username):
     # Build dataset
     dataset = build_dataset(problems)
 
-    # # Save dataset to jsonl file
-    # DATASET_DIR.mkdir(parents=True, exist_ok=True)
-    # dataset_df = pd.DataFrame([asdict(inst) for inst in dataset])
-    # dataset_name = f"pyperf_{exp_id}" if exp_id else "pyperf"
-    # dataset_df.to_json(
-    #     DATASET_DIR / f"{dataset_name}_dataset.jsonl", orient="records", lines=True
-    # )
+    # Save dataset to jsonl file
+    DATASET_DIR.mkdir(parents=True, exist_ok=True)
+    dataset_df = pd.DataFrame([asdict(inst) for inst in dataset])
+    dataset_name = f"pyperf_{exp_id}" if exp_id else "pyperf"
+    dataset_df.to_json(
+        DATASET_DIR / f"{dataset_name}_dataset.jsonl", orient="records", lines=True
+    )
 
-    # if push_to_hf:
-    #     hf_dataset = Dataset.from_pandas(dataset_df)
-    #     hf_dataset.push_to_hub(
-    #         f"{hf_username}/{dataset_name}", split="test", private=True
-    #     )
+    if push_to_hf:
+        hf_dataset = Dataset.from_pandas(dataset_df)
+        hf_dataset.push_to_hub(
+            f"{hf_username}/{dataset_name}", split="test", private=True
+        )
 
 
 if __name__ == "__main__":
