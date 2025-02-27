@@ -46,7 +46,7 @@ uv run src/pyperf/harness/prepare_images.py --dataset_name <dataset_name> --push
 
 <details>
 <summary>Prerequisite: You need to have all the docker images built and available.</summary>
-<pre>./src/pyperf/harness/pull_images.sh -r slimshetty/pyperf-pandas -s</pre>
+<pre>./src/pyperf/harness/scripts/pull_images.sh -r slimshetty/pyperf-pandas -s</pre>
 TODO: pull images as and when needed
 </details></br>
 
