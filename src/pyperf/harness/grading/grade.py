@@ -7,7 +7,7 @@ from pyperf.data.dataset import PyPerfInstance
 from pyperf.constants import RUN_EVALUATION_LOG_DIR, INSTANCE_IMAGE_BUILD_DIR
 from pyperf.harness.utils import setup_logger, close_logger
 from pyperf.harness.grading.metrics import get_eval_report
-from pyperf.harness.evalscript import get_eval_script
+from pyperf.harness.grading.evalscript import get_eval_script
 from pyperf.harness.environment.docker_build import create_container
 from pyperf.harness.environment.docker_utils import (
     cleanup_container,
