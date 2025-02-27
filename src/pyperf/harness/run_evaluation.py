@@ -221,7 +221,10 @@ if __name__ == "__main__":
         help="Rerun all instances, even if they have already been run. Default: False",
     )
     parser.add_argument(
-        "--max_workers", type=int, default=4, help="Max workers for parallel processing"
+        "--max_workers",
+        type=int,
+        default=10,
+        help="Max workers for parallel processing",
     )
     parser.add_argument(
         "--open_file_limit", type=int, default=8192, help="Open file limit"

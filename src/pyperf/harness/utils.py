@@ -29,4 +29,4 @@ def close_logger(logger):
 def natural_sort_key(s):
     import re
 
-    return [int(c) if c.isdigit() else c for c in re.split("(\d+)", s)]
+    return [int(c) if c.isdigit() else c for c in re.split(r"(\d+)", s)]

@@ -4,7 +4,7 @@ from enum import Enum
 
 from pyperf.constants import OPTIM_THRESH
 from pyperf.data.dataset import PyPerfInstance
-from pyperf.harness.evalscript import (
+from pyperf.harness.grading.evalscript import (
     APPLY_PATCH_FAIL,
     INSTALL_FAIL,
     TESTS_ERROR,

@@ -12,6 +12,12 @@ from pyperf.constants import EXPS_DIR
 from pyperf.utils.io import load_problems
 
 
+def has_non_python_changes(commit):
+    """Check if commit includes changes to non-Python files."""
+    ignore_list = ["py", "rst", "md", "txt", "yml", "toml", "gitignore"]
+    return any(file.split(".")[-1] not in ignore_list for file in commit.files_changed)
+
+
 def parse_times(time_str):
     pattern = r"Execution time:\s+([\d\.]+)s"
     times = []
@@ -42,7 +48,13 @@ def print_prob_summary(prob):
     print("-" * 50)
 
 
-def speedup_summary(prob, speedup_threshold=2, speedup_mode="target"):
+def speedup_summary(
+    prob,
+    speedup_threshold=2,
+    speedup_mode="target",
+    non_python_only=False,
+    python_only=False,
+):
     run0_res = list(prob.results.values())[0]
     stats = {}
     valid_commits, opt_commits = set(), set()
@@ -50,6 +62,11 @@ def speedup_summary(prob, speedup_threshold=2, speedup_mode="target"):
     for ct in run0_res:
         test = ct["test_file"]
         commit = next((c for c in prob.commits if c.quick_hash() == ct["commit"]), None)
+
+        if non_python_only and not has_non_python_changes(commit):
+            continue
+        elif python_only and has_non_python_changes(commit):
+            continue
 
         base_result = ct["base_result"]
         base_times = parse_times(base_result)
@@ -210,6 +227,9 @@ def plot_execution_times_distribution(df: pd.DataFrame, output_dir: str):
     plt.close()
 
 
+######### Printing Functions #########
+
+
 #########  Performance Summary #########
 
 
@@ -226,7 +246,17 @@ def create_performance_summary(df: pd.DataFrame) -> Dict:
     return summary
 
 
-def main(exp_id: str, specific_api: str | None = None):
+def main(
+    exp_id: str,
+    specific_api: str | None = None,
+    speedup_threshold: int = 2,
+    loc_threshold: int = None,
+    speedup_mode: str = "target",
+    top_k: int = 10,
+    non_python_only: bool = False,
+    python_only: bool = False,
+    top_by: str = "opt",
+):
     """Updated main function incorporating enhanced analysis."""
     exp_dir = EXPS_DIR / f"{exp_id}"
     output_dir = "plots"
@@ -252,7 +282,13 @@ def main(exp_id: str, specific_api: str | None = None):
             [c.quick_hash() for c in prob.commits if c.date.year >= 2016]
         )
         if prob.is_valid():
-            stats, valid_commits, opt_commits = speedup_summary(prob)
+            stats, valid_commits, opt_commits = speedup_summary(
+                prob,
+                speedup_threshold=speedup_threshold,
+                speedup_mode=speedup_mode,
+                non_python_only=non_python_only,
+                python_only=python_only,
+            )
             valid_commits_all.update(valid_commits)
             opt_commits_all.update(opt_commits)
 
@@ -261,7 +297,6 @@ def main(exp_id: str, specific_api: str | None = None):
                 opt_problems[prob.pid] = stats
                 for _, v in stats.items():
                     opt_apis.add(v["api"])
-
         else:
             err_problems.append(prob)
 
@@ -305,24 +340,35 @@ def main(exp_id: str, specific_api: str | None = None):
     print(f"  Total valid commits: {len(valid_commits_all)}")
     print(f"  Total optimized commits: {len(opt_commits_all)}")
 
-    print("\nTop problems (by opt%):")
-    for i, row in df.nlargest(10, "opt_perc").iterrows():
-        print(
-            f"  {row['pid']}-{row['test_id']} ({row['commit']}): {row['opt_perc']:.2f}%"
-        )
+    best = (
+        df.groupby(["pid", "commit"])
+        .agg({"opt_perc": "max", "speedup_factor": "max", "loc_changed": "first"})
+        .reset_index()
+    )
 
-    print("\nTop problems (by loc changed):")
-    for i, row in df.nlargest(10, "loc_changed").iterrows():
-        print(
-            f"  {row['pid']}-{row['test_id']} ({row['commit']}): {row['loc_changed']}"
-        )
+    if top_by == "opt":
+        print("\nTop problems by Opt (best result per pid-commit):")
+        for i, row in best.nlargest(top_k, "opt_perc").iterrows():
+            print(
+                f"  {row['pid']} ({row['commit']}): {row['opt_perc']:.2f}% | {row['speedup_factor']:.2f}x"
+            )
 
-    # print("\nErrored APIs:")
-    # for p in err_problems:
-    #     commits = ", ".join(
-    #         [f"{c.quick_hash()} ({c.date.strftime("%m/%d/%Y")})" for c in p.commits]
-    #     )
-    #     print(f"    {p.api} : {commits}")
+    if top_by == "loc":
+        print("\nTop problems by LoC (best result per pid-commit):")
+        for i, row in best.nlargest(top_k, "loc_changed").iterrows():
+            print(f"  {row['pid']} ({row['commit']}): {row['loc_changed']}")
+
+    if loc_threshold is not None and top_by == "loc_opt":
+        print(f"\nTop commits by Opt > {speedup_threshold}% & LoC > {loc_threshold}:")
+        top = best[best["loc_changed"] > loc_threshold]
+        top_commits = top.nlargest(top_k, "loc_changed")["commit"].unique()
+        for commit in top_commits:
+            max_loc = top[top["commit"] == commit]["loc_changed"].max()
+            print(f"  {commit} ({max_loc} lines):")
+            for _, row in top[top["commit"] == commit].iterrows():
+                print(
+                    f"      {row['pid']} ({row['opt_perc']:.2f}% | {row['speedup_factor']:.2f}x)"
+                )
 
     return df, summary
 
@@ -331,5 +377,46 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Analyze performance results")
     parser.add_argument("-e", "--exp_id", type=str, help="Experiment ID", required=True)
     parser.add_argument("-a", "--api", type=str, help="Specific API", required=False)
+    parser.add_argument(
+        "-t", "--speedup_threshold", type=int, help="Speedup threshold", default=2
+    )
+    parser.add_argument(
+        "-l", "--loc_threshold", type=int, help="Lines of code threshold", default=None
+    )
+    parser.add_argument(
+        "-m",
+        "--speedup_mode",
+        type=str,
+        help="Speedup mode (target or commit)",
+        default="target",
+    )
+    parser.add_argument(
+        "-k", "--top_k", type=int, help="Top results to show", default=10
+    )
+    parser.add_argument(
+        "--non-python-only",
+        action="store_true",
+        help="Only use commits with non-Python code changes",
+    )
+    parser.add_argument(
+        "--python-only",
+        action="store_true",
+        help="Only use commits with Python code changes",
+    )
+    parser.add_argument("--top_by", choices=["loc", "opt", "loc_opt"], default="opt")
     args = parser.parse_args()
-    df, summary = main(args.exp_id, args.api)
+
+    if args.top_by == "loc_opt" and args.loc_threshold is None:
+        raise ValueError("loc_threshold must be provided for top_by='loc_opt'")
+
+    df, summary = main(
+        args.exp_id,
+        args.api,
+        args.speedup_threshold,
+        args.loc_threshold,
+        args.speedup_mode,
+        args.top_k,
+        args.non_python_only,
+        args.python_only,
+        args.top_by,
+    )
