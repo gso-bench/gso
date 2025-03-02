@@ -101,10 +101,10 @@ install_repo() {{
 }}
 """
 
-RUN_BASE = """run_tests_for_commit /pyperf_test_{i}.py "base_{i}.txt" "--reference" "pyperf" """
-RUN_PATCH = """run_tests_for_commit /pyperf_test_{i}.py "result_{i}.txt" "--eqcheck" "pyperf" """
-RUN_COMMIT = """run_tests_for_commit /pyperf_test_{i}.py "commit_{i}.txt" "--reference" "pyperf" """
-RUN_MAIN = """run_tests_for_commit /pyperf_test_{i}.py "main_{i}.txt" "--reference" "pyperf" """
+RUN_BASE = """run_tests_for_commit /pyperf_test_{i}.py "base_{i}.txt" "--reference" "pyperf_{i}" """
+RUN_PATCH = """run_tests_for_commit /pyperf_test_{i}.py "result_{i}.txt" "--eqcheck" "pyperf_{i}" """
+RUN_COMMIT = """run_tests_for_commit /pyperf_test_{i}.py "commit_{i}.txt" "--reference" "pyperf_{i}" """
+RUN_MAIN = """run_tests_for_commit /pyperf_test_{i}.py "main_{i}.txt" "--reference" "pyperf_{i}" """
 PRINT_PERF = lambda i, f: f"""echo "{TEST_DELIMITER.format(i=i)}" && cat {f}_{i}.txt"""
 
 
