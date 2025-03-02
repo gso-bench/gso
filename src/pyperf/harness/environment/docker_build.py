@@ -70,14 +70,14 @@ def build_image(
 
     try:
         # Write the setup scripts to the build directory
-        for setup_script_name, setup_script in setup_scripts.items():
-            setup_script_path = build_dir / setup_script_name
+        for script_name, setup_script in setup_scripts.items():
+            setup_script_path = build_dir / script_name
             with open(setup_script_path, "w") as f:
                 f.write(setup_script)
 
-            if setup_script_name not in dockerfile:
+            if script_name not in dockerfile and "pyperf_test" not in script_name:
                 logger.warning(
-                    f"Setup script {setup_script_name} may not be used in Dockerfile"
+                    f"Setup script {script_name} may not be used in Dockerfile"
                 )
 
         # Write the dockerfile to the build directory
@@ -206,8 +206,11 @@ def build_instance_images(
                 instance_id=inst.instance_id,
                 setup_scripts={
                     "setup_repo.sh": inst.install_repo_script,
-                    "pyperf_test.py": inst.test_script,
                     "eval.sh": get_eval_script(inst),
+                    **{
+                        f"pyperf_test_{i}.py": ts
+                        for i, ts in enumerate(inst.test_scripts)
+                    },
                 },
                 dockerfile=get_dockerfile_instance(inst.platform, inst.arch),
                 platform=inst.platform,

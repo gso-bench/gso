@@ -46,7 +46,7 @@ RUN /bin/bash /root/setup_repo.sh
 
 # Copy the test and eval scripts to parent of testbed
 COPY ./eval.sh /
-COPY ./pyperf_test.py /
+COPY ./pyperf_test*.py /
 
 WORKDIR /testbed/
 
