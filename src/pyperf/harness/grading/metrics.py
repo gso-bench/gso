@@ -17,6 +17,7 @@ from pyperf.harness.grading.evalscript import (
     END_COMMIT_OUTPUT,
     START_MAIN_OUTPUT,
     END_MAIN_OUTPUT,
+    TEST_DELIMITER,
 )
 
 
@@ -26,49 +27,65 @@ class TestStatus(Enum):
     TESTS_PASSED = "TESTS_PASSED"
 
 
-def speedup(before_mean, after_mean) -> float:
-    opt_perc = ((before_mean - after_mean) / before_mean) * 100
-    speedup_factor = before_mean / after_mean
-    return opt_perc, speedup_factor
+def geometric_mean(nums):
+    return np.exp(np.mean(np.log(nums))) if nums else None
 
 
-def compute_stats(times):
-    mean = np.mean(times)
-    std_dev = np.std(times, ddof=1)
-    if np.isnan(mean):
-        return None, None
-    return mean, std_dev
+def speedup(before_mean, after_mean, before_test_means, after_test_means):
+    # compute speedup and opt% across tests
+    mean_opt_perc = ((before_mean - after_mean) / before_mean) * 100
+    mean_speedup = before_mean / after_mean
+    # compute per-test ratios and then geometric mean
+    ratios = [b / a for b, a in zip(before_test_means, after_test_means)]
+    geomean_speedup = geometric_mean(ratios) if ratios else None
+    return mean_opt_perc, mean_speedup, geomean_speedup
+
+
+def compute_stats(test_groups):
+    per_test_means = [np.mean(t) for t in test_groups if t]
+    if not per_test_means:
+        return None, None, []
+    overall_mean = np.mean(per_test_means)
+    overall_std = np.std(per_test_means, ddof=1) if len(per_test_means) > 1 else 0.0
+    return overall_mean, overall_std, per_test_means
 
 
 def parse_times(content, start_marker, end_marker):
-    time_str = content.split(start_marker)[1].split(end_marker)[0]
+    segment = content.split(start_marker)[1].split(end_marker)[0]
+    delim_base = TEST_DELIMITER.split("{")[0]
+    test_blocks = re.split(
+        r"^" + re.escape(delim_base) + r"\d+\s*$", segment, flags=re.MULTILINE
+    )
 
+    tests = []
     pattern = r"Execution time:\s+([\d\.]+)s"
-    times = []
-    for line in time_str.strip().split("\n"):
-        match = re.match(pattern, line.strip())
-        if match:
-            seconds = float(match.group(1))
-            times.append(seconds)
-    return times
+    for block in test_blocks:
+        block = block.strip()
+        if not block:
+            continue
+        times = []
+        for line in block.splitlines():
+            m = re.match(pattern, line.strip())
+            if m:
+                times.append(float(m.group(1)))
+        if times:
+            tests.append(times)
+    return tests
 
 
 def parse_logs(content):
-    time_map = {
+    tm = {
         "base_times": None,
         "patch_times": None,
         "commit_times": None,
         "main_times": None,
     }
 
-    time_map["base_times"] = parse_times(content, START_BASE_OUTPUT, END_BASE_OUTPUT)
-    time_map["patch_times"] = parse_times(content, START_PATCH_OUTPUT, END_PATCH_OUTPUT)
-    time_map["commit_times"] = parse_times(
-        content, START_COMMIT_OUTPUT, END_COMMIT_OUTPUT
-    )
-    time_map["main_times"] = parse_times(content, START_MAIN_OUTPUT, END_MAIN_OUTPUT)
-
-    return time_map
+    tm["base_times"] = parse_times(content, START_BASE_OUTPUT, END_BASE_OUTPUT)
+    tm["patch_times"] = parse_times(content, START_PATCH_OUTPUT, END_PATCH_OUTPUT)
+    tm["commit_times"] = parse_times(content, START_COMMIT_OUTPUT, END_COMMIT_OUTPUT)
+    tm["main_times"] = parse_times(content, START_MAIN_OUTPUT, END_MAIN_OUTPUT)
+    return tm
 
 
 def get_opt_status(time_map) -> dict:
@@ -88,72 +105,75 @@ def get_opt_status(time_map) -> dict:
         "opt_stats": {},
     }
 
+    base_mean, base_std, base_means = compute_stats(time_map["base_times"])
+    patch_mean, patch_std, patch_means = compute_stats(time_map["patch_times"])
+    commit_mean, commit_std, commit_means = compute_stats(time_map["commit_times"])
+    main_mean, main_std, main_means = compute_stats(time_map["main_times"])
+
     time_stats = {
-        k: None
-        for k in [
-            "base_mean",
-            "base_std",
-            "patch_mean",
-            "patch_std",
-            "commit_mean",
-            "commit_std",
-            "main_mean",
-            "main_std",
-        ]
+        "base_mean": base_mean,
+        "base_std": base_std,
+        "patch_mean": patch_mean,
+        "patch_std": patch_std,
+        "commit_mean": commit_mean,
+        "commit_std": commit_std,
+        "main_mean": main_mean,
+        "main_std": main_std,
     }
 
     opt_stats = {
-        k: None
-        for k in [
-            "opt_perc_base",
-            "opt_perc_commit",
-            "opt_perc_main",
-            "speedup_base",
-            "speedup_commit",
-            "speedup_main",
-        ]
+        "opt_perc_base": None,
+        "opt_perc_commit": None,
+        "opt_perc_main": None,
+        "speedup_base": None,
+        "speedup_commit": None,
+        "speedup_main": None,
+        "geomean_speedup_base": None,
+        "geomean_speedup_commit": None,
+        "geomean_speedup_main": None,
     }
 
-    base_mean, base_std_dev = compute_stats(time_map["base_times"])
-    patch_mean, patch_std_dev = compute_stats(time_map["patch_times"])
-    commit_mean, commit_std_dev = compute_stats(time_map["commit_times"])
-    main_mean, main_std_dev = compute_stats(time_map["main_times"])
-
-    time_stats.update(
-        {
-            "base_mean": base_mean,
-            "base_std": base_std_dev,
-            "patch_mean": patch_mean,
-            "patch_std": patch_std_dev,
-            "commit_mean": commit_mean,
-            "commit_std": commit_std_dev,
-            "main_mean": main_mean,
-            "main_std": main_std_dev,
-        }
+    # 1. Speedup via arithmetic mean of times and geometric mean of ratios
+    patch_base_opt, patch_base_speedup, patch_base_speedup_gm = speedup(
+        base_mean, patch_mean, base_means, patch_means
+    )
+    patch_com_opt, patch_com_speedup, patch_com_speedup_gm = speedup(
+        commit_mean, patch_mean, commit_means, patch_means
+    )
+    patch_main_opt, patch_main_speedup, patch_main_speedup_gm = speedup(
+        main_mean, patch_mean, main_means, patch_means
     )
 
-    patch_base_opt, patch_base_speedup = speedup(base_mean, patch_mean)
-    patch_com_opt, patch_com_speedup = speedup(commit_mean, patch_mean)
-    patch_main_opt, patch_main_speedup = speedup(main_mean, patch_mean)
-
     if base_mean > patch_mean and patch_base_opt >= OPTIM_THRESH:
-        opt_status.update({"improved_base": True})
+        opt_status["improved_base"] = True
         opt_stats.update(
-            {"opt_perc_base": patch_base_opt, "speedup_base": patch_base_speedup}
+            {
+                "opt_perc_base": patch_base_opt,
+                "speedup_base": patch_base_speedup,
+                "geomean_speedup_base": patch_base_speedup_gm,
+            }
         )
 
         # if patch improves over base, then check how it compares to commit/main
 
         if commit_mean > patch_mean and patch_com_opt >= OPTIM_THRESH:
-            opt_status.update({"improved_commit": True})
+            opt_status["improved_commit"] = True
             opt_stats.update(
-                {"opt_perc_commit": patch_com_opt, "speedup_commit": patch_com_speedup}
+                {
+                    "opt_perc_commit": patch_com_opt,
+                    "speedup_commit": patch_com_speedup,
+                    "geomean_speedup_commit": patch_com_speedup_gm,
+                }
             )
 
         if main_mean > patch_mean and patch_main_opt >= OPTIM_THRESH:
-            opt_status.update({"improved_main": True})
+            opt_status["improved_main"] = True
             opt_stats.update(
-                {"opt_perc_main": patch_main_opt, "speedup_main": patch_main_speedup}
+                {
+                    "opt_perc_main": patch_main_opt,
+                    "speedup_main": patch_main_speedup,
+                    "geomean_speedup_main": patch_main_speedup_gm,
+                }
             )
 
     return {**opt_status, "time_stats": time_stats, "opt_stats": opt_stats}
