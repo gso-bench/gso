@@ -31,6 +31,11 @@ INSTANCE_IMAGE_BUILD_DIR = Path("logs/build_images/instances")
 RUN_EVALUATION_LOG_DIR = Path("logs/run_evaluation")
 EVALUATION_REPORTS_DIR = Path("reports")
 
+# --------- Build Constants ---------
+
+MIN_PROB_SPEEDUP = 1.5  # min speedup to consider a problem as a benchmark instance
+MAX_TEST_COUNT = 3  # max number of tests to run per problem
+
 # --------- Grading Constants ---------
 
 OPTIM_THRESH = 25  # min % speedup to consider a patch as optimized

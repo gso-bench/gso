@@ -7,7 +7,7 @@ class PyPerfInstance:
     repo: str
     base_commit: str
     api: str
-    test_script: str
+    test_scripts: list[str]
     hints_text: str
     setup_commands: list[str]
     install_commands: list[str]
@@ -69,6 +69,10 @@ class PyPerfInstance:
             return "linux/arm64/v8"
         else:
             raise ValueError(f"Invalid architecture: {self.arch}")
+
+    @property
+    def test_count(self):
+        return len(self.test_scripts)
 
     def get_instance_container_name(self, run_id=None):
         if not run_id:

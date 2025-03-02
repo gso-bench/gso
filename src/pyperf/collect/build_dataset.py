@@ -3,7 +3,7 @@ from dataclasses import asdict
 from argparse import ArgumentParser
 from datasets import Dataset
 
-from pyperf.constants import EXPS_DIR, DATASET_DIR
+from pyperf.constants import EXPS_DIR, DATASET_DIR, MIN_PROB_SPEEDUP, MAX_TEST_COUNT
 from pyperf.data.problem import Problem
 from pyperf.data.dataset import PyPerfInstance
 from pyperf.data.perf import PerformanceCommit
@@ -12,20 +12,20 @@ from pyperf.utils.io import str2bool, load_problems
 from pyperf.collect.pids import TEST_PROBLEMS
 
 
-def create_instance(prob: Problem, commit_hash: str, test_id: str):
+def create_instance(prob: Problem, commit_hash: str, test_ids: list[int]):
     """Create a single dataset instance from a executed problem"""
     commit: PerformanceCommit = [
         c for c in prob.commits if c.quick_hash() == commit_hash
     ][0]
 
-    test_sample = prob.get_test(commit_hash, test_id)
+    test_samples = prob.get_tests(commit_hash, test_ids)
 
     return {
         "instance_id": (prob.repo.full_name + "-" + commit_hash).replace("/", "__"),
         "repo": prob.repo.full_name,
         "base_commit": commit.commit_hash + "^",
         "api": prob.api,
-        "test_script": test_sample,
+        "test_scripts": test_samples,
         "hints_text": commit.message,
         "setup_commands": prob.setup_commands,
         "install_commands": prob.install_commands,
@@ -56,21 +56,27 @@ def build_dataset(problems):
     )
     opt_problems_df = opt_problems_df[mask]
 
-    # pick the best test per problem-commit pair
-    opt_problems_df = opt_problems_df.loc[
-        opt_problems_df.groupby("pid")["opt_perc"].idxmax()
-    ]
-    assert len(opt_problems_df) == len(test_pid_commits), "Missing problems?"
+    # Filter by minimum speedup and take top K tests per prob
+    opt_problems_df = (
+        opt_problems_df[opt_problems_df["speedup_factor"] >= MIN_PROB_SPEEDUP]
+        .sort_values(["pid", "speedup_factor"], ascending=[True, False])
+        .groupby("pid")
+        .head(MAX_TEST_COUNT)
+    )
+    assert len(opt_problems_df["pid"].unique()) == len(test_pid_commits)
 
     avg_loc = opt_problems_df["loc_changed"].mean()
     avg_opt_perc = opt_problems_df["opt_perc"].mean()
     avg_speedup_factor = opt_problems_df["speedup_factor"].mean()
+    test_dist = opt_problems_df.groupby("pid").size().describe()
 
     # Create dataset instances for selected (problem, commit, test)
     dataset = []
-    for _, row in opt_problems_df.iterrows():
-        prob = [p for p in valid_problems if p.pid == row["pid"]][0]
-        inst_dict = create_instance(prob, row["commit"], row["test_id"])
+    for pid, grp in opt_problems_df.groupby("pid"):
+        prob = [p for p in valid_problems if p.pid == pid][0]
+        inst_dict = create_instance(
+            prob, grp["commit"].iloc[0], grp["test_id"].tolist()
+        )
         inst = PyPerfInstance(**inst_dict)
         dataset.append(inst)
 
@@ -79,6 +85,7 @@ def build_dataset(problems):
     print(f"Avg LOC: {avg_loc:.2f}")
     print(f"Avg Opt%: {avg_opt_perc:.2f}%")
     print(f"Avg speedup: {avg_speedup_factor:.2f}X")
+    print(f"Test dist: {test_dist}")
 
     return dataset
 
