@@ -10,7 +10,6 @@ from pyperf.utils.io import *
 from pyperf.generate.prompt import *
 from pyperf.generate.helpers import *
 from pyperf.generate.context import prepare
-from pyperf.generate.quickcheck import quickcheck
 from pyperf.generate.args import PerfExpGenArgs
 
 
@@ -63,7 +62,7 @@ class PerfExpGenerator:
                 prob = output.result
                 problems.append(prob)
                 for test in prob.tests:
-                    if "o1" in args.model_name:
+                    if args.model_name in ["o1-mini", "o3-mini", "o1-preview"]:
                         prompt = "\n\n".join(
                             msg["content"] for msg in test.chat_messages
                         )
@@ -73,7 +72,7 @@ class PerfExpGenerator:
             else:
                 logger.error(f"Failed to prepare: {output.exception_tb}")
 
-        if "o1" in args.model_name:
+        if args.model_name in ["o1-mini", "o3-mini", "o1-preview"]:
             payloads = [p for p in payloads for _ in range(args.n)]
             outputs = LLMCompletions.get_llm_completions(args, payloads)
             outputs = [item for sublist in outputs for item in sublist]
@@ -101,7 +100,4 @@ class PerfExpGenerator:
 if __name__ == "__main__":
     args = fire.Fire(PerfExpGenArgs.parse)
     generator = PerfExpGenerator(args)
-    if args.quickcheck:
-        generator.genquickcheck(args)
-    else:
-        generator.gen(args)
+    generator.gen(args)

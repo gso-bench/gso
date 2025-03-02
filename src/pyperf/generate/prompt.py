@@ -38,7 +38,7 @@ The test will also include equivalence checks and storing reference results for 
 6. **Run the Performance and Equivalence Test**: Write a function `run_test` that runs the `experiment` function using `timeit` and returns the execution time.
     - The function must have the following signature: `def run_test(eqcheck: bool = False, reference: bool = False) -> float:`
     Performance Testing:
-    - Setup the experiment data using the `setup` function.
+    - Setup the experiment data using the `setup` function. You can also return data/info from the `setup` function if necessary.
     - Run and time the `experiment` function and get the execution_time and result.
     - Use a simple `timeit` call with a lambda to wrap the function. E.g., execution_time, results = timeit.timeit(lambda: experiment(<args>)). You can also add a `number` argument if you think the function is too short lived and is better tested as a cumulative over multiple calls. This decision should be made as per real-world usage.
     - NOTE: ASSUME that the timeit template has been updated to return BOTH the execution time and the result of the experiment function. i.e., ASSUME the following is appended to the code:
@@ -93,6 +93,7 @@ if __name__ == '__main__':
 - The output should be a complete Python script that must contain an entry point: `run_test()` with the following signature:
     ```def run_test(eqcheck: bool = False, reference: bool = False, prefix: str = '') -> float:```
 - Do not write the main function as your code will be automatically appended with the harness
+- YOU MUST put your final script in a code block. e.g., ```python\n<your code here>\n```
 """
 
 CONTEXT_MSG = """Here's a commit and it's information that does some optimization for the {api} API in the {repo_name} repository that might be relevant to writing the test:
