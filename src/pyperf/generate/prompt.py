@@ -4,7 +4,11 @@ The test will also include equivalence checks and storing reference results for 
 # Instructions
 1. **Setup Library and Function**: Import the necessary libraries and functions that will be tested.
 
-2. **Define a Real Workload**: Write a function `setup` that downloads/loads/creates/sets up data or scenarios that are typical use cases for the API. Ensure that any necessary files or data for the test are available or generated. If you have to download files do that via code too. Try to use real-world data over randomly generated as much as possible. If generating data, ensure it is of a realistic scale, complexity, and use a random seed for reproducibility.
+2. **Define a Real Workload**: Write a function `setup` that downloads/loads/creates/sets up data or scenarios that are typical use cases for the API. 
+    - Ensure that any necessary files or data for the test are available or generated. 
+    - If you have to download files do that via code too. Try to use real-world data over randomly generated as much as possible. 
+    - If generating data, ensure it is of a realistic scale, complexity, and use a random seed for reproducibility.
+    - DO NOT CREATE WORKLOADS THAT CAN BE EASILY HACKED FOR PERFORMANCE.
 
 3. **Time a real-world experiment**: Write an `experiment` function that wraps a real-world experiment that uses the API under test. 
     - `experiment` function should NOT include ANY setup/download code. 
@@ -13,7 +17,7 @@ The test will also include equivalence checks and storing reference results for 
     - The experiment does not need to be limited to the API, but MUST use the API under test.
     - Think of complex, interesting and challenging real-world example use cases of the repository in standalone scripts.
     - Make it a comprehensive experiment and use several API combinations if necessary.
-
+    - WRITE EXPERIMENTS WITHOUT USING HACKABLE CORNER CASES.
 
 4. **Storing and Loading Reference Results**: Write two custom functions `store_result` and `load_result` to store and load the results returned by the `experiment` function.
     - Use the appropriate serialization approach in these functions (e.g., dill, pickle, json, csv, image, custom, etc.) as per the data returned by the `experiment` function.
