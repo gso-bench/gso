@@ -111,8 +111,8 @@ def combine_results(latest_path: str, previous_path: str, output_path: str):
 
 exp_id = "pandas"
 exp_dir = EXPS_DIR / f"{exp_id}"
-previous_path = exp_dir / f"{exp_id}_results.json"
-latest_path = exp_dir / f"{exp_id}_results_new.json"
+previous_path = exp_dir / "v0" / f"{exp_id}_results.json"
+latest_path = exp_dir / "v1" / f"{exp_id}_results.json"
 output_path = exp_dir / f"{exp_id}_results_merged.json"
 
 combine_results(latest_path, previous_path, output_path)
