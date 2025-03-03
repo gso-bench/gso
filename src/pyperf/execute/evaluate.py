@@ -185,45 +185,18 @@ def plot_top_improvements(df: pd.DataFrame, output_dir: str, top_n: int = 30):
 
 
 def plot_execution_times_distribution(df: pd.DataFrame, output_dir: str):
-    """Create a KDE plot comparing base and target execution times."""
-    plt.figure(figsize=(12, 6))
-
-    # Create KDE plots for both distributions
-    sns.kdeplot(
-        data=df["base_time"],
-        label="Base Time",
-        color="red",
-        fill=True,
-        alpha=0.2,
-        clip=(0, None),
-    )
-    sns.kdeplot(
-        data=df["target_time"],
-        label="Target Time",
-        color="blue",
-        fill=True,
-        alpha=0.2,
-        clip=(0, None),
+    """Create boxplots comparing base and target execution times with log scale."""
+    plt.figure(figsize=(10, 6))
+    plot_data = pd.DataFrame(
+        {"Base Time": df["base_time"], "Target Time": df["target_time"]}
     )
 
-    # Add vertical lines for means
-    plt.axvline(
-        df["base_time"].mean(),
-        color="red",
-        linestyle="--",
-        label=f'Base Mean: {df["base_time"].mean():.3f}s',
-    )
-    plt.axvline(
-        df["target_time"].mean(),
-        color="blue",
-        linestyle="--",
-        label=f'Target Mean: {df["target_time"].mean():.3f}s',
-    )
-
+    # Create boxplot
+    sns.boxplot(data=plot_data)
     plt.title("Distribution of Base vs Target Execution Times")
-    plt.xlabel("Execution Time (seconds)")
-    plt.ylabel("Density")
-    plt.xlim(left=0)
+    plt.ylabel("Execution Time (seconds)")
+    plt.yscale("log")  # Use log scale for y-axis
+    plt.grid(axis="y", linestyle="--", alpha=0.7)
     plt.legend()
     plt.tight_layout()
     plt.savefig(f"{output_dir}/execution_times_distribution.png")
