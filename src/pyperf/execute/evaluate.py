@@ -30,6 +30,9 @@ def parse_times(time_str):
 
 
 def compute_stats(times):
+    if not times or len(times) == 0:
+        return None, None
+
     mean = np.mean(times)
     std_dev = np.std(times, ddof=1)
     if np.isnan(mean):
@@ -322,6 +325,12 @@ def main(
         f"Optimized problems: {len(opt_problems)} ({len(opt_problems)/num_valid*100:.2f}%)"
     )
     print(f"Optimized APIs: {opt_apis}")
+    # print("\nErrored APIs:")
+    # for p in err_problems:
+    #     commits = ", ".join(
+    #         [f"{c.quick_hash()} ({c.date.strftime("%Y")})" for c in p.commits][:10]
+    #     )
+    #     print(f"  {p.api} : {commits}")
 
     print("\nTest Analysis:")
     print(f"  Total tests analyzed: {summary['total_tests']}")
