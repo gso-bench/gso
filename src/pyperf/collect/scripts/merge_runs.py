@@ -2,15 +2,15 @@ from pyperf.utils.io import load_problems, save_problems
 from pyperf.constants import *
 
 
-def combine_results(latest_path: str, previous_path: str, output_path: str):
+def merge_results(latest_path: str, previous_path: str, output_path: str):
     """
-    Combine results from two experiment runs, prioritizing the latest results
+    merge results from two execution runs of the same experiment, prioritizing the latest results
     and only merging when necessary based on validity criteria.
 
     Args:
         latest_path: Path to the latest experiment results JSON
         previous_path: Path to the previous experiment results JSON
-        output_path: Path for the combined results JSON
+        output_path: Path for the merged results JSON
     """
     latest_problems = load_problems(latest_path)
     previous_problems = load_problems(previous_path)
@@ -19,8 +19,8 @@ def combine_results(latest_path: str, previous_path: str, output_path: str):
     latest_map = {p.pid: p for p in latest_problems}
     previous_map = {p.pid: p for p in previous_problems}
 
-    # Combined problems list - start with all problems from latest
-    combined_problems = []
+    # merged problems list - start with all problems from latest
+    merged_problems = []
 
     for pid, latest_prob in latest_map.items():
         if pid in previous_map:
@@ -102,11 +102,11 @@ def combine_results(latest_path: str, previous_path: str, output_path: str):
             except Exception as e:
                 print(f"  Error merging results for {pid}: {e}")
 
-        combined_problems.append(latest_prob)
+        merged_problems.append(latest_prob)
         print("=" * 50, "\n")
 
-    save_problems(output_path, combined_problems)
-    print(f"Combined results saved to {output_path}")
+    save_problems(output_path, merged_problems)
+    print(f"merged results saved to {output_path}")
 
 
 exp_id = "pandas"
@@ -115,4 +115,4 @@ previous_path = exp_dir / "v0" / f"{exp_id}_results.json"
 latest_path = exp_dir / "v1" / f"{exp_id}_results.json"
 output_path = exp_dir / f"{exp_id}_results_merged.json"
 
-combine_results(latest_path, previous_path, output_path)
+merge_results(latest_path, previous_path, output_path)
