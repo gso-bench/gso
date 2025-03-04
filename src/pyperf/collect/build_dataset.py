@@ -33,10 +33,15 @@ def create_instance(prob: Problem, commit_hash: str, test_ids: list[int]):
     }
 
 
-def build_dataset(problems):
+def build_dataset(problems, exp_id):
     print(f"Loaded problems: {len(problems)}")
 
-    test_pid_commits = {pid: commit for pid, commit in TEST_PROBLEMS}
+    test_pid_commits = dict(
+        TEST_PROBLEMS[exp_id]
+        if exp_id
+        else [item for sublist in TEST_PROBLEMS.values() for item in sublist]
+    )
+
     problems = [p for p in problems if p.pid in test_pid_commits]
     print(f"Filtered problems: {len(problems)}")
 
@@ -85,20 +90,21 @@ def build_dataset(problems):
     print(f"Avg LOC: {avg_loc:.2f}")
     print(f"Avg Opt%: {avg_opt_perc:.2f}%")
     print(f"Avg speedup: {avg_speedup_factor:.2f}X")
-    print(f"Test dist: {test_dist}")
+    print(f"Test dist:\n{test_dist}")
 
     return dataset
 
 
 def main(exp_id, push_to_hf, hf_username):
-    if exp_id is None:
-        raise NotImplementedError("Building dataset for all exps not supported yet")
-
-    exp_dir = EXPS_DIR / f"{exp_id}"
-    problems = load_problems(exp_dir / f"{exp_id}_results.json")
+    exp_ids = TEST_PROBLEMS.keys() if exp_id is None else [exp_id]
+    problems = [
+        problem
+        for eid in exp_ids
+        for problem in load_problems((EXPS_DIR / f"{eid}" / f"{eid}_results.json"))
+    ]
 
     # Build dataset
-    dataset = build_dataset(problems)
+    dataset = build_dataset(problems, exp_id)
 
     # Save dataset to jsonl file
     DATASET_DIR.mkdir(parents=True, exist_ok=True)
