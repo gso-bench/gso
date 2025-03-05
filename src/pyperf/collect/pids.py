@@ -23,5 +23,43 @@ PANDAS_PROBLEMS = [
     ("pandas-index.infer_dtype", "12faa2e"),
 ]
 
+NUMPY_PROBLEMS = [
+    # --- string manipulation ---
+    ("numpy-np.char.rfind", "22ab9aa"),
+    ("numpy-numpy.char.rstrip", "728fedc"),
+    ("numpy-numpy.strings.ljust", "cb0d7cd"),
+    ("numpy-numpy.char.startswith", "ee75c87"),
+    ("numpy-numpy.char.multiply", "567b57d"),
+    ("numpy-numpy.char.endswith", "09db9c7"),  # NOTE: sub commit for ee75c87?
+    ("numpy-numpy.char.isnumeric", "893db31"),
+    # --- math operations ---
+    ("numpy-numpy.equal", "1134be2"),
+    ("numpy-numpy.add.at", "ba89ef9"),
+    ("numpy-numpy.core.umath.log", "2dfd21e"),
+    ("numpy-numpy.arctan2", "5f94eb8"),
+    ("numpy-numpy.exp", "8dd6761"),
+    ("numpy-np.ma.cov", "9b1a9c5"),
+    ("numpy-numpy.subtract", "be52f19"),
+    ("numpy-numpy.power", "e0194de"),
+    ("numpy-numpy.sum", "330057f"),
+    ("numpy-numpy.kron", "54605f3"),
+    # --- array manipulation ---
+    ("numpy-np.minimum.at", "11a7e2d"),
+    ("numpy-np.partition", "ac5c664"),
+    ("numpy-maskedarray.clip", "6d77c59"),
+    ("numpy-np.divide.at", "28706af"),
+    ("numpy-numpy.repeat", "905d37e"),
+    ("numpy-numpy.lib.recfunctions.structured_to_unstructured", "2540554"),
+    ("numpy-numpy.can_cast", "8535df6"),
+    ("numpy-numpy.ndarray.flat", "ec52363"),
+    ("numpy-np.in1d", "91e753c"),  # NOTE: simple?
+    ("numpy-numpy.where", "780799b"),  # NOTE: simple?
+    ("numpy-numpy.choose", "68eead8"),  # NOTE: simple?
+    ("numpy-array_equal", "7ff7ec7"),
+]
 
-TEST_PROBLEMS = PANDAS_PROBLEMS
+
+TEST_PROBLEMS = {
+    "pandas": PANDAS_PROBLEMS,
+    "numpy": NUMPY_PROBLEMS,
+}
