@@ -6,21 +6,37 @@ PANDAS_PROBLEMS = [
     ("pandas-merge_ordered", "061c2e9"),
     ("pandas-dataframegroupby.skew", "233bd83"),
     ("pandas-dataframegroupby.idxmin", "ccca5df"),
-    # --- v0.0.2 ---
     ("pandas-period.strftime", "2cdca01"),
     ("pandas-groupby.quantile", "e8961f1"),
     ("pandas-seriesgroupby.ffill", "84aca21"),
     ("pandas-merge_asof", "2f4c93e"),
-    ("pandas-pandas.concat", "b661313"),  # NOTE: easy to beat commit
-    ("pandas-datetimeindex.isocalendar", "1ae00c6"),  # NOTE: easy to beat commit
-    # --- v0.0.3 ---
+    ("pandas-pandas.concat", "b661313"),  # NOTE: commit < base?: remove
+    ("pandas-datetimeindex.isocalendar", "1ae00c6"),  # NOTE: commit < base?: remove
+    # --- v0.0.2 ---
     ("pandas-datetimelikearraymixin._add_datetimelike_scalar", "a6c0ae4"),
     ("pandas-rangeindex.dtype", "1e03419"),
     ("pandas-pandas.isna", "9097263"),
     ("pandas-block.make_block", "15fd7d7"),
-    ("pandas-ensure_string_array", "2a08b05"),
+    ("pandas-ensure_string_array", "2a08b05"),  # NOTE: simple?
     ("pandas-maybe_sequence_to_range", "bfaf917"),
     ("pandas-index.infer_dtype", "12faa2e"),
+    ("pandas-multiindex.argsort", "609c3b7"),
+    ("pandas-dataframe.__setitem__", "e7e3676"),
+    ("pandas-rangeindex.take", "fd43d4b"),  # NOTE: use (i)loc instead?
+    ("pandas-dataframe.apply", "5555c51"),
+    ("pandas-multiindex.get_locs", "2278923"),
+    ("pandas-series.loc", "6466fc6"),
+    ("pandas-dataframe.transpose", "f1211e7"),
+    ("pandas-dataframe.round", "f298507"),
+    ("pandas-multiindex.intersection", "438b957"),
+    ("pandas-arrays.integerarray.dtype", "37e9e06"),
+    ("pandas-dataframegroupby.nunique", "d377cc9"),
+    ("pandas-concat", "4583a04"),
+    ("pandas-multiindex.equals", "7281475"),
+    ("pandas-basemaskedarray._validate_setitem_value", "71c94af"),
+    ("pandas-basemaskedarray.reshape", "fa29f09"),
+    ("pandas-merge_asof", "ad3f3f7"),
+    ("pandas-dataframe", "9a6c8f0"),
 ]
 
 NUMPY_PROBLEMS = [
@@ -30,7 +46,6 @@ NUMPY_PROBLEMS = [
     ("numpy-numpy.strings.ljust", "cb0d7cd"),
     ("numpy-numpy.char.startswith", "ee75c87"),
     ("numpy-numpy.char.multiply", "567b57d"),
-    ("numpy-numpy.char.endswith", "09db9c7"),  # NOTE: sub commit for ee75c87?
     ("numpy-numpy.char.isnumeric", "893db31"),
     # --- math operations ---
     ("numpy-numpy.equal", "1134be2"),
