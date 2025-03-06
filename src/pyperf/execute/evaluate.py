@@ -203,7 +203,24 @@ def plot_execution_times_distribution(df: pd.DataFrame, output_dir: str):
     plt.close()
 
 
-######### Printing Functions #########
+def plot_top_pids_by_time(df: pd.DataFrame, output_dir: str, top_n: int = 20):
+    top_pids = df.groupby("pid")["base_time"].max().reset_index()
+    top_pids = top_pids.nlargest(top_n, "base_time")
+    plt.figure(figsize=(12, 8))
+    ax = sns.barplot(data=top_pids, y="pid", x="base_time", palette="viridis")
+
+    for i, v in enumerate(top_pids["base_time"]):
+        ax.text(v + 0.1, i, f"{v:.2f}s", va="center")
+
+    plt.title(f"Top {top_n} PIDs by Base Execution Time)")
+    plt.xlabel("Execution Time (seconds)")
+    plt.ylabel("PID")
+    plt.tight_layout()
+    plt.grid(axis="x", linestyle="--", alpha=0.7)
+    plt.savefig(f"{output_dir}/top_time_pids.png")
+    plt.close()
+
+    return top_pids
 
 
 #########  Performance Summary #########
@@ -288,6 +305,7 @@ def main(
     plot_speedup_distribution(df, output_dir)
     plot_top_improvements(df, output_dir)
     plot_execution_times_distribution(df, output_dir)
+    plot_top_pids_by_time(df, output_dir, top_n=20)
     summary = create_performance_summary(df)
 
     # Print summary report
