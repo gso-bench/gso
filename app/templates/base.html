@@ -531,7 +531,7 @@
                 // Header information for the commit
                 commitDiv.innerHTML = `
                     <div>
-                        <span class="stat-item"><strong>Commit:</strong> <a href="${commit.repo_url}/commit/${commit.commit}">${commit.commit}</a> (${new Date(commit.date).toLocaleDateString()})</span>
+                        <span class="stat-item"><strong>Commit:</strong> <a href="${commit.repo_url}/commit/${commit.full_commit_hash}">${commit.commit}</a> (${new Date(commit.date).toLocaleDateString()})</span>
                         <span class="stat-item"><strong>FTypes:</strong> ${commit.stats.ftypes}</span>
                         <span class="stat-item"><strong>Files:</strong> ${commit.stats.num_non_test_files}</span>  
                         <span class="stat-item"><strong>Hunks:</strong> ${commit.stats.num_hunks}</span>

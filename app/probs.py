@@ -62,6 +62,7 @@ def load_repo_data(repo_name, page=1, per_page=APIS_PER_PAGE, search_query=None)
                         get_file_type = lambda x: x.split(".")[-1]
 
                         result = stats[s].copy()
+                        result["full_commit_hash"] = commit.commit_hash
                         result["test"] = test
                         result["date"] = commit.date.isoformat()
                         result["repo_url"] = prob.repo.repo_url
