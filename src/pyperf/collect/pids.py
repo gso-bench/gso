@@ -73,8 +73,22 @@ NUMPY_PROBLEMS = [
     ("numpy-array_equal", "7ff7ec7"),
 ]
 
+PILLOW_PROBLEMS = [
+    ("pillow-image.split", "d8af3fc"),
+    ("pillow-putchunk", "4bc33d3"),
+    ("pillow-imaginggetbbox", "63f398b"),
+    ("pillow-imagecolor.getcolor", "99760f4"),
+    ("pillow-gifimagefile.n_frames", "f854676"),
+    ("pillow-image.rotate", "929c561"),
+    ("pillow-imagefilter.color3dlut", "2b09e7f"),
+    ("pillow-image.new", "c82f9fe"),
+    ("pillow-imagefilter.kernel", "3b5c2c3"),
+    ("pillow-tiffimagefile.is_animated", "fd8ee84"),
+]
+
 
 TEST_PROBLEMS = {
     "pandas": PANDAS_PROBLEMS,
     "numpy": NUMPY_PROBLEMS,
+    "pillow": PILLOW_PROBLEMS,
 }
