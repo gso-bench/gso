@@ -251,6 +251,7 @@ async def async_main(
             with open(exp_yaml, "r") as f:
                 exp_data = yaml.safe_load(f)
             for p in all_problems:
+                p.target_commit = exp_data.get("target_commit", "main")
                 p.install_commands = exp_data.get("install_commands", [])
         else:
             raise ValueError(f"Experiment YAML file provided but not found: {exp_yaml}")
