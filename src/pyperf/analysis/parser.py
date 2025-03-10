@@ -84,7 +84,11 @@ class CommitParser:
     ) -> FileDiff:
         match = re.match(r"diff --git a/(\S+) b/(\S+)", header)
         if not match:
-            raise ValueError(f"Invalid diff header: {header}")
+            return FileDiff(
+                old_file_content="",
+                new_file_content="",
+                header=FileDiffHeader(file=FileInfo(path="")),
+            )
 
         old_path, new_path = match.groups()
         assert old_path and new_path, f"Invalid paths: {old_path}, {new_path}"
