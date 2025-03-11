@@ -27,7 +27,7 @@ EVALUATION_REPORTS_DIR = Path("reports")
 
 # --------- Build Constants ---------
 
-MIN_PROB_SPEEDUP = 1.5  # min speedup to consider a problem as a benchmark instance
+MIN_PROB_SPEEDUP = 1.3  # min speedup to consider a problem as a benchmark instance
 MAX_TEST_COUNT = 3  # max number of tests to run per problem
 
 # --------- Grading Constants ---------

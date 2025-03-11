@@ -50,7 +50,7 @@ def build_dataset(problems, exp_id):
 
     opt_stats = {}
     for prob in valid_problems:
-        stats, _, _ = speedup_summary(prob, speedup_threshold=2, speedup_mode="target")
+        stats, _, _ = speedup_summary(prob, speedup_threshold=2, speedup_mode="commit")
         if stats:
             opt_stats[prob.pid] = stats
 
@@ -70,9 +70,8 @@ def build_dataset(problems, exp_id):
     )
     assert len(opt_problems_df["pid"].unique()) == len(test_pid_commits)
 
-    avg_loc = opt_problems_df["loc_changed"].mean()
-    avg_opt_perc = opt_problems_df["opt_perc"].mean()
-    avg_speedup_factor = opt_problems_df["speedup_factor"].mean()
+    loc_dist = opt_problems_df["loc_changed"].describe()
+    speedup_dist = opt_problems_df["speedup_factor"].describe()
     test_dist = opt_problems_df.groupby("pid").size().describe()
 
     # Create dataset instances for selected (problem, commit, test)
@@ -85,11 +84,11 @@ def build_dataset(problems, exp_id):
         inst = PyPerfInstance(**inst_dict)
         dataset.append(inst)
 
+    pd.set_option("display.float_format", "{:.2f}".format)
     print("Created dataset!\n\n------ Dataset Summary ------")
     print(f"Size: {len(dataset)}")
-    print(f"Avg LOC: {avg_loc:.2f}")
-    print(f"Avg Opt%: {avg_opt_perc:.2f}%")
-    print(f"Avg speedup: {avg_speedup_factor:.2f}X")
+    print(f"LoC dist:\n{loc_dist}")
+    print(f"Speedup dist:\n{speedup_dist}")
     print(f"Test dist:\n{test_dist}")
 
     return dataset

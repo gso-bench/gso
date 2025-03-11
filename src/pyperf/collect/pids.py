@@ -10,8 +10,6 @@ PANDAS_PROBLEMS = [
     ("pandas-groupby.quantile", "e8961f1"),
     ("pandas-seriesgroupby.ffill", "84aca21"),
     ("pandas-merge_asof", "2f4c93e"),
-    ("pandas-pandas.concat", "b661313"),  # NOTE: commit < base?: remove
-    ("pandas-datetimeindex.isocalendar", "1ae00c6"),  # NOTE: commit < base?: remove
     # --- v0.0.2 ---
     ("pandas-datetimelikearraymixin._add_datetimelike_scalar", "a6c0ae4"),
     ("pandas-rangeindex.dtype", "1e03419"),
@@ -37,6 +35,9 @@ PANDAS_PROBLEMS = [
     ("pandas-basemaskedarray.reshape", "fa29f09"),
     ("pandas-merge_asof", "ad3f3f7"),
     ("pandas-dataframe", "9a6c8f0"),
+    ("pandas-index.union", "c34da50"),
+    ("pandas-pandas.testing.assert_frame_equal", "32ebcfc"),
+    ("pandas-multiindex.symmetric_difference", "c6cf37a"),  # NOTE: simple?
 ]
 
 NUMPY_PROBLEMS = [
