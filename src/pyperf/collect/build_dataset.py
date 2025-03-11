@@ -87,8 +87,11 @@ def build_dataset(problems, exp_id):
     pd.set_option("display.float_format", "{:.2f}".format)
     print("Created dataset!\n\n------ Dataset Summary ------")
     print(f"Size: {len(dataset)}")
-    print(f"LoC dist:\n{loc_dist}")
-    print(f"Speedup dist:\n{speedup_dist}")
+    print(f"Avg LoC: {loc_dist['mean']:.2f}")
+    print(f"Avg Speedup: {speedup_dist['mean']:.2f}X\n")
+
+    print(f"LoC dist:\n{loc_dist}\n")
+    print(f"Speedup dist:\n{speedup_dist}\n")
     print(f"Test dist:\n{test_dist}")
 
     return dataset
