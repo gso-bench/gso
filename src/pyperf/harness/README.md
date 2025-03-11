@@ -6,7 +6,8 @@
     "instance_id": "str",               # pyperf task instance ID
     "repo": "str",                      # repository name
     "base_commit": "str",               # base commit hash
-    "test_script": "str",               # test script to run
+    "prob_script": "str",               # problem script for model
+    "tests": "List[str]",               # test scripts for eval
     "api": "str",                       # API to optimize (optional)
     "hints_text": "str",                # NL desc. of task (optional)
     "setup_commands": "List[str]",      # setup commands for VMs

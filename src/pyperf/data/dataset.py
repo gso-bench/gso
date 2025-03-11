@@ -7,7 +7,8 @@ class PyPerfInstance:
     repo: str
     base_commit: str
     api: str
-    test_scripts: list[str]
+    prob_script: str
+    tests: list[str]
     hints_text: str
     setup_commands: list[str]
     install_commands: list[str]
@@ -72,7 +73,7 @@ class PyPerfInstance:
 
     @property
     def test_count(self):
-        return len(self.test_scripts)
+        return len(self.tests)
 
     def get_instance_container_name(self, run_id=None):
         if not run_id:

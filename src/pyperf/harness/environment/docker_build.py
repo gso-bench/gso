@@ -167,7 +167,7 @@ def build_and_push_mp_helper(config: BuildPushConfig) -> str:
 
 
 def build_instance_images(
-    dataset: list,
+    dataset: list[PyPerfInstance],
     max_workers: int = 4,
     force_rebuild: bool = False,
     push_to_registry: bool = False,
@@ -207,10 +207,7 @@ def build_instance_images(
                 setup_scripts={
                     "setup_repo.sh": inst.install_repo_script,
                     "eval.sh": get_eval_script(inst),
-                    **{
-                        f"pyperf_test_{i}.py": ts
-                        for i, ts in enumerate(inst.test_scripts)
-                    },
+                    **{f"pyperf_test_{i}.py": ts for i, ts in enumerate(inst.tests)},
                 },
                 dockerfile=get_dockerfile_instance(inst.platform, inst.arch),
                 platform=inst.platform,

@@ -19,13 +19,15 @@ def create_instance(prob: Problem, commit_hash: str, test_ids: list[int]):
     ][0]
 
     test_samples = prob.get_tests(commit_hash, test_ids)
+    prob_script = test_samples[0]
 
     return {
         "instance_id": (prob.repo.full_name + "-" + commit_hash).replace("/", "__"),
         "repo": prob.repo.full_name,
         "base_commit": commit.commit_hash + "^",
         "api": prob.api,
-        "test_scripts": test_samples,
+        "prob_script": prob_script,
+        "tests": test_samples,
         "hints_text": commit.message,
         "setup_commands": prob.setup_commands,
         "install_commands": prob.install_commands,
