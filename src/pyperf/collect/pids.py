@@ -33,7 +33,7 @@ PANDAS_PROBLEMS = [
     ("pandas-multiindex.equals", "7281475"),
     ("pandas-basemaskedarray._validate_setitem_value", "71c94af"),
     ("pandas-basemaskedarray.reshape", "fa29f09"),
-    ("pandas-merge_asof", "ad3f3f7"),
+    # ("pandas-merge_asof", "ad3f3f7"), # NOTE: api duplicated
     ("pandas-dataframe", "9a6c8f0"),
     ("pandas-index.union", "c34da50"),
     ("pandas-pandas.testing.assert_frame_equal", "32ebcfc"),
