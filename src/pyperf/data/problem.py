@@ -92,9 +92,14 @@ class Problem(BaseModel):
         """Set the final base commit for this problem"""
         self.base_commit = commit_hash
 
-    def filter_commits(self, max_year: int):
+    def filter_commits_year(self, max_year: int):
         """Filter out commits older than max_year"""
         self.commits = [c for c in self.commits if c.date.year >= max_year]
+
+    def filter_commits_loc(self, min_loc: int):
+        """Filter out commits with less than min_loc"""
+        loc_lambda = lambda c: c.stats.get("num_non_test_edited_lines", 0)
+        self.commits = [c for c in self.commits if loc_lambda(c) >= min_loc]
 
     def get_test(self, commit_hash: str, test_id: int) -> str:
         """Get test for a commit"""

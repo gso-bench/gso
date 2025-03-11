@@ -51,9 +51,10 @@ class PerfExpGenerator:
             prev_valid_apis = [prob.api for prob in prev_run if prob.is_valid()]
             problems = [prob for prob in problems if prob.api in prev_valid_apis]
 
-        # filter their commits to a maximum year and remove empty problems
+        # filter their commits and remove empty problems
         for prob in problems:
-            prob.filter_commits(args.max_year)
+            prob.filter_commits_year(args.max_year)
+            prob.filter_commits_loc(args.min_loc)
         problems = [prob for prob in problems if prob.num_commits() > 0]
 
         # prepare each problem for test generation
@@ -80,6 +81,8 @@ class PerfExpGenerator:
                         payloads.append(test.chat_messages)
             else:
                 logger.error(f"Failed to prepare: {output.exception_tb}")
+
+        print(f"Generating {len(problems)} problems with {len(payloads)} payloads")
 
         if args.model_name in ["o1-mini", "o3-mini", "o1-preview"]:
             payloads = [p for p in payloads for _ in range(args.n)]
