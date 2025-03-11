@@ -8,8 +8,9 @@ from pyperf.data.problem import Problem
 from pyperf.data.dataset import PyPerfInstance
 from pyperf.data.perf import PerformanceCommit
 from pyperf.execute.evaluate import speedup_summary, create_analysis_dataframe
-from pyperf.utils.io import str2bool, load_problems
+from pyperf.utils.io import load_problems
 from pyperf.collect.pids import TEST_PROBLEMS
+from pyperf.collect.utils import prepare_prob_script
 
 
 def create_instance(prob: Problem, commit_hash: str, test_ids: list[int]):
@@ -19,7 +20,7 @@ def create_instance(prob: Problem, commit_hash: str, test_ids: list[int]):
     ][0]
 
     test_samples = prob.get_tests(commit_hash, test_ids)
-    prob_script = test_samples[0]
+    prob_script = prepare_prob_script(test_samples)
 
     return {
         "instance_id": (prob.repo.full_name + "-" + commit_hash).replace("/", "__"),
