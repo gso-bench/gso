@@ -2,18 +2,26 @@ import os
 import matplotlib.pyplot as plt
 import json
 import numpy as np
+from pyperf.harness.grading.metrics import speedup
 
+filter_improved_commit = True  # Set to False to show all problems
 
-speedup_mode = "Factor"
 # eval_report = "~/pyperf/reports/opt_k_reports/claude.opt@10.test.report.json"
-eval_report = "~/pyperf/reports/opt_k_reports/o3-mini-high.opt@25.test.report.json"
-opt_stats = json.load(open(os.path.expanduser(eval_report)))["opt_stats"]
+eval_report = (
+    "~/pyperf/reports/o3-mini_maxiter_50_N_v0.25.0-no-hint-run_1.test.report.json"
+)
+report = json.load(open(os.path.expanduser(eval_report)))
+opt_stats = report["opt_stats"]
+instance_sets = report["instance_sets"]
 
 
-def speedup(before_mean, after_mean, mode) -> float:
-    if mode == "Factor":
-        return before_mean / after_mean
-    return ((before_mean - after_mean) / before_mean) * 100
+def geomean_speedup(before_test_means, after_test_means):
+    before_mean = np.mean(before_test_means)
+    after_mean = np.mean(after_test_means)
+    _, _, speedup_gm = speedup(
+        before_mean, after_mean, before_test_means, after_test_means
+    )
+    return speedup_gm
 
 
 def add_top_labels(bars):
@@ -33,18 +41,34 @@ def add_top_labels(bars):
 
 # Extract speedups
 instances = list(opt_stats.keys())
+
+# Filter to instances where model outperforms commit if flag is enabled
+if filter_improved_commit and "improved_commit_ids" in instance_sets:
+    improved_instances = instance_sets["improved_commit_ids"]
+    instances = [instance for instance in instances if instance in improved_instances]
+
+
 speedups_model = [
-    speedup(opt_stats[p]["base_mean"], opt_stats[p]["patch_mean"], speedup_mode)
+    geomean_speedup(
+        opt_stats[p]["per_test_means"]["base"],
+        opt_stats[p]["per_test_means"]["patch"],
+    )
     for p in instances
 ]
 
 speedups_commit = [
-    speedup(opt_stats[p]["base_mean"], opt_stats[p]["commit_mean"], speedup_mode)
+    geomean_speedup(
+        opt_stats[p]["per_test_means"]["base"],
+        opt_stats[p]["per_test_means"]["commit"],
+    )
     for p in instances
 ]
 
 speedups_main = [
-    speedup(opt_stats[p]["base_mean"], opt_stats[p]["main_mean"], speedup_mode)
+    geomean_speedup(
+        opt_stats[p]["per_test_means"]["base"],
+        opt_stats[p]["per_test_means"]["main"],
+    )
     for p in instances
 ]
 
@@ -70,9 +94,9 @@ add_top_labels(bars3)
 # Apply log scale to y-axis
 ax.set_yscale("log")
 ax.set_title("Speedup achieved per problem")
-ax.set_ylabel(f"Speedup ({speedup_mode}) - Log Scale")
+ax.set_ylabel(f"Speedup Factor - Log Scale")
 ax.set_xticks(x)
-ax.set_xticklabels(instances)
+ax.set_xticklabels(instances, rotation=30, ha="center", fontsize=4)
 ax.spines["top"].set_visible(False)
 ax.spines["right"].set_visible(False)
 ax.legend(loc="upper right")
