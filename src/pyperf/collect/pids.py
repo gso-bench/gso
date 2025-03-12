@@ -29,7 +29,7 @@ PANDAS_PROBLEMS = [
     ("pandas-multiindex.intersection", "438b957"),
     ("pandas-arrays.integerarray.dtype", "37e9e06"),
     ("pandas-dataframegroupby.nunique", "d377cc9"),
-    ("pandas-concat", "4583a04"),
+    ("pandas-concat", "4583a04"),  # NOTE: single test!
     ("pandas-multiindex.equals", "7281475"),
     ("pandas-basemaskedarray._validate_setitem_value", "71c94af"),
     ("pandas-basemaskedarray.reshape", "fa29f09"),
