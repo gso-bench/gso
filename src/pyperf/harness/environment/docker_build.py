@@ -191,7 +191,7 @@ def build_instance_images(
     for inst in dataset:
         # TODO: add ":inst.instance_tag_name" to the image name
         instance_image_name = (
-            f"{dockerhub_id}:pyperf.eval.{inst.arch}.{inst.instance_id}"
+            f"{dockerhub_id}:pyperf.eval.{inst.arch}.{inst.instance_id.lower()}"
             if dockerhub_id
             else inst.instance_image_key
         )
