@@ -32,4 +32,8 @@ MAX_TEST_COUNT = 3  # max number of tests to run per problem
 
 # --------- Grading Constants ---------
 
-OPTIM_THRESH = 25  # min % speedup to consider a patch as optimized
+# min % speedup to consider a patch as optimized
+OPTIM_THRESH_PERC = 25
+
+# min factor to consider a patch as optimized
+OPTIM_THRESH_FACTOR = 1 / (1 - (OPTIM_THRESH_PERC / 100))

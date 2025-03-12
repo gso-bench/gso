@@ -170,7 +170,7 @@ def main(
             reformat_reports=reformat_reports,
         )
 
-    return make_run_report(predictions, full_dataset, run_id, client)
+    return make_run_report(predictions, full_dataset, run_id, client=None)
 
 
 if __name__ == "__main__":

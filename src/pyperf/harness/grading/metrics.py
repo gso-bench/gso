@@ -2,7 +2,7 @@ import re
 import numpy as np
 from enum import Enum
 
-from pyperf.constants import OPTIM_THRESH
+from pyperf.constants import OPTIM_THRESH_PERC, OPTIM_THRESH_FACTOR
 from pyperf.data.dataset import PyPerfInstance
 from pyperf.harness.grading.evalscript import (
     APPLY_PATCH_FAIL,
@@ -119,6 +119,12 @@ def get_opt_status(time_map) -> dict:
         "commit_std": commit_std,
         "main_mean": main_mean,
         "main_std": main_std,
+        "per_test_means": {
+            "base": base_means,
+            "patch": patch_means,
+            "commit": commit_means,
+            "main": main_means,
+        },
     }
 
     opt_stats = {
@@ -144,7 +150,7 @@ def get_opt_status(time_map) -> dict:
         main_mean, patch_mean, main_means, patch_means
     )
 
-    if base_mean > patch_mean and patch_base_opt >= OPTIM_THRESH:
+    if base_mean > patch_mean and patch_base_speedup_gm >= OPTIM_THRESH_FACTOR:
         opt_status["improved_base"] = True
         opt_stats.update(
             {
@@ -156,7 +162,7 @@ def get_opt_status(time_map) -> dict:
 
         # if patch improves over base, then check how it compares to commit/main
 
-        if commit_mean > patch_mean and patch_com_opt >= OPTIM_THRESH:
+        if commit_mean > patch_mean and patch_com_speedup_gm >= OPTIM_THRESH_FACTOR:
             opt_status["improved_commit"] = True
             opt_stats.update(
                 {
@@ -166,7 +172,7 @@ def get_opt_status(time_map) -> dict:
                 }
             )
 
-        if main_mean > patch_mean and patch_main_opt >= OPTIM_THRESH:
+        if main_mean > patch_mean and patch_main_speedup_gm >= OPTIM_THRESH_FACTOR:
             opt_status["improved_main"] = True
             opt_stats.update(
                 {
