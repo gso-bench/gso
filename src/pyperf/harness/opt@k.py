@@ -215,8 +215,8 @@ def main():
     parser.add_argument(
         "--dataset_name",
         type=str,
-        default="pyperf_pandas_dataset.jsonl",
-        help="Name of dataset to use",
+        default="manishs/pyperf",
+        help="Name of HF dataset to use or local json/jsonl file",
     )
     parser.add_argument(
         "--timeout",

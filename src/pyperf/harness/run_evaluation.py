@@ -188,7 +188,6 @@ if __name__ == "__main__":
         type=str,
         default="manishs/pyperf",
         help="Name of HF dataset to use or local json/jsonl file",
-        required=True,
     )
 
     parser.add_argument("--split", type=str, default="test", help="Split to use")
