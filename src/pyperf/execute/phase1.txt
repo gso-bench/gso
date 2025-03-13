@@ -33,7 +33,7 @@ candidate_commits=($COMMITS)
 for commit_hash in "${candidate_commits[@]}"; do
     echo "Testing candidate commit: ${commit_hash}"
     
-    cd $repo_name
+    cd $repo_name && git stash -u
     # Try to checkout the commit's parent
     if git checkout "${commit_hash}^"; then
         $install_commands

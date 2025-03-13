@@ -25,6 +25,7 @@ gfortran \
 libopenblas-dev \
 liblapack-dev \
 pkg-config \
+libssl-dev \
 # Add image processing libs
 libtiff5-dev \
 libjpeg8-dev \
