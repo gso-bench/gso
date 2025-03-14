@@ -1,0 +1,12 @@
+exp_id: tornado
+repo_url: https://github.com/tornadoweb/tornado
+py_version: "3.9"
+target_commit: "master"
+install_commands:
+  - uv venv --python 3.9
+  - source .venv/bin/activate
+  - which python
+  - python --version
+  - uv pip install . --reinstall
+  - uv pip install requests dill asyncio pycares pycurl twisted
+  - uv pip show tornado
