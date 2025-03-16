@@ -14,9 +14,9 @@ base_values = []
 commit_values = []
 main_values = []
 
-dataset_name = "pyperf_pandas_dataset.jsonl"
-# prediction_paths = "~/OpenHands/evaluation/evaluation_outputs/outputs/manishs__pyperf_pandas-test/CodeActAgent/claude-3-5-sonnet-v2-20241022_maxiter_50_N_v0.25.0-no-hint-run_*/output.pyperf.jsonl"
-prediction_paths = "~/OpenHands/evaluation/evaluation_outputs/outputs/manishs__pyperf_pandas-test/CodeActAgent/o3-mini_maxiter_50_N_v0.25.0-no-hint-run_*/output.pyperf.jsonl"
+dataset_name = "manishs/pyperf"
+# prediction_paths = "~/OpenHands/evaluation/evaluation_outputs/outputs/manishs__pyperf-test/CodeActAgent/claude-3-5-sonnet-v2-20241022_maxiter_50_N_v0.25.0-no-hint-run_*/output.pyperf.jsonl"
+prediction_paths = "~/OpenHands/evaluation/evaluation_outputs/outputs/manishs__pyperf-test/CodeActAgent/o3-mini_maxiter_50_N_v0.25.0-no-hint-run_*/output.pyperf.jsonl"
 # Expand the glob pattern into a list of paths
 path_list = glob.glob(os.path.expanduser(prediction_paths))
 timeout = 3600

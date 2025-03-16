@@ -7,9 +7,7 @@ from pyperf.harness.grading.metrics import speedup
 filter_improved_commit = True  # Set to False to show all problems
 
 # eval_report = "~/pyperf/reports/opt_k_reports/claude.opt@10.test.report.json"
-eval_report = (
-    "~/pyperf/reports/o3-mini_maxiter_50_N_v0.25.0-no-hint-run_1.test.report.json"
-)
+eval_report = "~/pyperf/reports/opt_k_reports/o3-mini.opt@10.test.report.json"
 report = json.load(open(os.path.expanduser(eval_report)))
 opt_stats = report["opt_stats"]
 instance_sets = report["instance_sets"]

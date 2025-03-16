@@ -8,7 +8,9 @@ from pyperf.harness.utils import natural_sort_key
 from pyperf.constants import EVALUATION_REPORTS_DIR
 
 
-def run_evaluation(pred_path, dataset_name, timeout, run_id, reformat_reports=False):
+def run_evaluation(
+    pred_path, dataset_name, timeout, run_id, reformat_reports=False, max_workers=10
+):
     """Run evaluation script and return path to generated report."""
     cmd = [
         "uv",
@@ -22,6 +24,8 @@ def run_evaluation(pred_path, dataset_name, timeout, run_id, reformat_reports=Fa
         str(timeout),
         "--run_id",
         run_id,
+        "--max_workers",
+        str(max_workers),
     ]
 
     if reformat_reports:
@@ -86,7 +90,6 @@ def merge_reports(report_files, k):
         },
         "instance_sets": {key: set() for key in STATUS_SETS},
         "schema_version": 1,
-        "docker_status": {"active_containers": [], "instance_images": set()},
     }
     report["summary"]["k"] = k
 
@@ -132,10 +135,7 @@ def merge_reports(report_files, k):
                     ):
                         instance_opt_stats[instance_id] = new_opt_stats
 
-            # Merge docker images and improvement tracking
-            report["docker_status"]["instance_images"].update(
-                current_report["docker_status"].get("instance_images", set())
-            )
+            # Merge improvement tracking
             for metric in IMPROVEMENT_METRICS:
                 report["instance_sets"][metric].update(current_sets[metric])
 
@@ -151,9 +151,6 @@ def merge_reports(report_files, k):
     # Convert sets to sorted lists
     for key in report["instance_sets"]:
         report["instance_sets"][key] = sorted(report["instance_sets"][key])
-    report["docker_status"]["instance_images"] = sorted(
-        report["docker_status"]["instance_images"]
-    )
 
     # Update summary counts
     summary_mapping = {
@@ -245,6 +242,12 @@ def main():
         action="store_true",
         help="Reformat and rewrite reports for instances that have already been run",
     )
+    parser.add_argument(
+        "--max_workers",
+        type=int,
+        default=10,
+        help="Max workers for parallel processing",
+    )
 
     args = parser.parse_args()
 
@@ -262,6 +265,7 @@ def main():
             args.timeout,
             args.run_id,
             args.reformat_reports,
+            args.max_workers,
         )
         report_files.append(report_path)
 
