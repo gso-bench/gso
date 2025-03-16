@@ -133,6 +133,7 @@ def merge_reports(report_files, k):
                         or new_opt_stats["opt_perc_base"]
                         > current_opt_stats["opt_perc_base"]
                     ):
+                        new_opt_stats["report_file"] = report_file
                         instance_opt_stats[instance_id] = new_opt_stats
 
             # Merge improvement tracking

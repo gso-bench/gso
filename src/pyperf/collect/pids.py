@@ -2,7 +2,6 @@
 
 PANDAS_PROBLEMS = [
     # --- v0.0.1 ---
-    ("pandas-index._getitem_slice", "9b4cffc"),
     ("pandas-merge_ordered", "061c2e9"),
     ("pandas-dataframegroupby.skew", "233bd83"),
     ("pandas-dataframegroupby.idxmin", "ccca5df"),
@@ -11,14 +10,10 @@ PANDAS_PROBLEMS = [
     ("pandas-seriesgroupby.ffill", "84aca21"),
     ("pandas-merge_asof", "2f4c93e"),
     # --- v0.0.2 ---
-    (
-        "pandas-datetimelikearraymixin._add_datetimelike_scalar",
-        "a6c0ae4",
-    ),  # NOTE: simple?
     ("pandas-rangeindex.dtype", "1e03419"),
     ("pandas-pandas.isna", "9097263"),
     ("pandas-block.make_block", "15fd7d7"),
-    ("pandas-ensure_string_array", "2a08b05"),  # NOTE: simple?
+    ("pandas-ensure_string_array", "2a08b05"),
     ("pandas-maybe_sequence_to_range", "bfaf917"),
     ("pandas-index.infer_dtype", "12faa2e"),
     ("pandas-multiindex.argsort", "609c3b7"),
@@ -32,8 +27,6 @@ PANDAS_PROBLEMS = [
     ("pandas-multiindex.intersection", "438b957"),
     ("pandas-arrays.integerarray.dtype", "37e9e06"),
     ("pandas-dataframegroupby.nunique", "d377cc9"),
-    ("pandas-concat", "4583a04"),  # NOTE: single test!
-    ("pandas-multiindex.equals", "7281475"),
     ("pandas-basemaskedarray._validate_setitem_value", "71c94af"),
     ("pandas-basemaskedarray.reshape", "fa29f09"),
     # ("pandas-merge_asof", "ad3f3f7"), # NOTE: api duplicated
@@ -41,6 +34,11 @@ PANDAS_PROBLEMS = [
     ("pandas-index.union", "c34da50"),
     ("pandas-pandas.testing.assert_frame_equal", "32ebcfc"),
     ("pandas-multiindex.symmetric_difference", "c6cf37a"),
+    # --- simple/buffer ---
+    ("pandas-index._getitem_slice", "9b4cffc"),  # NOTE: weak tests
+    ("pandas-concat", "4583a04"),  # NOTE: single test!
+    ("pandas-multiindex.equals", "7281475"),
+    ("pandas-datetimelikearraymixin._add_datetimelike_scalar", "a6c0ae4"),
 ]
 
 NUMPY_PROBLEMS = [
@@ -52,16 +50,13 @@ NUMPY_PROBLEMS = [
     ("numpy-numpy.char.multiply", "567b57d"),
     ("numpy-numpy.char.isnumeric", "893db31"),
     # --- math operations ---
-    ("numpy-numpy.equal", "1134be2"),  # NOTE: bad? commit slow? enable SIMD?
     ("numpy-numpy.add.at", "ba89ef9"),
     ("numpy-numpy.core.umath.log", "2dfd21e"),
     ("numpy-numpy.arctan2", "5f94eb8"),
     ("numpy-numpy.exp", "8dd6761"),
-    ("numpy-np.ma.cov", "9b1a9c5"),  # NOTE: bad? commit slow?
     ("numpy-numpy.subtract", "be52f19"),
     ("numpy-numpy.power", "e0194de"),
     ("numpy-numpy.sum", "330057f"),
-    ("numpy-numpy.kron", "54605f3"),  # NOTE: simple? 23 loc
     # --- array manipulation ---
     ("numpy-np.minimum.at", "11a7e2d"),
     ("numpy-np.partition", "ac5c664"),
@@ -71,10 +66,14 @@ NUMPY_PROBLEMS = [
     ("numpy-numpy.lib.recfunctions.structured_to_unstructured", "2540554"),
     ("numpy-numpy.can_cast", "8535df6"),
     ("numpy-numpy.ndarray.flat", "ec52363"),
-    ("numpy-np.in1d", "91e753c"),  # NOTE: simple? low speedup
     ("numpy-numpy.where", "780799b"),
     ("numpy-numpy.choose", "68eead8"),
     ("numpy-array_equal", "7ff7ec7"),
+    # --- simple/buffer ---
+    ("numpy-numpy.equal", "1134be2"),  # NOTE: commit slow! enable SIMD?
+    ("numpy-np.ma.cov", "9b1a9c5"),  # NOTE: commit slow!
+    ("numpy-numpy.kron", "54605f3"),  # NOTE: simple? 23 loc
+    ("numpy-np.in1d", "91e753c"),  # NOTE: simple?
 ]
 
 PILLOW_PROBLEMS = [
@@ -84,10 +83,11 @@ PILLOW_PROBLEMS = [
     ("pillow-imagecolor.getcolor", "99760f4"),
     ("pillow-gifimagefile.n_frames", "f854676"),
     ("pillow-image.rotate", "929c561"),
-    ("pillow-imagefilter.color3dlut", "2b09e7f"),  # NOTE: simple? low speedup?
-    ("pillow-image.new", "c82f9fe"),  # NOTE: single test!
     ("pillow-imagefilter.kernel", "3b5c2c3"),
     ("pillow-tiffimagefile.is_animated", "fd8ee84"),
+    # --- simple/buffer ---
+    ("pillow-imagefilter.color3dlut", "2b09e7f"),  # NOTE: simple? low speedup?
+    ("pillow-image.new", "c82f9fe"),  # NOTE: single test!
 ]
 
 
