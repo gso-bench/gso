@@ -9,6 +9,7 @@ from pyperf.harness.environment.docker_utils import list_images
 from pyperf.harness.grading.utils import get_dataset_from_preds
 from pyperf.harness.grading.grade import grade_instance
 from pyperf.harness.grading.report import make_run_report
+from pyperf.harness.utils import retag_remote_to_local_image
 from pyperf.utils.multiprocess import run_tasks_in_parallel_iter
 from pyperf.constants import RUN_EVALUATION_LOG_DIR
 from pyperf.data.dataset import PyPerfInstance
@@ -58,6 +59,7 @@ def run_instances(
 
     # print number of existing instance images
     instance_image_ids = {x.instance_image_key for x in instances}
+    retag_remote_to_local_image(instances, client)
     existing_images = {
         tag
         for i in client.images.list(all=True)

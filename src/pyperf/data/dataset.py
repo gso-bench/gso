@@ -22,6 +22,11 @@ class PyPerfInstance:
         return key
 
     @property
+    def remote_instance_image_key(self):
+        key = f"slimshetty/pyperf:pyperf.eval.{self.arch}.{self.instance_id.lower()}"
+        return key
+
+    @property
     def opt_commit(self):
         return self.base_commit.rstrip("^")
 
