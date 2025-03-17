@@ -39,17 +39,20 @@ def create_instance(prob: Problem, commit_hash: str, test_ids: list[int]):
 def build_dataset(problems, exp_id):
     print(f"Loaded problems: {len(problems)}")
 
-    test_pid_commits = dict(
+    test_problems_list = (
         TEST_PROBLEMS[exp_id]
         if exp_id
         else [item for sublist in TEST_PROBLEMS.values() for item in sublist]
     )
 
-    problems = [p for p in problems if p.pid in test_pid_commits]
-    print(f"Filtered problems: {len(problems)}")
+    # Create a set of tuples for efficient membership checking
+    test_pid_commits_set = set(test_problems_list)
+    test_pids = set(pid for pid, _ in test_problems_list)
+    print("Filtered problems: ", len(test_pid_commits_set))
 
+    # identify problems by pid and validity
+    problems = [p for p in problems if p.pid in test_pids]
     valid_problems = [p for p in problems if p.is_valid()]
-    print(f"Valid problems: {len(valid_problems)}")
 
     opt_stats = {}
     for prob in valid_problems:
@@ -60,30 +63,29 @@ def build_dataset(problems, exp_id):
     # create dataframe and filter to test commits
     opt_problems_df = create_analysis_dataframe(opt_stats)
     mask = opt_problems_df.apply(
-        lambda r: r["commit"] == test_pid_commits.get(r["pid"]), axis=1
+        lambda r: (r["pid"], r["commit"]) in test_pid_commits_set, axis=1
     )
     opt_problems_df = opt_problems_df[mask]
 
     # Filter by minimum speedup and take top K tests per prob
     opt_problems_df = (
         opt_problems_df[opt_problems_df["speedup_factor"] >= MIN_PROB_SPEEDUP]
-        .sort_values(["pid", "speedup_factor"], ascending=[True, False])
-        .groupby("pid")
+        .sort_values(["pid", "commit", "speedup_factor"], ascending=[True, True, False])
+        .groupby(["pid", "commit"])
         .head(MAX_TEST_COUNT)
     )
-    assert len(opt_problems_df["pid"].unique()) == len(test_pid_commits)
+    unique_pid_commits = set(zip(opt_problems_df["pid"], opt_problems_df["commit"]))
+    print(f"Found {len(unique_pid_commits)} / {len(test_pid_commits_set)} probs")
 
     loc_dist = opt_problems_df["loc_changed"].describe()
     speedup_dist = opt_problems_df["speedup_factor"].describe()
-    test_dist = opt_problems_df.groupby("pid").size().describe()
+    test_dist = opt_problems_df.groupby(["pid", "commit"]).size().describe()
 
     # Create dataset instances for selected (problem, commit, test)
     dataset = []
-    for pid, grp in opt_problems_df.groupby("pid"):
+    for (pid, commit), grp in opt_problems_df.groupby(["pid", "commit"]):
         prob = [p for p in valid_problems if p.pid == pid][0]
-        inst_dict = create_instance(
-            prob, grp["commit"].iloc[0], grp["test_id"].tolist()
-        )
+        inst_dict = create_instance(prob, commit, grp["test_id"].tolist())
         inst = PyPerfInstance(**inst_dict)
         dataset.append(inst)
 
