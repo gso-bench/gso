@@ -53,7 +53,7 @@ RUN conda init --all
 RUN conda config --append channels conda-forge
 
 # Download and instal uv
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+RUN curl -LsSf https://astral.sh/uv/0.5.4/install.sh | sh
 RUN . $HOME/.local/bin/env
 # Add uv to PATH
 ENV PATH=/root/.local/bin:$PATH
