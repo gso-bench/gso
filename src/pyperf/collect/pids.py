@@ -124,9 +124,34 @@ PILLOW_PROBLEMS = [
     ("pillow-image.new", "c82f9fe"),  # NOTE: single test!
 ]
 
+DATASETS_PROBLEMS = [
+    ("dataset-load_dataset_builder", "ef3b5dd"),
+    ("datasets-dataset.select_columns", "32b206d"),
+    ("datasets-iterabledataset.skip", "c5464b3"),
+    ("datasets-iterabledataset.filter", "ef2fb35"),
+    ("datasets-dataset._select_contiguous", "5994036"),  # NOTE: single test
+    ("datasets-datasetbuilder.download_and_prepare", "2878019"),  # NOTE: single test
+    ("datasets-image.cast_storage", "d9a8d8a"),  # NOTE: single test
+]
+
+TORNADO_PROBLEMS = [
+    ("tornado-parse_cookie", "0a39ba8"),
+    ("tornado-tcpserver.__init__", "bf1b21a"),
+    ("tornado-tornado.websocket.websocketclientconnection.write_message", "9a18f6c"),
+    ("tornado-baseiostream.write", "1b464c4"),
+    ("tornado-addthreadselectoreventloop.remove_reader", "5cfe2fc"),
+    ("tornado-http1serverconnection.close", "715ef05"),
+    ("tornado-resolver.resolve", "bc74d7b"),  # NOTE: common PR w/ .close
+    ("tornado-future.set_exception", "4d4c1e0"),
+    ("tornado-future.done", "ac13ee5"),  # NOTE: common PR w/ set_exception
+    ("tornado-oauth2mixin.oauth2_request", "0ab8263"),  # NOTE: simple?
+]
+
 
 TEST_PROBLEMS = {
     "pandas": PANDAS_PROBLEMS,
     "numpy": NUMPY_PROBLEMS,
     "pillow": PILLOW_PROBLEMS,
+    "datasets": DATASETS_PROBLEMS,
+    "tornado": TORNADO_PROBLEMS,
 }
