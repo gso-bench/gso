@@ -2,13 +2,35 @@ import os
 import matplotlib.pyplot as plt
 import json
 import numpy as np
+import argparse
 from pyperf.harness.grading.metrics import speedup
 
-filter_improved_commit = True  # Set to False to show all problems
+# Add argument parsing
+parser = argparse.ArgumentParser(
+    description="Plot speedup metrics from evaluation report"
+)
+parser.add_argument(
+    "--eval_report", type=str, required=True, help="Path to evaluation report JSON file"
+)
+parser.add_argument(
+    "--show_all_probs",
+    action="store_true",
+    default=False,
+    help="Show all problems (default: show only problems where model outperforms commit)",
+)
+parser.add_argument(
+    "--output_path",
+    type=str,
+    default="plots/opt_per_prob.png",
+    help="Path to save the output plot",
+)
+args = parser.parse_args()
 
-# eval_report = "~/pyperf/reports/opt_k_reports/claude.opt@10.test.report.json"
-eval_report = "~/pyperf/reports/opt_k_reports/o3-mini.opt@10.test.report.json"
-report = json.load(open(os.path.expanduser(eval_report)))
+# Create plots directory if it doesn't exist
+os.makedirs(os.path.dirname(args.output_path), exist_ok=True)
+
+# Load the report
+report = json.load(open(os.path.expanduser(args.eval_report)))
 opt_stats = report["opt_stats"]
 instance_sets = report["instance_sets"]
 
@@ -40,8 +62,8 @@ def add_top_labels(bars):
 # Extract speedups
 instances = list(opt_stats.keys())
 
-# Filter to instances where model outperforms commit if flag is enabled
-if filter_improved_commit and "improved_commit_ids" in instance_sets:
+# Filter to instances where model outperforms commit unless show_all_probs is enabled
+if not args.show_all_probs and "improved_commit_ids" in instance_sets:
     improved_instances = instance_sets["improved_commit_ids"]
     instances = [instance for instance in instances if instance in improved_instances]
 
@@ -102,6 +124,6 @@ ax.spines["right"].set_visible(False)
 ax.legend(loc="upper right")
 ax.yaxis.grid(True, linestyle="--", alpha=0.7)
 plt.tight_layout()
-plt.savefig("plots/opt_per_prob.png", dpi=300, bbox_inches="tight")
+plt.savefig(args.output_path, dpi=300, bbox_inches="tight")
 plt.close()
-print("Plot saved as plots/opt_per_prob.png")
+print(f"Plot saved as {args.output_path}")
