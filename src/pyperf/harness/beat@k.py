@@ -276,10 +276,10 @@ def main():
 
     # Save report results
     EVALUATION_REPORTS_DIR.mkdir(parents=True, exist_ok=True)
-    opt_reports_dir = EVALUATION_REPORTS_DIR / Path("opt_k_reports")
+    opt_reports_dir = EVALUATION_REPORTS_DIR / Path("beat_k_reports")
     opt_reports_dir.mkdir(parents=True, exist_ok=True)
     output_file = opt_reports_dir / Path(
-        f"{args.model_name}.opt@{args.k}.{args.run_id}.report.json"
+        f"{args.model_name}.beat@{args.k}.{args.run_id}.report.json"
     )
     with open(output_file, "w") as f:
         json.dump(merged_results, f, indent=2)
