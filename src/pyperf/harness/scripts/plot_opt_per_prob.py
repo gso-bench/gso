@@ -70,9 +70,10 @@ speedups_main = [
     for p in instances
 ]
 
+max_speedup = max(speedups_model + speedups_commit + speedups_main)
+
 # Clean up problem names for display
 instances = [p.split("__")[1] for p in instances]  # Remove org name
-instances = [p[:12] for p in instances]  # Truncate for readability
 
 # Create the plot
 fig, ax = plt.subplots(figsize=(10, 6))
@@ -93,6 +94,7 @@ add_top_labels(bars3)
 ax.set_yscale("log")
 ax.set_title("Speedup achieved per problem")
 ax.set_ylabel(f"Speedup Factor - Log Scale")
+ax.set_ylim(top=max_speedup * 4)
 ax.set_xticks(x)
 ax.set_xticklabels(instances, rotation=30, ha="center", fontsize=4)
 ax.spines["top"].set_visible(False)

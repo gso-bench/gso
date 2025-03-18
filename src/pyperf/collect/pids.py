@@ -28,7 +28,7 @@ PANDAS_PROBLEMS = [
     ("pandas-dataframegroupby.nunique", "d377cc9"),
     ("pandas-basemaskedarray._validate_setitem_value", "71c94af"),
     ("pandas-basemaskedarray.reshape", "fa29f09"),
-    ("pandas-dataframe", "9a6c8f0"),
+    ("pandas-dataframe", "9a6c8f0"),  # NOTE: weak test?
     ("pandas-index.union", "c34da50"),
     ("pandas-pandas.testing.assert_frame_equal", "32ebcfc"),
     ("pandas-multiindex.symmetric_difference", "c6cf37a"),
@@ -36,7 +36,7 @@ PANDAS_PROBLEMS = [
     ("pandas-merge_asof", "ad3f3f7"),
     ("pandas-to_datetime", "2421931"),
     ("pandas-pandas.testing.assert_frame_equal", "00d88e9"),
-    ("pandas-datetimeindex.tz_localize", "b731518"),
+    ("pandas-datetimeindex.tz_localize", "b731518"),  # NOTE: weak test?
     ("pandas-indexengine.get_indexer_non_unique", "5d82d8b"),  # NOTE: internal test
     ("pandas-dataframe.last_valid_index", "65bca65"),  # NOTE: sc, hl
     ("pandas-merge", "81b5f1d"),  # NOTE: sc, hl
@@ -44,7 +44,6 @@ PANDAS_PROBLEMS = [
     ("pandas-dataframe.duplicated", "235113e"),
     ("pandas-dataframe.all", "28f4942"),
     ("pandas-merge", "c51c2a7"),
-    ("pandas-ensure_index_from_sequences", "38086f1"),
     ("pandas-concat", "1c2ad16"),
     ("pandas-series.__init__", "191557d"),  # NOTE: single test!
     ("pandas-datetimelikearraymixin.astype", "45f0705"),  # NOTE: single test!
@@ -53,6 +52,7 @@ PANDAS_PROBLEMS = [
     ("pandas-concat", "4583a04"),  # NOTE: single test!
     ("pandas-multiindex.equals", "7281475"),
     ("pandas-datetimelikearraymixin._add_datetimelike_scalar", "a6c0ae4"),
+    ("pandas-ensure_index_from_sequences", "38086f1"),  # NOTE: single test!
 ]
 
 NUMPY_PROBLEMS = [
