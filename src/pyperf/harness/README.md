@@ -67,7 +67,7 @@ uv run src/pyperf/harness/run_evaluation.py --dataset_name <dataset_name> --pred
 ## 2.2 Evaluate multiple rollouts (beat@K)
 
 ```bash
-uv run src/pyperf/harness/beat@k.py --dataset_name <dataset_name> --prediction_paths <prediction_paths> --timeout 3600 --run_id <run_id> --k 10 --model <modelname>
+uv run src/pyperf/harness/beat_at_k.py --dataset_name <dataset_name> --prediction_paths <prediction_paths> --timeout 3600 --run_id <run_id> --k 10 --model <modelname>
 ```
 - `--dataset_name` can be a local jsonl file or a huggingface hub dataset.
 - `--prediction_paths` is a space separated list of predictions jsonl files (OR) a glob pattern.
