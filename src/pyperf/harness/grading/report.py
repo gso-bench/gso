@@ -182,9 +182,9 @@ def make_run_report(
     print(f"Instances with empty patches: {summary['empty_patch_instances']}")
     print(f"Instances with errors: {summary['error_instances']}")
     print("-" * 10)
-    print(f"Opt(base): {summary['improved_over_base']} ({opt_base*100:.2f}%) ")
-    print(f"Opt(commit): {summary['improved_over_commit']} ({opt_commit*100:.2f}%)")
-    print(f"Opt(main): {summary['improved_over_main']} ({opt_main*100:.2f}%) ")
+    print(f"beat(base): {summary['improved_over_base']} ({opt_base*100:.2f}%) ")
+    print(f"beat(commit): {summary['improved_over_commit']} ({opt_commit*100:.2f}%)")
+    print(f"beat(main): {summary['improved_over_main']} ({opt_main*100:.2f}%) ")
 
     print(f"\nReport written to: {report_file}")
     return report_file

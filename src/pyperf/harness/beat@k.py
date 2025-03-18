@@ -193,9 +193,11 @@ def merge_reports(report_files, k):
     print(f"Instances with empty patches: {summary['empty_patch_instances']}")
     print(f"Instances with errors: {summary['error_instances']}")
     print("-" * 10)
-    print(f"Opt(base)@{k}: {summary['improved_over_base']} ({opt_base*100:.2f}%) ")
-    print(f"Opt(commit)@{k}: {summary['improved_over_commit']} ({opt_commit*100:.2f}%)")
-    print(f"Opt(main)@{k}: {summary['improved_over_main']} ({opt_main*100:.2f}%) ")
+    print(f"beat(base)@{k}: {summary['improved_over_base']} ({opt_base*100:.2f}%) ")
+    print(
+        f"beat(commit)@{k}: {summary['improved_over_commit']} ({opt_commit*100:.2f}%)"
+    )
+    print(f"beat(main)@{k}: {summary['improved_over_main']} ({opt_main*100:.2f}%) ")
 
     return report
 
