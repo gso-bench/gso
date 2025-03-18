@@ -4,9 +4,34 @@ import matplotlib.pyplot as plt
 import os
 import glob
 from tqdm import tqdm
+import argparse
+
+# Add argument parsing
+parser = argparse.ArgumentParser(description="Run and plot Opt@K evaluations")
+parser.add_argument(
+    "--dataset_name", type=str, default="manishs/pyperf", help="Dataset name"
+)
+parser.add_argument(
+    "--prediction_paths",
+    type=str,
+    nargs="+",
+    help="Glob pattern for prediction paths",
+    required=True,
+)
+parser.add_argument("--timeout", type=int, default=3600, help="Timeout in seconds")
+parser.add_argument("--run_id", type=str, default="test", help="Run identifier")
+parser.add_argument("--model_name", type=str, help="Model name", required=True)
+parser.add_argument(
+    "--reformat_reports", action="store_true", help="Whether to just reformat reports"
+)
+parser.add_argument("--k", type=int, default=10, help="Maximum K value")
+parser.add_argument(
+    "--output_dir", type=str, default="plots", help="Directory to save plots"
+)
+args = parser.parse_args()
 
 # Create plots directory if it doesn't exist
-os.makedirs("plots", exist_ok=True)
+os.makedirs(args.output_dir, exist_ok=True)
 
 # Store results for each k
 k_values = []
@@ -14,46 +39,35 @@ base_values = []
 commit_values = []
 main_values = []
 
-dataset_name = "manishs/pyperf"
-# prediction_paths = "~/OpenHands/evaluation/evaluation_outputs/outputs/manishs__pyperf-test/CodeActAgent/claude-3-5-sonnet-v2-20241022_maxiter_50_N_v0.25.0-no-hint-run_*/output.pyperf.jsonl"
-prediction_paths = "~/OpenHands/evaluation/evaluation_outputs/outputs/manishs__pyperf-test/CodeActAgent/o3-mini_maxiter_50_N_v0.25.0-no-hint-run_*/output.pyperf.jsonl"
-# Expand the glob pattern into a list of paths
-path_list = glob.glob(os.path.expanduser(prediction_paths))
-timeout = 3600
-run_id = "test"
-model = "claude"
-reformat_reports = True
-K = 10
-
-for k in tqdm(range(1, K + 1), desc="Processing K predictions"):
+for k in tqdm(range(1, args.k + 1), desc="Processing K predictions"):
     # Construct the command
     cmd = [
         "uv",
         "run",
         "src/pyperf/harness/opt@k.py",  # Changed to opt@k.py
         "--dataset_name",
-        dataset_name,
+        args.dataset_name,
         "--prediction_paths",
     ]
 
     # Add paths as separate arguments (not as a single string)
-    cmd.extend(path_list)
+    cmd.extend(args.prediction_paths)
 
     # Add remaining arguments
     cmd.extend(
         [
             "--timeout",
-            str(timeout),
+            str(args.timeout),
             "--run_id",
-            run_id,
+            args.run_id,
             "--model_name",  # Changed to model_name to match opt@k.py
-            model,
+            args.model_name,
             "--k",
             str(k),
         ]
     )
 
-    if reformat_reports:
+    if args.reformat_reports:
         cmd.append("--reformat_reports")
 
     try:
@@ -95,5 +109,6 @@ plt.legend()
 plt.grid(True)
 
 # Save the plot
-plt.savefig("plots/opt_at_k.png", dpi=300, bbox_inches="tight")
-print("Plot saved as plots/opt_at_k.png")
+output_path = os.path.join(args.output_dir, "opt_at_k.png")
+plt.savefig(output_path, dpi=300, bbox_inches="tight")
+print(f"Plot saved as {output_path}")
