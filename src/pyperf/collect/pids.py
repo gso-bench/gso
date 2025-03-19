@@ -48,11 +48,11 @@ PANDAS_PROBLEMS = [
     ("pandas-series.__init__", "191557d"),  # NOTE: single test!
     ("pandas-datetimelikearraymixin.astype", "45f0705"),  # NOTE: single test!
     # --- buffer ---
-    ("pandas-index._getitem_slice", "9b4cffc"),  # NOTE: weak tests
-    ("pandas-concat", "4583a04"),  # NOTE: single test!
-    ("pandas-multiindex.equals", "7281475"),
-    ("pandas-datetimelikearraymixin._add_datetimelike_scalar", "a6c0ae4"),
-    ("pandas-ensure_index_from_sequences", "38086f1"),  # NOTE: single test!
+    # ("pandas-index._getitem_slice", "9b4cffc"),  # NOTE: weak tests
+    # ("pandas-concat", "4583a04"),  # NOTE: single test!
+    # ("pandas-multiindex.equals", "7281475"),
+    # ("pandas-datetimelikearraymixin._add_datetimelike_scalar", "a6c0ae4"),
+    # ("pandas-ensure_index_from_sequences", "38086f1"),  # NOTE: single test!
 ]
 
 NUMPY_PROBLEMS = [
@@ -104,10 +104,10 @@ NUMPY_PROBLEMS = [
     ("numpy-np.sort", "794f474"),  # NOTE: enable AVX2/SIMD?
     ("numpy-numpy.conjugate", "d352270"),  # NOTE: enable SIMD? (single test)
     # --- buffer ---
-    ("numpy-numpy.equal", "1134be2"),  # NOTE: commit slow!
-    ("numpy-np.ma.cov", "9b1a9c5"),  # NOTE: commit slow!
-    ("numpy-numpy.kron", "54605f3"),  # NOTE: simple? 23 loc
-    ("numpy-np.in1d", "91e753c"),  # NOTE: simple?
+    # ("numpy-numpy.equal", "1134be2"),  # NOTE: commit slow!
+    # ("numpy-np.ma.cov", "9b1a9c5"),  # NOTE: commit slow!
+    # ("numpy-numpy.kron", "54605f3"),  # NOTE: simple? 23 loc
+    # ("numpy-np.in1d", "91e753c"),  # NOTE: simple?
 ]
 
 PILLOW_PROBLEMS = [
