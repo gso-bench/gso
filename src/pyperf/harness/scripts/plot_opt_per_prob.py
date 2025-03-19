@@ -12,6 +12,7 @@ parser = argparse.ArgumentParser(
 parser.add_argument(
     "--eval_report", type=str, required=True, help="Path to evaluation report JSON file"
 )
+parser.add_argument("--model_name", type=str, help="Model name", required=True)
 parser.add_argument(
     "--show_all_probs",
     action="store_true",
@@ -19,15 +20,12 @@ parser.add_argument(
     help="Show all problems (default: show only problems where model outperforms commit)",
 )
 parser.add_argument(
-    "--output_path",
-    type=str,
-    default="plots/opt_per_prob.png",
-    help="Path to save the output plot",
+    "--output_dir", type=str, default="plots", help="Directory to save plots"
 )
 args = parser.parse_args()
 
 # Create plots directory if it doesn't exist
-os.makedirs(os.path.dirname(args.output_path), exist_ok=True)
+os.makedirs(args.output_dir, exist_ok=True)
 
 # Load the report
 report = json.load(open(os.path.expanduser(args.eval_report)))
@@ -103,9 +101,9 @@ x = np.arange(len(instances))
 width = 0.2
 
 # Create bars
-bars1 = ax.bar(x - width, speedups_model, width, label="Model", color="#1f77b4")
-bars2 = ax.bar(x, speedups_commit, width, label="Commit", color="#ff7f0e")
-bars3 = ax.bar(x + width, speedups_main, width, label="Main", color="#2ca02c")
+bars1 = ax.bar(x - width, speedups_model, width, label="Model")
+bars2 = ax.bar(x, speedups_commit, width, label="Commit")
+bars3 = ax.bar(x + width, speedups_main, width, label="Main")
 
 # Add labels
 add_top_labels(bars1)
@@ -114,8 +112,8 @@ add_top_labels(bars3)
 
 # Apply log scale to y-axis
 ax.set_yscale("log")
-ax.set_title("Speedup achieved per problem")
 ax.set_ylabel(f"Speedup Factor - Log Scale")
+ax.set_xlabel("Problem ID")
 ax.set_ylim(top=max_speedup * 4)
 ax.set_xticks(x)
 ax.set_xticklabels(instances, rotation=30, ha="center", fontsize=4)
@@ -124,6 +122,8 @@ ax.spines["right"].set_visible(False)
 ax.legend(loc="upper right")
 ax.yaxis.grid(True, linestyle="--", alpha=0.7)
 plt.tight_layout()
-plt.savefig(args.output_path, dpi=300, bbox_inches="tight")
-plt.close()
-print(f"Plot saved as {args.output_path}")
+
+# Save the plot
+output_path = os.path.join(args.output_dir, f"opt_per_prob.{args.model_name}.png")
+plt.savefig(output_path, dpi=300, bbox_inches="tight")
+print(f"Plot saved as {output_path}")
