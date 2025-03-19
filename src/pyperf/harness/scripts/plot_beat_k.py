@@ -58,17 +58,23 @@ for k in tqdm(range(1, args.k + 1), desc="Processing K predictions"):
     commit_values.append(opt_commit)
     main_values.append(opt_main)
 
-# Create the plot
-plt.figure(figsize=(10, 6))
+
+# convert y values to percentage
+base_values = [x * 100 for x in base_values]
+commit_values = [x * 100 for x in commit_values]
+main_values = [x * 100 for x in main_values]
+
+plt.figure(figsize=(8, 6))
+plt.rcParams.update({"font.size": 14})
+plt.xticks(k_values)
 plt.plot(k_values, base_values, "o-", label="beat(base)@k", linewidth=2)
-plt.plot(k_values, commit_values, "s-", label="beat(commit)@k", linewidth=2)
-plt.plot(k_values, main_values, "^-", label="beat(main)@k", linewidth=2)
+plt.plot(k_values, commit_values, "o-", label="beat(commit)@k", linewidth=2)
+plt.plot(k_values, main_values, "o-", label="beat(main)@k", linewidth=2)
 
 plt.xlabel("# Agent Rollouts (K)")
 plt.ylabel("% Problems")
-plt.title("Inference time scaling for beat@K")
 plt.legend()
-plt.grid(True)
+plt.grid(True, linestyle="-", alpha=0.05)
 
 # Save the plot
 output_path = os.path.join(args.output_dir, f"beat_at_k.{args.model_name}.png")
