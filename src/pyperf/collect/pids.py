@@ -125,7 +125,7 @@ PILLOW_PROBLEMS = [
 ]
 
 DATASETS_PROBLEMS = [
-    ("dataset-load_dataset_builder", "ef3b5dd"),
+    ("datasets-load_dataset_builder", "ef3b5dd"),
     ("datasets-dataset.select_columns", "32b206d"),
     ("datasets-iterabledataset.skip", "c5464b3"),
     ("datasets-iterabledataset.filter", "ef2fb35"),
@@ -147,6 +147,15 @@ TORNADO_PROBLEMS = [
     ("tornado-oauth2mixin.oauth2_request", "0ab8263"),  # NOTE: simple?
 ]
 
+PYDANTIC_PROBLEMS = [
+    ("pydantic-basemodel.__setattr__", "addf1f9"),
+    ("pydantic-genericmodel.__concrete_name__", "4a09447"),
+    ("pydantic-basemodel._iter", "7d9614e"),  # NOTE: long running!
+    ("pydantic-typeadapter.validate_strings", "c2647ab"),
+    ("pydantic-typeadapter.validate_python", "ac9e6ee"),
+    ("pydantic-typeadapter.__init__", "c5dce37"),
+]
+
 
 TEST_PROBLEMS = {
     "pandas": PANDAS_PROBLEMS,
@@ -154,4 +163,5 @@ TEST_PROBLEMS = {
     "pillow": PILLOW_PROBLEMS,
     "datasets": DATASETS_PROBLEMS,
     "tornado": TORNADO_PROBLEMS,
+    "pydantic": PYDANTIC_PROBLEMS,
 }
