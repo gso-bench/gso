@@ -20,6 +20,13 @@ SKYGEN_TEMPLATE = current_dir / "execute" / "template.yaml"
 PHASE1_TEMPLATE = current_dir / "execute" / "phase1.txt"
 PHASE2_TEMPLATE = current_dir / "execute" / "phase2.txt"
 
+SUBMISSIONS_DIR = PYPERF_BUCKET_DIR / "submissions"
+SUBMISSION_TRACES_DIR = SUBMISSIONS_DIR / "traces"
+SUBMISSION_PATCHES_DIR = SUBMISSIONS_DIR / "patches"
+SUBMISSION_REPORTS_DIR = SUBMISSIONS_DIR / "reports"
+
+# --------- Harness/Evals Constants ---------
+
 DATASET_DIR = PYPERF_BUCKET_DIR / "datasets"
 INSTANCE_IMAGE_BUILD_DIR = Path("logs/build_images/instances")
 RUN_EVALUATION_LOG_DIR = Path("logs/run_evaluation")

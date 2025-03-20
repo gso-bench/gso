@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Conversation Viewer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        button {
+            padding: 8px 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .conversation {
+            margin-top: 20px;
+        }
+        .history-item {
+            margin: 15px 0;
+            padding: 15px;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            background-color: #fff;
+        }
+        .history-item.agent {
+            border-left: 4px solid #28a745;
+        }
+        .history-item.observation {
+            border-left: 4px solid #47a0ff;
+        }
+        .metadata {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+        .metadata-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+        }
+        .tool-call {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            border-left: 3px solid #fd7e14;
+            font-size: 90%;
+        }
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .timestamp {
+            color: #6c757d;
+            font-size: 0.875rem;
+        }
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-right: 5px;
+        }
+        .badge.source {
+            background-color: #e9ecef;
+            color: #495057;
+        }
+        .badge.action {
+            background-color: #cff4fc;
+            color: #055160;
+        }
+        .collapsible {
+            cursor: pointer;
+        }
+        .collapsible:hover {
+            background-color: #f1f3f5;
+        }
+        .content {
+            display: none;
+            padding: 10px;
+        }
+        .content.active {
+            display: block;
+        }
+        .error {
+            border-left: 4px solid #dc3545;
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .metrics {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div style="margin-bottom: 20px;">
+            <a href="/" style="text-decoration: none; color: #007bff;">← Back to Log List</a>
+        </div>
+
+        <div class="navigation">
+            <div class="nav-buttons">
+                <button onclick="loadPrevious()" id="prevButton">Previous</button>
+                <button onclick="loadNext()" id="nextButton">Next</button>
+            </div>
+            <div id="pagination"></div>
+        </div>
+
+        <div id="content">
+            <div class="metadata">
+                <h3>Metadata</h3>
+                <div id="metadata" class="metadata-grid"></div>
+            </div>
+
+            <div class="conversation">
+                <h3>Conversation History</h3>
+                <div id="history"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Add this line at the top of your script section
+        const logPath = "{{ log_path }}";
+
+        function formatToolCall(toolCall) {
+            if (!toolCall) return '';
+
+            let html = `
+                <div class="tool-call">
+                    ${toolCall.model_response.choices[0].message.content ? `<strong>Content:</strong> <pre>${toolCall.model_response.choices[0].message.content}</pre>` : ''}
+                    <strong>Tool:</strong> ${toolCall.function_name} <br>
+                    <strong>Cmd:</strong> ${JSON.parse(toolCall.model_response.choices[0].message.tool_calls[0].function.arguments).command}<br>
+                    <div class="collapsible" onclick="toggleContent(this)" style="margin-top: 10px;">
+                        Details ▼
+                        <div class="content">
+                            <pre>${JSON.stringify(toolCall.model_response.choices[0].message, null, 2)}</pre>
+                        </div>
+                    </div>
+                </div>
+            `;
+            return html;
+        }
+
+        function formatResult(metrics, testResult) {
+            if (!metrics) return '';
+
+            return `
+                <div class="metrics">
+                    <strong>Accumulated Cost:</strong> ${metrics.accumulated_cost}<br>
+                    <strong>Costs:</strong>
+                    <pre>${JSON.stringify(metrics.costs, null, 2)}</pre>
+                    <strong>Git Patch:</strong>
+                    <pre>${testResult.git_patch}</pre>
+                </div>
+            `;
+        }
+
+        function updateButtons(currentIndex, total) {
+            document.getElementById('prevButton').disabled = currentIndex === 0;
+            document.getElementById('nextButton').disabled = currentIndex === total - 1;
+            document.getElementById('pagination').textContent = `Conversation ${currentIndex + 1} of ${total}`;
+        }
+
+        function updateUrlWithInstanceId(instanceId) {
+            if (instanceId) {
+                // Get the base path (without instance_id if present)
+                let basePath = window.location.pathname;
+                if (basePath.includes('/output.jsonl')) {
+                    basePath = basePath.replace('/output.jsonl', '');
+                } else {
+                    // Remove any existing instance ID
+                    const pathParts = basePath.split('/');
+                    basePath = pathParts.slice(0, -1).join('/');
+                }
+
+                // Create new URL with instance ID
+                const newUrl = `${basePath}/${instanceId}`;
+                window.history.pushState({}, '', newUrl);
+            }
+        }
+
+        function displayConversation(data) {
+            const conversation = data.conversation;
+            updateButtons(data.current_index, data.total);
+
+            // Update URL with instance ID
+            if (data.instance_id) {
+                updateUrlWithInstanceId(data.instance_id);
+            }
+
+            // Display metadata
+            const metadataHtml = `
+                <div>
+                    <p><strong>Instance ID:</strong> ${conversation.instance_id}</p>
+                    <p><strong>Agent Class:</strong> ${conversation.metadata.agent_class}</p>
+                    <p><strong>Model:</strong> ${conversation.metadata.llm_config.model}</p>
+                    <p><strong>Dataset:</strong> ${conversation.metadata.dataset}</p>
+                </div>
+                <div>
+                    <p><strong>Start Time:</strong> ${conversation.metadata.start_time}</p>
+                    <p><strong>Git Commit:</strong> ${conversation.metadata.git_commit}</p>
+                    <p><strong>Max Iterations:</strong> ${conversation.metadata.max_iterations}</p>
+                </div>
+            `;
+            document.getElementById('metadata').innerHTML = metadataHtml;
+
+            // Display conversation history
+            const historyHtml = conversation.history.reduce((acc, item, index) => {
+                // Skip items without action (they are responses to previous actions)
+                if (!item.action) {
+                    // If this is a response item, add its content to the previous item
+                    if (index > 0) {
+                        acc += `
+                            <div class="history-item observation">
+                                <span class="badge">ID:${item.id}</span>
+                                <span class="badge source">observation</span>
+                                <span class="timestamp">${item.timestamp}</span>
+
+                                ${item.message ? `<pre>${item.message}</pre>` : ''}
+                                ${item.error ? `<div class="error">${item.error}</div>` : ''}
+                                ${item.content ? `<pre>${item.content}</pre>` : ''}
+                            </div>
+                        `;
+                    }
+                    return acc;
+                }
+
+                return acc + `
+                    <div class="history-item ${item.source}">
+                        <span class="badge">ID:${item.id}</span>
+                        <span class="badge source">${item.source}</span>
+                        <span class="badge action">${item.action}</span>
+                        <span class="timestamp">${item.timestamp}</span>
+
+                        ${item.message ? `<pre>${item.message}</pre>` : ''}
+
+                        ${item.tool_call_metadata ? formatToolCall(item.tool_call_metadata) : ''}
+
+                        ${item.error ? `<div class="error">${item.error}</div>` : ''}
+                    </div>
+                `;
+            }, '');
+            document.getElementById('history').innerHTML = historyHtml;
+
+            // Add metrics if they exist
+            if (conversation.metrics || conversation.test_result) {
+                document.getElementById('history').innerHTML += formatResult(conversation.metrics, conversation.test_result);
+            }
+        }
+
+        function toggleContent(element) {
+            const content = element.querySelector('.content');
+            content.classList.toggle('active');
+            element.querySelector('strong').textContent =
+                content.classList.contains('active') ? 'Details ▼' : 'Details ▶';
+        }
+
+        async function loadConversation() {
+            const response = await fetch(`/conversation/current/${logPath}`);
+            const data = await response.json();
+            displayConversation(data);
+        }
+
+        async function loadNext() {
+            const response = await fetch(`/conversation/next/${logPath}`);
+            const data = await response.json();
+            displayConversation(data);
+        }
+
+        async function loadPrevious() {
+            const response = await fetch(`/conversation/previous/${logPath}`);
+            const data = await response.json();
+            displayConversation(data);
+        }
+
+        // Load initial conversation
+        loadConversation();
+    </script>
+</body>
+</html>

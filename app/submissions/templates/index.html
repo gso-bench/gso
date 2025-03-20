@@ -1,0 +1,53 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Log Files</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        .log-list {
+            list-style: none;
+            padding: 0;
+        }
+        .log-item {
+            padding: 10px;
+            margin: 5px 0;
+            background-color: #f5f5f5;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+        .log-item:hover {
+            background-color: #e0e0e0;
+        }
+        .log-link {
+            text-decoration: none;
+            color: #2196F3;
+            display: block;
+            width: 100%;
+        }
+        .log-link:hover {
+            color: #1976D2;
+        }
+    </style>
+</head>
+<body>
+    <h1>Available Log Files</h1>
+    <ul class="log-list">
+        {% for log in logs %}
+        <li class="log-item">
+            <a href="{{ url_for('view_log', log_path=log) }}" class="log-link">{{ log }}</a>
+        </li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
