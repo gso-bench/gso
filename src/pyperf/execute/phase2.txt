@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+# set -e
 
 echo "Phase 2: Running performance comparison for all working combinations..."
 

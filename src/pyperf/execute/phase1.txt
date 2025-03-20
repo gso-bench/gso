@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+# set -e
 
 echo "Phase 1: Testing all commit-test combinations..."
 
