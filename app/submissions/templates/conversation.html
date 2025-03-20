@@ -1,324 +1,255 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Conversation Viewer</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f5f5f5;
-        }
-        .container {
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .navigation {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding: 10px;
-            background-color: #f8f9fa;
-            border-radius: 4px;
-        }
-        .nav-buttons {
-            display: flex;
-            gap: 10px;
-        }
-        button {
-            padding: 8px 16px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        button:disabled {
-            background-color: #cccccc;
-            cursor: not-allowed;
-        }
-        .conversation {
-            margin-top: 20px;
-        }
-        .history-item {
-            margin: 15px 0;
-            padding: 15px;
-            border: 1px solid #dee2e6;
-            border-radius: 8px;
-            background-color: #fff;
-        }
-        .history-item.agent {
-            border-left: 4px solid #28a745;
-        }
-        .history-item.observation {
-            border-left: 4px solid #47a0ff;
-        }
-        .metadata {
-            margin-bottom: 20px;
-            padding: 15px;
-            background-color: #f8f9fa;
-            border-radius: 8px;
-            border: 1px solid #dee2e6;
-        }
-        .metadata-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 15px;
-        }
-        .tool-call {
-            margin-top: 10px;
-            padding: 10px;
-            background-color: #f8f9fa;
-            border-radius: 4px;
-            border-left: 3px solid #fd7e14;
-            font-size: 90%;
-        }
-        pre {
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            background-color: #f8f9fa;
-            padding: 10px;
-            border-radius: 4px;
-            max-height: 400px;
-            overflow-y: auto;
-        }
-        .timestamp {
-            color: #6c757d;
-            font-size: 0.875rem;
-        }
-        .badge {
-            display: inline-block;
-            padding: 3px 8px;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            margin-right: 5px;
-        }
-        .badge.source {
-            background-color: #e9ecef;
-            color: #495057;
-        }
-        .badge.action {
-            background-color: #cff4fc;
-            color: #055160;
-        }
-        .collapsible {
-            cursor: pointer;
-        }
-        .collapsible:hover {
-            background-color: #f1f3f5;
-        }
-        .content {
-            display: none;
-            padding: 10px;
-        }
-        .content.active {
-            display: block;
-        }
-        .error {
-            border-left: 4px solid #dc3545;
-            background-color: #f8d7da;
-            color: #721c24;
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 4px;
-        }
-        .metrics {
-            margin-top: 15px;
-            padding: 10px;
-            background-color: #e9ecef;
-            border-radius: 4px;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div style="margin-bottom: 20px;">
-            <a href="/" style="text-decoration: none; color: #007bff;">← Back to Log List</a>
+<!-- templates/conversation.html -->
+{% extends "base.html" %}
+
+{% block title %}Conversation Viewer{% endblock %}
+
+{% block header %}Conversation Viewer{% endblock %}
+
+{% block content %}
+    <!-- Back to Log List Button -->
+    <div class="mb-4">
+        <a href="{{ url_for('index') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Log List
+        </a>
+    </div>
+
+    <!-- Navigation Controls -->
+    <nav aria-label="Conversation Navigation" class="mb-4">
+        <ul class="pagination justify-content-center">
+            <li class="page-item" id="prevButton">
+                <button onclick="loadPrevious()" class="page-link">
+                    <i class="fas fa-arrow-left"></i> Previous
+                </button>
+            </li>
+            <li class="page-item disabled">
+                <span class="page-link" id="pagination"></span>
+            </li>
+            <li class="page-item" id="nextButton">
+                <button onclick="loadNext()" class="page-link">
+                    Next <i class="fas fa-arrow-right"></i>
+                </button>
+            </li>
+        </ul>
+    </nav>
+
+    <div id="content">
+        <!-- Metadata Section -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <button class="btn btn-link" type="button" data-bs-toggle="collapse" 
+                           data-bs-target="#metadataCollapse" aria-expanded="true">
+                        Metadata
+                    </button>
+                </h5>
+            </div>
+            <div id="metadataCollapse" class="collapse show">
+                <div class="card-body">
+                    <div id="metadata" class="metadata-grid"></div>
+                </div>
+            </div>
         </div>
 
-        <div class="navigation">
-            <div class="nav-buttons">
-                <button onclick="loadPrevious()" id="prevButton">Previous</button>
-                <button onclick="loadNext()" id="nextButton">Next</button>
+        <!-- Conversation History Section -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Conversation History</h5>
             </div>
-            <div id="pagination"></div>
-        </div>
-
-        <div id="content">
-            <div class="metadata">
-                <h3>Metadata</h3>
-                <div id="metadata" class="metadata-grid"></div>
-            </div>
-
-            <div class="conversation">
-                <h3>Conversation History</h3>
+            <div class="card-body">
                 <div id="history"></div>
             </div>
         </div>
     </div>
+{% endblock %}
 
-    <script>
-        // Add this line at the top of your script section
-        const logPath = "{{ log_path }}";
+{% block scripts %}
+<script>
+    // Define log path from the template
+    const logPath = "{{ log_path }}";
 
-        function formatToolCall(toolCall) {
-            if (!toolCall) return '';
+    function formatToolCall(toolCall) {
+        if (!toolCall) return '';
 
-            let html = `
-                <div class="tool-call">
-                    ${toolCall.model_response.choices[0].message.content ? `<strong>Content:</strong> <pre>${toolCall.model_response.choices[0].message.content}</pre>` : ''}
-                    <strong>Tool:</strong> ${toolCall.function_name} <br>
-                    <strong>Cmd:</strong> ${JSON.parse(toolCall.model_response.choices[0].message.tool_calls[0].function.arguments).command}<br>
-                    <div class="collapsible" onclick="toggleContent(this)" style="margin-top: 10px;">
-                        Details ▼
-                        <div class="content">
-                            <pre>${JSON.stringify(toolCall.model_response.choices[0].message, null, 2)}</pre>
-                        </div>
+        let html = `
+            <div class="tool-call">
+                ${toolCall.model_response.choices[0].message.content ? `<strong>Content:</strong> <pre>${toolCall.model_response.choices[0].message.content}</pre>` : ''}
+                <strong>Tool:</strong> ${toolCall.function_name} <br>
+                <strong>Cmd:</strong> ${JSON.parse(toolCall.model_response.choices[0].message.tool_calls[0].function.arguments).command}<br>
+                <div class="collapsible" onclick="toggleContent(this)" style="margin-top: 10px;">
+                    <span>Details <i class="fas fa-chevron-down"></i></span>
+                    <div class="content">
+                        <pre>${JSON.stringify(toolCall.model_response.choices[0].message, null, 2)}</pre>
                     </div>
                 </div>
-            `;
-            return html;
-        }
+            </div>
+        `;
+        return html;
+    }
 
-        function formatResult(metrics, testResult) {
-            if (!metrics) return '';
+    function formatResult(metrics, testResult) {
+        if (!metrics) return '';
 
-            return `
-                <div class="metrics">
-                    <strong>Accumulated Cost:</strong> ${metrics.accumulated_cost}<br>
-                    <strong>Costs:</strong>
-                    <pre>${JSON.stringify(metrics.costs, null, 2)}</pre>
-                    <strong>Git Patch:</strong>
-                    <pre>${testResult.git_patch}</pre>
-                </div>
-            `;
-        }
+        return `
+            <div class="metrics">
+                <strong>Accumulated Cost:</strong> ${metrics.accumulated_cost}<br>
+                <strong>Costs:</strong>
+                <pre>${JSON.stringify(metrics.costs, null, 2)}</pre>
+                ${testResult && testResult.git_patch ? `<strong>Git Patch:</strong><pre>${testResult.git_patch}</pre>` : ''}
+            </div>
+        `;
+    }
 
-        function updateButtons(currentIndex, total) {
-            document.getElementById('prevButton').disabled = currentIndex === 0;
-            document.getElementById('nextButton').disabled = currentIndex === total - 1;
-            document.getElementById('pagination').textContent = `Conversation ${currentIndex + 1} of ${total}`;
-        }
+    function updateButtons(currentIndex, total) {
+        document.getElementById('prevButton').classList.toggle('disabled', currentIndex === 0);
+        document.getElementById('nextButton').classList.toggle('disabled', currentIndex === total - 1);
+        document.getElementById('pagination').textContent = `Conversation ${currentIndex + 1} of ${total}`;
+    }
 
-        function updateUrlWithInstanceId(instanceId) {
-            if (instanceId) {
-                // Get the base path (without instance_id if present)
-                let basePath = window.location.pathname;
-                if (basePath.includes('/output.jsonl')) {
-                    basePath = basePath.replace('/output.jsonl', '');
-                } else {
-                    // Remove any existing instance ID
-                    const pathParts = basePath.split('/');
-                    basePath = pathParts.slice(0, -1).join('/');
-                }
-
-                // Create new URL with instance ID
-                const newUrl = `${basePath}/${instanceId}`;
-                window.history.pushState({}, '', newUrl);
-            }
-        }
-
-        function displayConversation(data) {
-            const conversation = data.conversation;
-            updateButtons(data.current_index, data.total);
-
-            // Update URL with instance ID
-            if (data.instance_id) {
-                updateUrlWithInstanceId(data.instance_id);
+    function updateUrlWithInstanceId(instanceId) {
+        if (instanceId) {
+            // Get the base path (without instance_id if present)
+            let basePath = window.location.pathname;
+            if (basePath.includes('/output.jsonl')) {
+                basePath = basePath.replace('/output.jsonl', '');
+            } else {
+                // Remove any existing instance ID
+                const pathParts = basePath.split('/');
+                basePath = pathParts.slice(0, -1).join('/');
             }
 
-            // Display metadata
-            const metadataHtml = `
-                <div>
-                    <p><strong>Instance ID:</strong> ${conversation.instance_id}</p>
-                    <p><strong>Agent Class:</strong> ${conversation.metadata.agent_class}</p>
-                    <p><strong>Model:</strong> ${conversation.metadata.llm_config.model}</p>
-                    <p><strong>Dataset:</strong> ${conversation.metadata.dataset}</p>
-                </div>
-                <div>
-                    <p><strong>Start Time:</strong> ${conversation.metadata.start_time}</p>
-                    <p><strong>Git Commit:</strong> ${conversation.metadata.git_commit}</p>
-                    <p><strong>Max Iterations:</strong> ${conversation.metadata.max_iterations}</p>
-                </div>
-            `;
-            document.getElementById('metadata').innerHTML = metadataHtml;
+            // Create new URL with instance ID
+            const newUrl = `${basePath}/${instanceId}`;
+            window.history.pushState({}, '', newUrl);
+        }
+    }
 
-            // Display conversation history
-            const historyHtml = conversation.history.reduce((acc, item, index) => {
-                // Skip items without action (they are responses to previous actions)
-                if (!item.action) {
-                    // If this is a response item, add its content to the previous item
-                    if (index > 0) {
-                        acc += `
-                            <div class="history-item observation">
-                                <span class="badge">ID:${item.id}</span>
-                                <span class="badge source">observation</span>
-                                <span class="timestamp">${item.timestamp}</span>
+    function displayConversation(data) {
+        const conversation = data.conversation;
+        updateButtons(data.current_index, data.total);
 
-                                ${item.message ? `<pre>${item.message}</pre>` : ''}
-                                ${item.error ? `<div class="error">${item.error}</div>` : ''}
-                                ${item.content ? `<pre>${item.content}</pre>` : ''}
+        // Update URL with instance ID
+        if (data.instance_id) {
+            updateUrlWithInstanceId(data.instance_id);
+        }
+
+        // Display metadata
+        const metadataHtml = `
+            <div>
+                <p><strong>Instance ID:</strong> ${conversation.instance_id || 'N/A'}</p>
+                <p><strong>Agent Class:</strong> ${conversation.metadata?.agent_class || 'N/A'}</p>
+                <p><strong>Model:</strong> ${conversation.metadata?.llm_config?.model || 'N/A'}</p>
+                <p><strong>Dataset:</strong> ${conversation.metadata?.dataset || 'N/A'}</p>
+            </div>
+            <div>
+                <p><strong>Steps Taken:</strong> <span class="badge bg-info">${stepsCount}</span></p>
+                <p><strong>Success:</strong> <span class="badge ${success === true ? 'bg-success' : success === false ? 'bg-danger' : 'bg-secondary'}">${success === true ? 'Yes' : success === false ? 'No' : 'Unknown'}</span></p>
+                <p><strong>Execution Time:</strong> ${executionTime}</p>
+                <p><strong>Max Iterations:</strong> ${conversation.metadata?.max_iterations || 'N/A'}</p>
+            </div>
+            <div>
+                <p><strong>Start Time:</strong> ${conversation.metadata?.start_time || 'N/A'}</p>
+                <p><strong>Git Commit:</strong> ${conversation.metadata?.git_commit || 'N/A'}</p>
+                <p><strong>Temperature:</strong> ${conversation.metadata?.llm_config?.temperature || 'N/A'}</p>
+                <p><strong>Token Usage:</strong> ${conversation.metrics?.total_tokens ? conversation.metrics.total_tokens.toLocaleString() : 'N/A'}</p>
+            </div>
+        `;
+        document.getElementById('metadata').innerHTML = metadataHtml;
+
+        // Display conversation history
+        const historyHtml = conversation.history.reduce((acc, item, index) => {
+            // Skip items without action (they are responses to previous actions)
+            if (!item.action) {
+                // If this is a response item, add its content to the previous item
+                if (index > 0) {
+                    acc += `
+                        <div class="history-item observation">
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="badge bg-secondary">ID:${item.id}</span>
+                                <span class="badge bg-secondary source">observation</span>
+                                <span class="timestamp ms-2">${item.timestamp || 'N/A'}</span>
                             </div>
-                        `;
-                    }
-                    return acc;
+
+                            ${item.message ? `<pre>${item.message}</pre>` : ''}
+                            ${item.error ? `<div class="error">${item.error}</div>` : ''}
+                            ${item.content ? `<pre style="font-size:70%;">${item.content}</pre>` : ''}
+                        </div>
+                    `;
                 }
-
-                return acc + `
-                    <div class="history-item ${item.source}">
-                        <span class="badge">ID:${item.id}</span>
-                        <span class="badge source">${item.source}</span>
-                        <span class="badge action">${item.action}</span>
-                        <span class="timestamp">${item.timestamp}</span>
-
-                        ${item.message ? `<pre>${item.message}</pre>` : ''}
-
-                        ${item.tool_call_metadata ? formatToolCall(item.tool_call_metadata) : ''}
-
-                        ${item.error ? `<div class="error">${item.error}</div>` : ''}
-                    </div>
-                `;
-            }, '');
-            document.getElementById('history').innerHTML = historyHtml;
-
-            // Add metrics if they exist
-            if (conversation.metrics || conversation.test_result) {
-                document.getElementById('history').innerHTML += formatResult(conversation.metrics, conversation.test_result);
+                return acc;
             }
-        }
 
-        function toggleContent(element) {
-            const content = element.querySelector('.content');
-            content.classList.toggle('active');
-            element.querySelector('strong').textContent =
-                content.classList.contains('active') ? 'Details ▼' : 'Details ▶';
-        }
+            return acc + `
+                <div class="history-item ${item.source || ''}">
+                    <div class="d-flex align-items-center mb-2">
+                        <span class="badge bg-secondary">ID:${item.id}</span>
+                        <span class="badge bg-primary source">${item.source || 'N/A'}</span>
+                        <span class="badge bg-success action">${item.action || 'N/A'}</span>
+                        <span class="timestamp ms-2">${item.timestamp || 'N/A'}</span>
+                    </div>
 
-        async function loadConversation() {
+                    ${item.message ? `<pre>${item.message}</pre>` : ''}
+
+                    ${item.tool_call_metadata ? formatToolCall(item.tool_call_metadata) : ''}
+
+                    ${item.error ? `<div class="error">${item.error}</div>` : ''}
+                </div>
+            `;
+        }, '');
+        document.getElementById('history').innerHTML = historyHtml || '<div class="alert alert-info">No history data available.</div>';
+
+        // Add metrics if they exist
+        if (conversation.metrics || conversation.test_result) {
+            document.getElementById('history').innerHTML += formatResult(conversation.metrics, conversation.test_result);
+        }
+    }
+
+    function toggleContent(element) {
+        const content = element.querySelector('.content');
+        content.classList.toggle('active');
+        const icon = element.querySelector('i');
+        if (content.classList.contains('active')) {
+            icon.classList.replace('fa-chevron-down', 'fa-chevron-up');
+        } else {
+            icon.classList.replace('fa-chevron-up', 'fa-chevron-down');
+        }
+    }
+
+    async function loadConversation() {
+        try {
             const response = await fetch(`/conversation/current/${logPath}`);
             const data = await response.json();
             displayConversation(data);
+        } catch (error) {
+            console.error("Error loading conversation:", error);
+            document.getElementById('history').innerHTML = `
+                <div class="alert alert-danger">
+                    Error loading conversation data. Please try again.
+                </div>
+            `;
         }
+    }
 
-        async function loadNext() {
+    async function loadNext() {
+        try {
             const response = await fetch(`/conversation/next/${logPath}`);
             const data = await response.json();
             displayConversation(data);
+        } catch (error) {
+            console.error("Error loading next conversation:", error);
         }
+    }
 
-        async function loadPrevious() {
+    async function loadPrevious() {
+        try {
             const response = await fetch(`/conversation/previous/${logPath}`);
             const data = await response.json();
             displayConversation(data);
+        } catch (error) {
+            console.error("Error loading previous conversation:", error);
         }
+    }
 
-        // Load initial conversation
-        loadConversation();
-    </script>
-</body>
-</html>
+    // Load initial conversation
+    document.addEventListener('DOMContentLoaded', loadConversation);
+</script>
+{% endblock %}

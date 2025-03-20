@@ -3,18 +3,15 @@ import os
 
 from flask import Flask, jsonify, render_template
 
-from pyperf.constants import SUBMISSION_TRACES_DIR
+from pyperf.constants import SUBMISSIONS_DIR
 
 app = Flask(__name__)
-
-# Base directory for logs
-SUBMISSION_TRACES_DIR = "evaluation/evaluation_outputs/outputs"
 
 
 def get_available_logs():
     """Recursively find all .jsonl files in the logs directory"""
     log_files = []
-    for root, dirs, files in os.walk(SUBMISSION_TRACES_DIR):
+    for root, dirs, files in os.walk(SUBMISSIONS_DIR):
         for file in files:
             # jsonl file with name output.jsonl
             if file.endswith(".jsonl") and file == "output.jsonl":
@@ -22,10 +19,8 @@ def get_available_logs():
                 if "archives" in root:
                     continue
 
-                # Get relative path from SUBMISSION_TRACES_DIR
-                rel_path = os.path.relpath(
-                    os.path.join(root, file), SUBMISSION_TRACES_DIR
-                )
+                # Get relative path from SUBMISSIONS_DIR
+                rel_path = os.path.relpath(os.path.join(root, file), SUBMISSIONS_DIR)
                 log_files.append(rel_path)
     return sorted(log_files)
 
@@ -43,7 +38,7 @@ def load_jsonl(file_path):
     if not file_path.endswith("output.jsonl"):
         file_path = os.path.join(file_path, "output.jsonl")
 
-    full_path = os.path.join(SUBMISSION_TRACES_DIR, file_path)
+    full_path = os.path.join(SUBMISSIONS_DIR, file_path)
     with open(full_path, "r") as f:
         conversations[file_path] = []
         instance_id_maps[file_path] = {}
