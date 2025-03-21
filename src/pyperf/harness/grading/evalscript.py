@@ -6,6 +6,7 @@ INSTALL_PASS = ">>>>> Init Succeeded"
 TESTS_ERROR = ">>>>> Tests Errored"
 TESTS_PASSED = ">>>>> Tests Passed"
 TESTS_TIMEOUT = ">>>>> Tests Timed Out"
+MAIN_REGRESS_WARNING = ">>>>> WARNING: Error in main branch! continuing..."
 START_BASE_OUTPUT = ">>>>> Start Base Output"
 END_BASE_OUTPUT = ">>>>> End Base Output"
 START_PATCH_OUTPUT = ">>>>> Start Patch Output"
@@ -73,6 +74,13 @@ run_tests_for_commit() {{
                 echo "{timeout}"
                 return 1
             else 
+
+                # If main fails, warn and return
+                if [[ "$result_file" == "main"* ]]; then
+                    echo "{warning}"
+                    return 0
+                fi
+
                 # Any other non-zero exit indicates test error
                 echo "{error}"
                 return 1
@@ -167,7 +175,10 @@ def get_eval_script(instance) -> str:
                     failed=APPLY_PATCH_FAIL, passed=APPLY_PATCH_PASS
                 ),
                 RUN_TESTS_HELPER.format(
-                    timeout=TESTS_TIMEOUT, error=TESTS_ERROR, passed=TESTS_PASSED
+                    timeout=TESTS_TIMEOUT,
+                    warning=MAIN_REGRESS_WARNING,
+                    error=TESTS_ERROR,
+                    passed=TESTS_PASSED,
                 ),
                 INSTALL_HELPER.format(
                     install_commands="\n\t\t".join(install_commands),

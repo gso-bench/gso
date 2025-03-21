@@ -18,6 +18,7 @@ from pyperf.harness.grading.evalscript import (
     START_MAIN_OUTPUT,
     END_MAIN_OUTPUT,
     TEST_DELIMITER,
+    MAIN_REGRESS_WARNING,
 )
 
 
@@ -32,6 +33,9 @@ def geometric_mean(nums):
 
 
 def speedup(before_mean, after_mean, before_test_means, after_test_means):
+    if before_mean is None or after_mean is None:
+        return None, None, None
+
     # compute speedup and opt% across tests
     mean_opt_perc = ((before_mean - after_mean) / before_mean) * 100
     mean_speedup = before_mean / after_mean
@@ -42,6 +46,9 @@ def speedup(before_mean, after_mean, before_test_means, after_test_means):
 
 
 def compute_stats(test_groups):
+    if not test_groups:
+        return None, None, []
+
     per_test_means = [np.mean(t) for t in test_groups if t]
     if not per_test_means:
         return None, None, []
@@ -84,7 +91,10 @@ def parse_logs(content):
     tm["base_times"] = parse_times(content, START_BASE_OUTPUT, END_BASE_OUTPUT)
     tm["patch_times"] = parse_times(content, START_PATCH_OUTPUT, END_PATCH_OUTPUT)
     tm["commit_times"] = parse_times(content, START_COMMIT_OUTPUT, END_COMMIT_OUTPUT)
-    tm["main_times"] = parse_times(content, START_MAIN_OUTPUT, END_MAIN_OUTPUT)
+
+    if not MAIN_REGRESS_WARNING in content:
+        tm["main_times"] = parse_times(content, START_MAIN_OUTPUT, END_MAIN_OUTPUT)
+
     return tm
 
 
@@ -172,7 +182,9 @@ def get_opt_status(time_map) -> dict:
                 }
             )
 
-        if main_mean > patch_mean and patch_main_speedup_gm >= OPTIM_THRESH_FACTOR:
+        if main_mean is None:
+            pass
+        elif main_mean > patch_mean and patch_main_speedup_gm >= OPTIM_THRESH_FACTOR:
             opt_status["improved_main"] = True
             opt_stats.update(
                 {
