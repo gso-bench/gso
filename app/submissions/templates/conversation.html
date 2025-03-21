@@ -46,6 +46,18 @@
             <div id="metadataCollapse" class="collapse show">
                 <div class="card-body">
                     <div id="metadata" class="metadata-grid"></div>
+                    
+                    <div id="performanceStats" style="margin-top: 15px;">
+                        <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#performanceStatsCollapse" aria-expanded="false">
+                            <i class="fas fa-chart-line"></i> Performance Stats
+                        </button>
+                        <div class="collapse" id="performanceStatsCollapse">
+                            <div class="card card-body mt-2" id="performanceStatsContent">
+                                <!-- Will be filled by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -132,28 +144,50 @@
             updateUrlWithInstanceId(data.instance_id);
         }
 
+        // Calculate number of steps taken by agent
+        const stepsCount = conversation.history.filter(item => item.action).length;
+        
+        // Get total execution time if available
+        const startTime = new Date(conversation.history[0]?.timestamp);
+        const endTime = new Date(conversation.history[conversation.history.length - 1]?.timestamp);
+        const executionTime = isNaN(startTime) || isNaN(endTime) ? 'N/A' : 
+                     ((endTime - startTime) / 60000).toFixed(2) + ' min';
+        
+        // Get optimization stats if available
+        const hasOptStats = conversation.test_result?.opt_stats || {};
+        const beatCommit = conversation.test_result?.improved_commit === true;
+        const beatMain = conversation.test_result?.improved_main === true;
+        
         // Display metadata
         const metadataHtml = `
             <div>
                 <p><strong>Instance ID:</strong> ${conversation.instance_id || 'N/A'}</p>
                 <p><strong>Agent Class:</strong> ${conversation.metadata?.agent_class || 'N/A'}</p>
                 <p><strong>Model:</strong> ${conversation.metadata?.llm_config?.model || 'N/A'}</p>
-                <p><strong>Dataset:</strong> ${conversation.metadata?.dataset || 'N/A'}</p>
-            </div>
-            <div>
-                <p><strong>Steps Taken:</strong> <span class="badge bg-info">${stepsCount}</span></p>
-                <p><strong>Success:</strong> <span class="badge ${success === true ? 'bg-success' : success === false ? 'bg-danger' : 'bg-secondary'}">${success === true ? 'Yes' : success === false ? 'No' : 'Unknown'}</span></p>
+                <p><strong>Steps:</strong> ${stepsCount}</p>
                 <p><strong>Execution Time:</strong> ${executionTime}</p>
-                <p><strong>Max Iterations:</strong> ${conversation.metadata?.max_iterations || 'N/A'}</p>
             </div>
             <div>
-                <p><strong>Start Time:</strong> ${conversation.metadata?.start_time || 'N/A'}</p>
-                <p><strong>Git Commit:</strong> ${conversation.metadata?.git_commit || 'N/A'}</p>
-                <p><strong>Temperature:</strong> ${conversation.metadata?.llm_config?.temperature || 'N/A'}</p>
-                <p><strong>Token Usage:</strong> ${conversation.metrics?.total_tokens ? conversation.metrics.total_tokens.toLocaleString() : 'N/A'}</p>
+                <p><strong>Beat(commit):</strong> <span class="badge ${beatCommit ? 'bg-success' : 'bg-secondary'}">${beatCommit}</span></p>
+                <p><strong>Beat(main):</strong> <span class="badge ${beatMain ? 'bg-success' : 'bg-secondary'}">${beatMain}</span></p>
+                <p><strong>speedup_base:</strong> ${hasOptStats.geomean_speedup_base?.toFixed(2) || 'N/A'}</p>
+                <p><strong>speedup_commit:</strong> ${hasOptStats.geomean_speedup_commit?.toFixed(2) || 'N/A'}</p>
+                <p><strong>speedup_main:</strong> ${hasOptStats.geomean_speedup_main?.toFixed(2) || 'N/A'}</p>
             </div>
         `;
         document.getElementById('metadata').innerHTML = metadataHtml;
+
+        // Fill performance stats with the json content fron hasOptStats if available
+        const performanceStatsContent = document.getElementById('performanceStatsContent');
+        if (hasOptStats) {
+            performanceStatsContent.innerHTML = `
+                <pre>${JSON.stringify(hasOptStats, null, 2)}</pre>
+            `;
+        } else {
+            performanceStatsContent.innerHTML = `
+                <div class="alert alert-info">No performance stats available.</div>
+            `;
+        }
 
         // Display conversation history
         const historyHtml = conversation.history.reduce((acc, item, index) => {
@@ -164,7 +198,7 @@
                     acc += `
                         <div class="history-item observation">
                             <div class="d-flex align-items-center mb-2">
-                                <span class="badge bg-secondary">ID:${item.id}</span>
+                                <span class="badge bg-secondary">ID:${item.id || 'N/A'}</span>
                                 <span class="badge bg-secondary source">observation</span>
                                 <span class="timestamp ms-2">${item.timestamp || 'N/A'}</span>
                             </div>

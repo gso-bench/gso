@@ -1,9 +1,10 @@
 import json
 import os
+from pathlib import Path
 
 from flask import Flask, jsonify, render_template
 
-from pyperf.constants import SUBMISSIONS_DIR
+from pyperf.constants import SUBMISSIONS_DIR, EVALUATION_REPORTS_DIR
 
 app = Flask(__name__)
 
@@ -46,10 +47,47 @@ def load_jsonl(file_path):
         for idx, line in enumerate(f):
             try:
                 conv = json.loads(line)
+                run_id = Path(file_path).parent.name
+                conv["run_id"] = run_id
+                instance_id = conv.get("instance_id")
+                if instance_id:
+                    try:
+                        # Look for report in the reports directory
+                        possible_reports = list(
+                            EVALUATION_REPORTS_DIR.glob(f"*{run_id}*.report.json")
+                        )
+
+                        if possible_reports:
+                            report_path = possible_reports[0]
+                            with open(report_path, "r") as report_file:
+                                report_data = json.load(report_file)
+
+                                # Check if instance is in improved_commit_ids
+                                improved_commit = instance_id in report_data.get(
+                                    "instance_sets", {}
+                                ).get("improved_commit_ids", [])
+                                improved_main = instance_id in report_data.get(
+                                    "instance_sets", {}
+                                ).get("improved_main_ids", [])
+
+                                # Get optimization stats if available
+                                opt_stats = report_data.get("opt_stats", {}).get(
+                                    instance_id, {}
+                                )
+
+                                # Add to the conversation data
+                                if "test_result" not in conv:
+                                    conv["test_result"] = {}
+
+                                conv["test_result"]["improved_commit"] = improved_commit
+                                conv["test_result"]["improved_main"] = improved_main
+                                conv["test_result"]["opt_stats"] = opt_stats
+                    except Exception as e:
+                        print(f"Error loading report for {instance_id}: {e}")
+
                 conversations[file_path].append(conv)
 
                 # Map instance_id to index
-                instance_id = conv.get("instance_id")
                 if instance_id:
                     instance_id_maps[file_path] = instance_id_maps.get(file_path, {})
                     instance_id_maps[file_path][instance_id] = idx
