@@ -63,7 +63,7 @@ class PyPerfInstance:
                 f"git remote add origin {self.repo_url}",  # add remote back
                 "git fetch origin",  # fetch all branches
                 "git clean -xfd",  # clean up untracked files
-                "git reset --hard origin/main",  # reset to main
+                "git reset --hard origin/main || git reset --hard origin/master",  # reset to main
             ]
         )
 
