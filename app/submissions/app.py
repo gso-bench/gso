@@ -54,7 +54,7 @@ def load_jsonl(file_path):
                     try:
                         # Look for report in the reports directory
                         possible_reports = list(
-                            EVALUATION_REPORTS_DIR.glob(f"*{run_id}*.report.json")
+                            EVALUATION_REPORTS_DIR.glob(f"*{run_id}.test.report.json")
                         )
 
                         if possible_reports:

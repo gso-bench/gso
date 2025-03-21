@@ -135,7 +135,7 @@ DATASETS_PROBLEMS = [
 ]
 
 TORNADO_PROBLEMS = [
-    ("tornado-parse_cookie", "0a39ba8"),
+    ("tornado-parse_cookie", "0a39ba8"),  # NOTE: long running!
     ("tornado-tcpserver.__init__", "bf1b21a"),
     ("tornado-tornado.websocket.websocketclientconnection.write_message", "9a18f6c"),
     ("tornado-baseiostream.write", "1b464c4"),

@@ -34,7 +34,7 @@
 
     <div id="content">
         <!-- Metadata Section -->
-        <div class="card mb-4">
+        <div class="card mb-4" id="metadatacard">
             <div class="card-header">
                 <h5 class="mb-0">
                     <button class="btn btn-link" type="button" data-bs-toggle="collapse" 
@@ -162,10 +162,10 @@
         const metadataHtml = `
             <div>
                 <p><strong>Instance ID:</strong> ${conversation.instance_id || 'N/A'}</p>
+                <p><strong>Run ID:</strong> ${conversation.id || 'N/A'}</p>
                 <p><strong>Agent Class:</strong> ${conversation.metadata?.agent_class || 'N/A'}</p>
                 <p><strong>Model:</strong> ${conversation.metadata?.llm_config?.model || 'N/A'}</p>
-                <p><strong>Steps:</strong> ${stepsCount}</p>
-                <p><strong>Execution Time:</strong> ${executionTime}</p>
+                <p><strong>Steps:</strong> ${stepsCount} (${executionTime})</p>
             </div>
             <div>
                 <p><strong>Beat(commit):</strong> <span class="badge ${beatCommit ? 'bg-success' : 'bg-secondary'}">${beatCommit}</span></p>
@@ -176,6 +176,16 @@
             </div>
         `;
         document.getElementById('metadata').innerHTML = metadataHtml;
+
+        // if beatCommit is true, make metadata div green else red
+        if (beatCommit) {
+            document.getElementById('metadatacard').style.backgroundColor = '#d4edda';
+            document.querySelector('.card-header').style.borderColor = '#198754'; 
+        }
+        else {
+            document.getElementById('metadatacard').style.backgroundColor = '#f8d7da';
+            document.querySelector('.card-header').style.borderColor = '#dc3545';
+        }
 
         // Fill performance stats with the json content fron hasOptStats if available
         const performanceStatsContent = document.getElementById('performanceStatsContent');
