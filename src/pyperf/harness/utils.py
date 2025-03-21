@@ -42,6 +42,6 @@ def retag_remote_to_local_image(instances, client):
     for remote_image in remote_to_local:
         try:
             client.images.get(remote_image).tag(remote_to_local[remote_image])
-            print(f"Retagged {remote_image} -> {remote_to_local[remote_image]}")
+            # print(f"Retagged {remote_image} -> {remote_to_local[remote_image]}")
         except docker.errors.ImageNotFound:
             pass

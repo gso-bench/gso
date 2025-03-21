@@ -32,6 +32,7 @@ def run_evaluation(
         cmd.append("--reformat_reports")
 
     output = subprocess.check_output(cmd, text=True)
+    print(output)
     report_path = next(
         line.split(": ")[1]
         for line in output.split("\n")
