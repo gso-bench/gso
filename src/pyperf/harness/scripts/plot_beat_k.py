@@ -11,6 +11,7 @@ from pyperf.harness.utils import natural_sort_key
 from pyperf.harness.beat_at_k import merge_reports
 from pyperf.constants import EVALUATION_REPORTS_DIR
 
+PLOT_MAIN = False
 
 # Add argument parsing
 parser = argparse.ArgumentParser(description="Run and plot beat@K evaluations")
@@ -69,7 +70,8 @@ plt.rcParams.update({"font.size": 14})
 plt.xticks(k_values)
 plt.plot(k_values, base_values, "o-", label="beat(base)@k", linewidth=2)
 plt.plot(k_values, commit_values, "o-", label="beat(commit)@k", linewidth=2)
-plt.plot(k_values, main_values, "o-", label="beat(main)@k", linewidth=2)
+if PLOT_MAIN:
+    plt.plot(k_values, main_values, "o-", label="beat(main)@k", linewidth=2)
 
 plt.xlabel("# Agent Rollouts (K)")
 plt.ylabel("% Problems")
