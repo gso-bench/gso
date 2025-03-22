@@ -102,7 +102,7 @@ def build_dataset(problems, exp_id):
     return dataset
 
 
-def main(exp_id, push_to_hf, hf_username):
+def main(exp_id, push_to_hf, hf_username, dataset_name=None):
     exp_ids = TEST_PROBLEMS.keys() if exp_id is None else [exp_id]
     problems = [
         problem
@@ -116,7 +116,8 @@ def main(exp_id, push_to_hf, hf_username):
     # Save dataset to jsonl file
     DATASET_DIR.mkdir(parents=True, exist_ok=True)
     dataset_df = pd.DataFrame([asdict(inst) for inst in dataset])
-    dataset_name = f"pyperf_{exp_id}" if exp_id else "pyperf"
+    if not dataset_name:
+        dataset_name = f"pyperf_{exp_id}" if exp_id else "pyperf"
     dataset_df.to_json(
         DATASET_DIR / f"{dataset_name}_dataset.jsonl", orient="records", lines=True
     )
@@ -131,6 +132,7 @@ def main(exp_id, push_to_hf, hf_username):
 if __name__ == "__main__":
     parser = ArgumentParser(description="Analyze performance results")
     parser.add_argument("--exp_id", type=str, help="Experiment ID", default=None)
+    parser.add_argument("--dataset_name", type=str, help="Dataset name", default=None)
     parser.add_argument(
         "--push_to_hf",
         action="store_true",
