@@ -89,6 +89,7 @@ speedups_main = [
     )
     for p in instances
 ]
+# speedups_main = [s if s else 0 for s in speedups_main]
 
 max_speedup = max(speedups_model + speedups_commit + speedups_main)
 
