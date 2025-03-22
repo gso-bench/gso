@@ -26,7 +26,7 @@ def main(
         else ""
     )
 
-    dataset = load_pyperf_dataset(dataset_name, split)
+    dataset = load_pyperf_dataset(dataset_name, split, instance_ids)
 
     # Build images for instances
     successful, failed = build_instance_images(

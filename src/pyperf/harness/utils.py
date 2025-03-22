@@ -30,3 +30,18 @@ def natural_sort_key(s):
     import re
 
     return [int(c) if c.isdigit() else c for c in re.split(r"(\d+)", s)]
+
+
+def retag_remote_to_local_image(instances, client):
+    """
+    Retag remote instance images to local instance images.
+    """
+    remote_to_local = {
+        x.remote_instance_image_key: x.instance_image_key for x in instances
+    }
+    for remote_image in remote_to_local:
+        try:
+            client.images.get(remote_image).tag(remote_to_local[remote_image])
+            # print(f"Retagged {remote_image} -> {remote_to_local[remote_image]}")
+        except docker.errors.ImageNotFound:
+            pass

@@ -6,7 +6,8 @@
     "instance_id": "str",               # pyperf task instance ID
     "repo": "str",                      # repository name
     "base_commit": "str",               # base commit hash
-    "test_script": "str",               # test script to run
+    "prob_script": "str",               # problem script for model
+    "tests": "List[str]",               # test scripts for eval
     "api": "str",                       # API to optimize (optional)
     "hints_text": "str",                # NL desc. of task (optional)
     "setup_commands": "List[str]",      # setup commands for VMs
@@ -52,7 +53,7 @@ Your system's predictions should be a jsonl file with one line per task containi
 }
 ```
 
-## 2.1 Evaluate a single rollout (Opt@1)
+## 2.1 Evaluate a single rollout (beat@1)
 
 ```bash
 uv run src/pyperf/harness/run_evaluation.py --dataset_name <dataset_name> --predictions_path <predictions_path> --timeout 3600 --run_id <run_id>
@@ -63,10 +64,10 @@ uv run src/pyperf/harness/run_evaluation.py --dataset_name <dataset_name> --pred
 - `--run_id` is a unique identifier for the run.
 
 
-## 2.2 Evaluate multiple rollouts (Opt@K)
+## 2.2 Evaluate multiple rollouts (beat@K)
 
 ```bash
-uv run src/pyperf/harness/opt@k.py --dataset_name <dataset_name> --prediction_paths <prediction_paths> --timeout 3600 --run_id <run_id> --k 10 --model <modelname>
+uv run src/pyperf/harness/beat_at_k.py --dataset_name <dataset_name> --prediction_paths <prediction_paths> --timeout 3600 --run_id <run_id> --k 10 --model <modelname>
 ```
 - `--dataset_name` can be a local jsonl file or a huggingface hub dataset.
 - `--prediction_paths` is a space separated list of predictions jsonl files (OR) a glob pattern.
@@ -76,4 +77,4 @@ uv run src/pyperf/harness/opt@k.py --dataset_name <dataset_name> --prediction_pa
 - `--model` is the model/agent name to use for reporting.
 
 > [!Note]
-> Find scripts to plot results such as Opt@K and Speedups acheived in ([/scripts](./scripts/))
+> Find scripts to plot results such as beat@K and Speedups acheived in ([/scripts](./scripts/))

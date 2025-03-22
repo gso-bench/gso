@@ -9,6 +9,7 @@ from pyperf.harness.environment.docker_utils import list_images
 from pyperf.harness.grading.utils import get_dataset_from_preds
 from pyperf.harness.grading.grade import grade_instance
 from pyperf.harness.grading.report import make_run_report
+from pyperf.harness.utils import retag_remote_to_local_image
 from pyperf.utils.multiprocess import run_tasks_in_parallel_iter
 from pyperf.constants import RUN_EVALUATION_LOG_DIR
 from pyperf.data.dataset import PyPerfInstance
@@ -58,6 +59,7 @@ def run_instances(
 
     # print number of existing instance images
     instance_image_ids = {x.instance_image_key for x in instances}
+    retag_remote_to_local_image(instances, client)
     existing_images = {
         tag
         for i in client.images.list(all=True)
@@ -170,7 +172,7 @@ def main(
             reformat_reports=reformat_reports,
         )
 
-    return make_run_report(predictions, full_dataset, run_id, client)
+    return make_run_report(predictions, full_dataset, run_id, client=None)
 
 
 if __name__ == "__main__":
@@ -188,7 +190,6 @@ if __name__ == "__main__":
         type=str,
         default="manishs/pyperf",
         help="Name of HF dataset to use or local json/jsonl file",
-        required=True,
     )
 
     parser.add_argument("--split", type=str, default="test", help="Split to use")

@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+# set -e
 
 echo "Phase 2: Running performance comparison for all working combinations..."
 
@@ -38,7 +38,7 @@ for i in $(seq 0 $(($total_pairs - 1))); do
     echo "Processing base commit $commit with test $test_file"
 
     # Test base commit (parent of working commit)
-    cd $repo_name
+    cd $repo_name && git stash -u
     echo "Testing base commit: ${commit}^"
     git checkout "${commit}^"
     $install_commands
@@ -60,7 +60,7 @@ for i in $(seq 0 $(($total_pairs - 1))); do
     }" > "$meta_file"
 
     # Test working commit
-    cd $repo_name
+    cd $repo_name && git stash -u
     echo "Testing working commit: ${commit}"
     git checkout $commit
     $install_commands
@@ -77,7 +77,7 @@ done
 
 # Now run target commit tests once
 echo "Testing target commit: ${target_commit}"
-cd $repo_name
+cd $repo_name && git stash -u
 git checkout ${target_commit}
 $install_commands
 cd ..

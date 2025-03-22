@@ -2,7 +2,11 @@ import docker
 import json
 from pathlib import Path
 
-from pyperf.constants import RUN_EVALUATION_LOG_DIR, EVALUATION_REPORTS_DIR
+from pyperf.constants import (
+    RUN_EVALUATION_LOG_DIR,
+    EVALUATION_REPORTS_DIR,
+    OPTIM_THRESH_PERC,
+)
 from pyperf.harness.environment.docker_utils import list_images
 
 
@@ -166,7 +170,7 @@ def make_run_report(
     opt_base = summary["improved_over_base"] / summary["total_instances"]
     opt_commit = summary["improved_over_commit"] / summary["total_instances"]
     opt_main = summary["improved_over_main"] / summary["total_instances"]
-    print("\n=== Evaluation Summary ===")
+    print(f"\n=== Evaluation Summary (t={OPTIM_THRESH_PERC:.2f}%)===")
     print(f"Total instances: {summary['total_instances']}")
     print(f"Instances submitted: {summary['total_predictions']}")
     print(f"Instances completed: {summary['completed_instances']}")
@@ -178,9 +182,9 @@ def make_run_report(
     print(f"Instances with empty patches: {summary['empty_patch_instances']}")
     print(f"Instances with errors: {summary['error_instances']}")
     print("-" * 10)
-    print(f"Opt(base): {summary['improved_over_base']} ({opt_base*100:.2f}%) ")
-    print(f"Opt(commit): {summary['improved_over_commit']} ({opt_commit*100:.2f}%)")
-    print(f"Opt(main): {summary['improved_over_main']} ({opt_main*100:.2f}%) ")
+    print(f"beat(base): {summary['improved_over_base']} ({opt_base*100:.2f}%) ")
+    print(f"beat(commit): {summary['improved_over_commit']} ({opt_commit*100:.2f}%)")
+    print(f"beat(main): {summary['improved_over_main']} ({opt_main*100:.2f}%) ")
 
     print(f"\nReport written to: {report_file}")
     return report_file

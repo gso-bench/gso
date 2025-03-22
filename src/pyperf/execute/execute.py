@@ -13,6 +13,8 @@ from pyperf.utils.io import load_problems, save_problems
 from pyperf.data import Problem
 from pyperf.constants import *
 
+DEBUG_FLAG = False
+
 
 @dataclass
 class TaskState:
@@ -191,7 +193,7 @@ class ExecutionManager:
     async def run(self):
         """Main execution loop using async/await"""
         count = 0
-        results_json = self.exp_dir / f"{self.exp_id}_results.json"
+        results_json = f"{self.exp_id}_results{'_DEBUG' if DEBUG_FLAG else ''}.json"
         try:
             while not self.all_tasks_complete():
                 print("======== Phase: Launch =========", flush=True)
@@ -206,12 +208,12 @@ class ExecutionManager:
 
                 # Save on every 10 new problems that are completed
                 if len(self.completed_clusters) - count >= 10:
-                    save_problems(results_json, self.problems)
+                    save_problems(self.exp_dir / results_json, self.problems)
                     count = len(self.completed_clusters)
         finally:
             self.thread_pool.shutdown(wait=True)
             self.cleanup_all()
-            save_problems(results_json, self.problems)
+            save_problems(self.exp_dir / results_json, self.problems)
 
     def cleanup_all(self):
         for state in self.tasks.values():
@@ -249,6 +251,7 @@ async def async_main(
             with open(exp_yaml, "r") as f:
                 exp_data = yaml.safe_load(f)
             for p in all_problems:
+                p.target_commit = exp_data.get("target_commit", "main")
                 p.install_commands = exp_data.get("install_commands", [])
         else:
             raise ValueError(f"Experiment YAML file provided but not found: {exp_yaml}")
@@ -266,7 +269,8 @@ async def async_main(
         await manager.run()
     finally:
         SkyManager.cleanup_all_clusters()
-        save_problems(exp_dir / f"{exp_id}_results.json", problems)
+        if not DEBUG_FLAG:
+            save_problems(exp_dir / f"{exp_id}_results.json", problems)
 
 
 def main(

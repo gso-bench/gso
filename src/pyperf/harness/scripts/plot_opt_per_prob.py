@@ -2,18 +2,44 @@ import os
 import matplotlib.pyplot as plt
 import json
 import numpy as np
+import argparse
+from pyperf.harness.grading.metrics import speedup
+
+# Add argument parsing
+parser = argparse.ArgumentParser(
+    description="Plot speedup metrics from evaluation report"
+)
+parser.add_argument(
+    "--eval_report", type=str, required=True, help="Path to evaluation report JSON file"
+)
+parser.add_argument("--model_name", type=str, help="Model name", required=True)
+parser.add_argument(
+    "--show_all_probs",
+    action="store_true",
+    default=False,
+    help="Show all problems (default: show only problems where model outperforms commit)",
+)
+parser.add_argument(
+    "--output_dir", type=str, default="plots", help="Directory to save plots"
+)
+args = parser.parse_args()
+
+# Create plots directory if it doesn't exist
+os.makedirs(args.output_dir, exist_ok=True)
+
+# Load the report
+report = json.load(open(os.path.expanduser(args.eval_report)))
+opt_stats = report["opt_stats"]
+instance_sets = report["instance_sets"]
 
 
-speedup_mode = "Factor"
-# eval_report = "~/pyperf/reports/opt_k_reports/claude.opt@10.test.report.json"
-eval_report = "~/pyperf/reports/opt_k_reports/o3-mini-high.opt@25.test.report.json"
-opt_stats = json.load(open(os.path.expanduser(eval_report)))["opt_stats"]
-
-
-def speedup(before_mean, after_mean, mode) -> float:
-    if mode == "Factor":
-        return before_mean / after_mean
-    return ((before_mean - after_mean) / before_mean) * 100
+def geomean_speedup(before_test_means, after_test_means):
+    before_mean = np.mean(before_test_means)
+    after_mean = np.mean(after_test_means)
+    _, _, speedup_gm = speedup(
+        before_mean, after_mean, before_test_means, after_test_means
+    )
+    return speedup_gm
 
 
 def add_top_labels(bars):
@@ -33,24 +59,41 @@ def add_top_labels(bars):
 
 # Extract speedups
 instances = list(opt_stats.keys())
+
+# Filter to instances where model outperforms commit unless show_all_probs is enabled
+if not args.show_all_probs and "improved_commit_ids" in instance_sets:
+    improved_instances = instance_sets["improved_commit_ids"]
+    instances = [instance for instance in instances if instance in improved_instances]
+
+
 speedups_model = [
-    speedup(opt_stats[p]["base_mean"], opt_stats[p]["patch_mean"], speedup_mode)
+    geomean_speedup(
+        opt_stats[p]["per_test_means"]["base"],
+        opt_stats[p]["per_test_means"]["patch"],
+    )
     for p in instances
 ]
 
 speedups_commit = [
-    speedup(opt_stats[p]["base_mean"], opt_stats[p]["commit_mean"], speedup_mode)
+    geomean_speedup(
+        opt_stats[p]["per_test_means"]["base"],
+        opt_stats[p]["per_test_means"]["commit"],
+    )
     for p in instances
 ]
 
 speedups_main = [
-    speedup(opt_stats[p]["base_mean"], opt_stats[p]["main_mean"], speedup_mode)
+    geomean_speedup(
+        opt_stats[p]["per_test_means"]["base"],
+        opt_stats[p]["per_test_means"]["main"],
+    )
     for p in instances
 ]
 
+max_speedup = max(speedups_model + speedups_commit + speedups_main)
+
 # Clean up problem names for display
 instances = [p.split("__")[1] for p in instances]  # Remove org name
-instances = [p[:12] for p in instances]  # Truncate for readability
 
 # Create the plot
 fig, ax = plt.subplots(figsize=(10, 6))
@@ -58,9 +101,9 @@ x = np.arange(len(instances))
 width = 0.2
 
 # Create bars
-bars1 = ax.bar(x - width, speedups_model, width, label="Model", color="#1f77b4")
-bars2 = ax.bar(x, speedups_commit, width, label="Commit", color="#ff7f0e")
-bars3 = ax.bar(x + width, speedups_main, width, label="Main", color="#2ca02c")
+bars1 = ax.bar(x - width, speedups_model, width, label="Model")
+bars2 = ax.bar(x, speedups_commit, width, label="Commit")
+bars3 = ax.bar(x + width, speedups_main, width, label="Main")
 
 # Add labels
 add_top_labels(bars1)
@@ -69,15 +112,18 @@ add_top_labels(bars3)
 
 # Apply log scale to y-axis
 ax.set_yscale("log")
-ax.set_title("Speedup achieved per problem")
-ax.set_ylabel(f"Speedup ({speedup_mode}) - Log Scale")
+ax.set_ylabel(f"Speedup Factor - Log Scale")
+ax.set_xlabel("Problem ID")
+ax.set_ylim(top=max_speedup * 4)
 ax.set_xticks(x)
-ax.set_xticklabels(instances)
+ax.set_xticklabels(instances, rotation=30, ha="center", fontsize=4)
 ax.spines["top"].set_visible(False)
 ax.spines["right"].set_visible(False)
 ax.legend(loc="upper right")
 ax.yaxis.grid(True, linestyle="--", alpha=0.7)
 plt.tight_layout()
-plt.savefig("plots/opt_per_prob.png", dpi=300, bbox_inches="tight")
-plt.close()
-print("Plot saved as plots/opt_per_prob.png")
+
+# Save the plot
+output_path = os.path.join(args.output_dir, f"opt_per_prob.{args.model_name}.png")
+plt.savefig(output_path, dpi=300, bbox_inches="tight")
+print(f"Plot saved as {output_path}")

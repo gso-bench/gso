@@ -4,7 +4,11 @@ The test will also include equivalence checks and storing reference results for 
 # Instructions
 1. **Setup Library and Function**: Import the necessary libraries and functions that will be tested.
 
-2. **Define a Real Workload**: Write a function `setup` that downloads/loads/creates/sets up data or scenarios that are typical use cases for the API. Ensure that any necessary files or data for the test are available or generated. If you have to download files do that via code too. Try to use real-world data over randomly generated as much as possible. If generating data, ensure it is of a realistic scale, complexity, and use a random seed for reproducibility.
+2. **Define a Real Workload**: Write a function `setup` that downloads/loads/creates/sets up data or scenarios that are typical use cases for the API. 
+    - Ensure that any necessary files or data for the test are available or generated. 
+    - If you have to download files do that via code too. Try to use real-world data over randomly generated as much as possible. 
+    - If generating data, ensure it is of a realistic scale, complexity, and use a random seed for reproducibility.
+    - DO NOT CREATE WORKLOADS THAT CAN BE EASILY HACKED FOR PERFORMANCE.
 
 3. **Time a real-world experiment**: Write an `experiment` function that wraps a real-world experiment that uses the API under test. 
     - `experiment` function should NOT include ANY setup/download code. 
@@ -13,7 +17,7 @@ The test will also include equivalence checks and storing reference results for 
     - The experiment does not need to be limited to the API, but MUST use the API under test.
     - Think of complex, interesting and challenging real-world example use cases of the repository in standalone scripts.
     - Make it a comprehensive experiment and use several API combinations if necessary.
-
+    - WRITE EXPERIMENTS WITHOUT USING HACKABLE CORNER CASES.
 
 4. **Storing and Loading Reference Results**: Write two custom functions `store_result` and `load_result` to store and load the results returned by the `experiment` function.
     - Use the appropriate serialization approach in these functions (e.g., dill, pickle, json, csv, image, custom, etc.) as per the data returned by the `experiment` function.
@@ -34,7 +38,7 @@ The test will also include equivalence checks and storing reference results for 
 6. **Run the Performance and Equivalence Test**: Write a function `run_test` that runs the `experiment` function using `timeit` and returns the execution time.
     - The function must have the following signature: `def run_test(eqcheck: bool = False, reference: bool = False) -> float:`
     Performance Testing:
-    - Setup the experiment data using the `setup` function.
+    - Setup the experiment data using the `setup` function. You can also return data/info from the `setup` function if necessary.
     - Run and time the `experiment` function and get the execution_time and result.
     - Use a simple `timeit` call with a lambda to wrap the function. E.g., execution_time, results = timeit.timeit(lambda: experiment(<args>)). You can also add a `number` argument if you think the function is too short lived and is better tested as a cumulative over multiple calls. This decision should be made as per real-world usage.
     - NOTE: ASSUME that the timeit template has been updated to return BOTH the execution time and the result of the experiment function. i.e., ASSUME the following is appended to the code:
@@ -89,6 +93,7 @@ if __name__ == '__main__':
 - The output should be a complete Python script that must contain an entry point: `run_test()` with the following signature:
     ```def run_test(eqcheck: bool = False, reference: bool = False, prefix: str = '') -> float:```
 - Do not write the main function as your code will be automatically appended with the harness
+- YOU MUST put your final script in a code block. e.g., ```python\n<your code here>\n```
 """
 
 CONTEXT_MSG = """Here's a commit and it's information that does some optimization for the {api} API in the {repo_name} repository that might be relevant to writing the test:

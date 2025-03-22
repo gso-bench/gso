@@ -65,8 +65,9 @@ class Problem(BaseModel):
                 "sudo apt update -y && sudo upt upgrade -y",
                 "sudo apt-get install -y libtiff5-dev libjpeg8-dev libopenjp2-7-dev zlib1g-dev",
                 "sudo apt-get install -y libfreetype6-dev liblcms2-dev libwebp-dev tcl8.6-dev tk8.6-dev python3-tk",
-                "sudo apt-get install -y libharfbuzz-dev libfribidi-dev libxcb1-dev libx11-dev",
+                "sudo apt-get install -y libharfbuzz-dev libfribidi-dev libxcb1-dev libx11-dev libssl-dev",
                 "sudo apt install -y gcc g++ gfortran libopenblas-dev liblapack-dev pkg-config",
+                "sudo apt-get -y install clang",
             ]
 
         if self.install_commands == []:
@@ -92,15 +93,27 @@ class Problem(BaseModel):
         """Set the final base commit for this problem"""
         self.base_commit = commit_hash
 
-    def filter_commits(self, max_year: int):
+    def filter_commits_year(self, max_year: int):
         """Filter out commits older than max_year"""
         self.commits = [c for c in self.commits if c.date.year >= max_year]
 
-    def get_test(self, commit_hash: str, test_id: str) -> str:
-        """Get test object for a commit"""
+    def filter_commits_loc(self, min_loc: int):
+        """Filter out commits with less than min_loc"""
+        loc_lambda = lambda c: c.stats.get("num_non_test_edited_lines", 0)
+        self.commits = [c for c in self.commits if loc_lambda(c) >= min_loc]
+
+    def get_test(self, commit_hash: str, test_id: int) -> str:
+        """Get test for a commit"""
         for test in self.tests:
             if test.quick_hash == commit_hash:
                 return test.samples[test_id]
+        return None
+
+    def get_tests(self, commit_hash: str, test_ids: list[int]) -> list[str]:
+        """Get multiple tests for a commit"""
+        for test in self.tests:
+            if test.quick_hash == commit_hash:
+                return [test.samples[i] for i in test_ids]
         return None
 
     # helper to get properties of the problem

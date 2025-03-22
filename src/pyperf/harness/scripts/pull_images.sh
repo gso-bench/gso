@@ -44,8 +44,17 @@ fi
 # If no specific tags are provided, get all tags from Docker Hub
 if [ -z "$TAGS" ]; then
     echo "Fetching all tags for $REPO"
-    # Using Docker Hub API to list all tags
-    TAGS=$(curl -s "https://hub.docker.com/v2/repositories/$REPO/tags" | grep -o '"name":"[^"]*' | grep -o '[^"]*$' | tr '\n' ',' | sed 's/,$//')
+    TAGS=""
+    NEXT_URL="https://hub.docker.com/v2/repositories/$REPO/tags?page_size=100"
+    
+    while [ -n "$NEXT_URL" ]; do
+        RESPONSE=$(curl -s "$NEXT_URL")
+        PAGE_TAGS=$(echo "$RESPONSE" | grep -o '"name":"[^"]*' | grep -o '[^"]*$' | tr '\n' ',' | sed 's/,$//')
+        TAGS="$TAGS,$PAGE_TAGS"
+        NEXT_URL=$(echo "$RESPONSE" | grep -o '"next":"[^"]*' | grep -o 'http[^"]*' || echo "")
+    done
+    
+    TAGS=$(echo "$TAGS" | sed 's/^,//')
     
     if [ -z "$TAGS" ]; then
         echo "Error: No tags found for repository $REPO"

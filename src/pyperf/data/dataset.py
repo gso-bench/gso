@@ -7,7 +7,8 @@ class PyPerfInstance:
     repo: str
     base_commit: str
     api: str
-    test_script: str
+    prob_script: str
+    tests: list[str]
     hints_text: str
     setup_commands: list[str]
     install_commands: list[str]
@@ -18,6 +19,11 @@ class PyPerfInstance:
     @property
     def instance_image_key(self):
         key = f"pyperf.eval.{self.arch}.{self.instance_id.lower()}:{self.instance_image_tag}"
+        return key
+
+    @property
+    def remote_instance_image_key(self):
+        key = f"slimshetty/pyperf:pyperf.eval.{self.arch}.{self.instance_id.lower()}"
         return key
 
     @property
@@ -57,7 +63,7 @@ class PyPerfInstance:
                 f"git remote add origin {self.repo_url}",  # add remote back
                 "git fetch origin",  # fetch all branches
                 "git clean -xfd",  # clean up untracked files
-                "git reset --hard origin/main",  # reset to main
+                "git reset --hard origin/main || git reset --hard origin/master",  # reset to main
             ]
         )
 
@@ -69,6 +75,10 @@ class PyPerfInstance:
             return "linux/arm64/v8"
         else:
             raise ValueError(f"Invalid architecture: {self.arch}")
+
+    @property
+    def test_count(self):
+        return len(self.tests)
 
     def get_instance_container_name(self, run_id=None):
         if not run_id:

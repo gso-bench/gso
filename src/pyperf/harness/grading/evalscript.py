@@ -6,6 +6,7 @@ INSTALL_PASS = ">>>>> Init Succeeded"
 TESTS_ERROR = ">>>>> Tests Errored"
 TESTS_PASSED = ">>>>> Tests Passed"
 TESTS_TIMEOUT = ">>>>> Tests Timed Out"
+MAIN_REGRESS_WARNING = ">>>>> WARNING: Error in main branch! continuing..."
 START_BASE_OUTPUT = ">>>>> Start Base Output"
 END_BASE_OUTPUT = ">>>>> End Base Output"
 START_PATCH_OUTPUT = ">>>>> Start Patch Output"
@@ -14,6 +15,7 @@ START_COMMIT_OUTPUT = ">>>>> Start Commit Output"
 END_COMMIT_OUTPUT = ">>>>> End Commit Output"
 START_MAIN_OUTPUT = ">>>>> Start Main Output"
 END_MAIN_OUTPUT = ">>>>> End Main Output"
+TEST_DELIMITER = ">>>>> Test {i}"
 
 
 APPLY_PATCH_HELPER = """
@@ -72,6 +74,13 @@ run_tests_for_commit() {{
                 echo "{timeout}"
                 return 1
             else 
+
+                # If main fails, warn and return
+                if [[ "$result_file" == "main"* ]]; then
+                    echo "{warning}"
+                    return 0
+                fi
+
                 # Any other non-zero exit indicates test error
                 echo "{error}"
                 return 1
@@ -100,32 +109,41 @@ install_repo() {{
 }}
 """
 
+RUN_BASE = """run_tests_for_commit /pyperf_test_{i}.py "base_{i}.txt" "--reference" "pyperf_{i}" """
+RUN_PATCH = """run_tests_for_commit /pyperf_test_{i}.py "result_{i}.txt" "--eqcheck" "pyperf_{i}" """
+RUN_COMMIT = """run_tests_for_commit /pyperf_test_{i}.py "commit_{i}.txt" "--reference" "pyperf_{i}" """
+RUN_MAIN = """run_tests_for_commit /pyperf_test_{i}.py "main_{i}.txt" "--reference" "pyperf_{i}" """
+PRINT_PERF = lambda i, f: f"""echo "{TEST_DELIMITER.format(i=i)}" && cat {f}_{i}.txt"""
+
 
 def get_eval_script(instance) -> str:
     install_commands = instance.install_commands
     opt_commit = instance.opt_commit
     reset_repo_commands = instance.reset_repo_commands
+    test_count = instance.test_count
 
     # Avoid deleting result files
     if "git clean -xfd" in install_commands:
         install_commands.remove("git clean -xfd")
 
+    run_base = "\n".join([RUN_BASE.format(i=i) for i in range(test_count)])
+
     eval_commands = [
         "source .venv/bin/activate",
         # ----------- base and patch perf testing ------------
         'echo "Running performance test before patch..."',
-        'run_tests_for_commit "/pyperf_test.py" "base.txt" "--reference" "pyperf"',
+        *[RUN_BASE.format(i=i) for i in range(test_count)],
         'echo "Applying patch..."',
         'apply_patch "/tmp/patch.diff"',
         'echo "Installing repo..."',
         "install_repo",
         'echo "Running performance test after patch..."',
-        'run_tests_for_commit "/pyperf_test.py" "result.txt" "--eqcheck" "pyperf"',
+        *[RUN_PATCH.format(i=i) for i in range(test_count)],
         f'echo "{START_BASE_OUTPUT}"',
-        "cat base.txt",
+        *[PRINT_PERF(i, "base") for i in range(test_count)],
         f'echo "{END_BASE_OUTPUT}"',
         f'echo "{START_PATCH_OUTPUT}"',
-        "cat result.txt",
+        *[PRINT_PERF(i, "result") for i in range(test_count)],
         f'echo "{END_PATCH_OUTPUT}"',
         # ----------- reset the repo to remote origin ------------
         f"{reset_repo_commands}",
@@ -133,18 +151,18 @@ def get_eval_script(instance) -> str:
         'echo "Installing repo..."',
         "install_repo",
         'echo "Running performance test for main..."',
-        'run_tests_for_commit "/pyperf_test.py" "main.txt" "--reference" "pyperf"',
+        *[RUN_MAIN.format(i=i) for i in range(test_count)],
         f'echo "{START_MAIN_OUTPUT}"',
-        "cat main.txt",
+        *[PRINT_PERF(i, "main") for i in range(test_count)],
         f'echo "{END_MAIN_OUTPUT}"',
         'echo "Checking out commit..."',
         f"git checkout {opt_commit}",
         'echo "Installing repo..."',
         "install_repo",
         'echo "Running performance test for commit..."',
-        'run_tests_for_commit "/pyperf_test.py" "commit.txt" "--reference" "pyperf"',
+        *[RUN_COMMIT.format(i=i) for i in range(test_count)],
         f'echo "{START_COMMIT_OUTPUT}"',
-        "cat commit.txt",
+        *[PRINT_PERF(i, "commit") for i in range(test_count)],
         f'echo "{END_COMMIT_OUTPUT}"',
     ]
 
@@ -157,7 +175,10 @@ def get_eval_script(instance) -> str:
                     failed=APPLY_PATCH_FAIL, passed=APPLY_PATCH_PASS
                 ),
                 RUN_TESTS_HELPER.format(
-                    timeout=TESTS_TIMEOUT, error=TESTS_ERROR, passed=TESTS_PASSED
+                    timeout=TESTS_TIMEOUT,
+                    warning=MAIN_REGRESS_WARNING,
+                    error=TESTS_ERROR,
+                    passed=TESTS_PASSED,
                 ),
                 INSTALL_HELPER.format(
                     install_commands="\n\t\t".join(install_commands),

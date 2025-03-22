@@ -30,6 +30,9 @@ def parse_times(time_str):
 
 
 def compute_stats(times):
+    if not times or len(times) == 0:
+        return None, None
+
     mean = np.mean(times)
     std_dev = np.std(times, ddof=1)
     if np.isnan(mean):
@@ -182,52 +185,42 @@ def plot_top_improvements(df: pd.DataFrame, output_dir: str, top_n: int = 30):
 
 
 def plot_execution_times_distribution(df: pd.DataFrame, output_dir: str):
-    """Create a KDE plot comparing base and target execution times."""
-    plt.figure(figsize=(12, 6))
-
-    # Create KDE plots for both distributions
-    sns.kdeplot(
-        data=df["base_time"],
-        label="Base Time",
-        color="red",
-        fill=True,
-        alpha=0.2,
-        clip=(0, None),
-    )
-    sns.kdeplot(
-        data=df["target_time"],
-        label="Target Time",
-        color="blue",
-        fill=True,
-        alpha=0.2,
-        clip=(0, None),
+    """Create boxplots comparing base and target execution times with log scale."""
+    plt.figure(figsize=(10, 6))
+    plot_data = pd.DataFrame(
+        {"Base Time": df["base_time"], "Target Time": df["target_time"]}
     )
 
-    # Add vertical lines for means
-    plt.axvline(
-        df["base_time"].mean(),
-        color="red",
-        linestyle="--",
-        label=f'Base Mean: {df["base_time"].mean():.3f}s',
-    )
-    plt.axvline(
-        df["target_time"].mean(),
-        color="blue",
-        linestyle="--",
-        label=f'Target Mean: {df["target_time"].mean():.3f}s',
-    )
-
+    # Create boxplot
+    sns.boxplot(data=plot_data)
     plt.title("Distribution of Base vs Target Execution Times")
-    plt.xlabel("Execution Time (seconds)")
-    plt.ylabel("Density")
-    plt.xlim(left=0)
+    plt.ylabel("Execution Time (seconds)")
+    plt.yscale("log")  # Use log scale for y-axis
+    plt.grid(axis="y", linestyle="--", alpha=0.7)
     plt.legend()
     plt.tight_layout()
     plt.savefig(f"{output_dir}/execution_times_distribution.png")
     plt.close()
 
 
-######### Printing Functions #########
+def plot_top_pids_by_time(df: pd.DataFrame, output_dir: str, top_n: int = 20):
+    top_pids = df.groupby("pid")["base_time"].max().reset_index()
+    top_pids = top_pids.nlargest(top_n, "base_time")
+    plt.figure(figsize=(12, 8))
+    ax = sns.barplot(data=top_pids, y="pid", x="base_time", palette="viridis")
+
+    for i, v in enumerate(top_pids["base_time"]):
+        ax.text(v + 0.1, i, f"{v:.2f}s", va="center")
+
+    plt.title(f"Top {top_n} PIDs by Base Execution Time)")
+    plt.xlabel("Execution Time (seconds)")
+    plt.ylabel("PID")
+    plt.tight_layout()
+    plt.grid(axis="x", linestyle="--", alpha=0.7)
+    plt.savefig(f"{output_dir}/top_time_pids.png")
+    plt.close()
+
+    return top_pids
 
 
 #########  Performance Summary #########
@@ -312,6 +305,7 @@ def main(
     plot_speedup_distribution(df, output_dir)
     plot_top_improvements(df, output_dir)
     plot_execution_times_distribution(df, output_dir)
+    plot_top_pids_by_time(df, output_dir, top_n=20)
     summary = create_performance_summary(df)
 
     # Print summary report
@@ -322,6 +316,12 @@ def main(
         f"Optimized problems: {len(opt_problems)} ({len(opt_problems)/num_valid*100:.2f}%)"
     )
     print(f"Optimized APIs: {opt_apis}")
+    # print("\nErrored APIs:")
+    # for p in err_problems:
+    #     commits = ", ".join(
+    #         [f"{c.quick_hash()} ({c.date.strftime("%Y")})" for c in p.commits][:10]
+    #     )
+    #     print(f"  {p.api} : {commits}")
 
     print("\nTest Analysis:")
     print(f"  Total tests analyzed: {summary['total_tests']}")

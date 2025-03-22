@@ -6,6 +6,6 @@ install_commands:
   - source .venv/bin/activate
   - which python
   - python --version
-  - uv pip install -e .
-  - uv pip install requests dill
+  - uv pip install . --reinstall
+  - uv pip install requests dill sqlalchemy pillow absl-py decorator zstandard pyspark
   - uv pip show datasets

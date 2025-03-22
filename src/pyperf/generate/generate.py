@@ -10,8 +10,10 @@ from pyperf.utils.io import *
 from pyperf.generate.prompt import *
 from pyperf.generate.helpers import *
 from pyperf.generate.context import prepare
-from pyperf.generate.quickcheck import quickcheck
 from pyperf.generate.args import PerfExpGenArgs
+
+# NOTE: Only use for debug; runs testgen for valid probs from previous run
+IS_RERUN_FLAG = False
 
 
 class PerfExpGenerator:
@@ -42,10 +44,17 @@ class PerfExpGenerator:
             Problem.create_prob(self.repo, api, commits, self.config)
             for api, commits in self.candidates.items()
         ]
-        
-        # filter their commits to a maximum year and remove empty problems
+
+        # filter out invalid problems from previous run
+        if IS_RERUN_FLAG:
+            prev_run = load_problems(self.exp_dir / f"{self.exp_id}_results.json")
+            prev_valid_apis = [prob.api for prob in prev_run if prob.is_valid()]
+            problems = [prob for prob in problems if prob.api in prev_valid_apis]
+
+        # filter their commits and remove empty problems
         for prob in problems:
-            prob.filter_commits(args.max_year)
+            prob.filter_commits_year(args.max_year)
+            prob.filter_commits_loc(args.min_loc)
         problems = [prob for prob in problems if prob.num_commits() > 0]
 
         # prepare each problem for test generation
@@ -63,7 +72,7 @@ class PerfExpGenerator:
                 prob = output.result
                 problems.append(prob)
                 for test in prob.tests:
-                    if "o1" in args.model_name:
+                    if args.model_name in ["o1-mini", "o3-mini", "o1-preview"]:
                         prompt = "\n\n".join(
                             msg["content"] for msg in test.chat_messages
                         )
@@ -73,7 +82,9 @@ class PerfExpGenerator:
             else:
                 logger.error(f"Failed to prepare: {output.exception_tb}")
 
-        if "o1" in args.model_name:
+        print(f"Generating {len(problems)} problems with {len(payloads)} payloads")
+
+        if args.model_name in ["o1-mini", "o3-mini", "o1-preview"]:
             payloads = [p for p in payloads for _ in range(args.n)]
             outputs = LLMCompletions.get_llm_completions(args, payloads)
             outputs = [item for sublist in outputs for item in sublist]
@@ -101,7 +112,4 @@ class PerfExpGenerator:
 if __name__ == "__main__":
     args = fire.Fire(PerfExpGenArgs.parse)
     generator = PerfExpGenerator(args)
-    if args.quickcheck:
-        generator.genquickcheck(args)
-    else:
-        generator.gen(args)
+    generator.gen(args)
