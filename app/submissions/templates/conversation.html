@@ -174,6 +174,9 @@
                 <p><strong>speedup_commit:</strong> ${hasOptStats.geomean_speedup_commit?.toFixed(2) || 'N/A'}</p>
                 <p><strong>speedup_main:</strong> ${hasOptStats.geomean_speedup_main?.toFixed(2) || 'N/A'}</p>
             </div>
+            <div>
+                ${conversation.analysis ? `<pre style="font-size: 80%; max-height: 350px; overflow-y: auto;"><strong>Analysis:</strong>\n${conversation.analysis}</pre>` : ''}
+            </div>
         `;
         document.getElementById('metadata').innerHTML = metadataHtml;
 

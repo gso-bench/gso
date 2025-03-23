@@ -1,5 +1,6 @@
 import json
 import os
+import pandas as pd
 from pathlib import Path
 
 from flask import Flask, jsonify, render_template, url_for
@@ -39,6 +40,11 @@ def load_jsonl(file_path):
     if not file_path.endswith("output.jsonl"):
         file_path = os.path.join(file_path, "output.jsonl")
 
+    # open the analsis csv file into a df
+    analysis_df = pd.read_csv(
+        "~/pyperf/experiments/qualitative/trajectory_analysis.csv"
+    )
+
     full_path = os.path.join(SUBMISSIONS_DIR, file_path)
     with open(full_path, "r") as f:
         conversations[file_path] = []
@@ -49,8 +55,16 @@ def load_jsonl(file_path):
                 conv = json.loads(line)
                 run_id = Path(file_path).parent.name
                 conv["run_id"] = run_id
+                conv["analysis"] = ""
                 instance_id = conv.get("instance_id")
                 if instance_id:
+                    analysis = analysis_df[
+                        (analysis_df["run_id"] == run_id)
+                        & (analysis_df["instance_id"] == conv["instance_id"])
+                    ]
+                    if not analysis.empty:
+                        conv["analysis"] = analysis.iloc[0].get("analysis", "")
+
                     try:
                         # Look for report in the reports directory
                         possible_reports = list(
