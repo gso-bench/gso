@@ -66,15 +66,14 @@ class Problem(BaseModel):
     results: dict[int | str, list[dict]] = defaultdict(list)
 
     def model_post_init(self, __context) -> None:
-        if self.setup_commands == []:
-            self.setup_commands = [
-                "sudo apt update -y && sudo upt upgrade -y",
-                "sudo apt-get install -y libtiff5-dev libjpeg8-dev libopenjp2-7-dev zlib1g-dev",
-                "sudo apt-get install -y libfreetype6-dev liblcms2-dev libwebp-dev tcl8.6-dev tk8.6-dev python3-tk",
-                "sudo apt-get install -y libharfbuzz-dev libfribidi-dev libxcb1-dev libx11-dev libssl-dev",
-                "sudo apt install -y gcc g++ gfortran libopenblas-dev liblapack-dev pkg-config",
-                "sudo apt-get -y install clang",
-            ]
+        self.setup_commands = [
+            "sudo apt update -y && sudo upt upgrade -y",
+            "sudo apt-get install -y libtiff5-dev libjpeg8-dev libopenjp2-7-dev zlib1g-dev",
+            "sudo apt-get install -y libfreetype6-dev liblcms2-dev libwebp-dev tcl8.6-dev tk8.6-dev python3-tk",
+            "sudo apt-get install -y libharfbuzz-dev libfribidi-dev libxcb1-dev libx11-dev libssl-dev",
+            "sudo apt install -y gcc g++ gfortran libopenblas-dev liblapack-dev pkg-config",
+            "sudo apt-get install -y clang",
+        ]
 
         if self.install_commands == []:
             self.install_commands = [

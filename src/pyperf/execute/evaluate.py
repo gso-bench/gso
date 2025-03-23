@@ -58,11 +58,11 @@ def speedup_summary(
     non_python_only=False,
     python_only=False,
 ):
-    run0_res = list(prob.results.values())[0]
+    lrun_res = list(prob.results.values())[-1]
     stats = {}
     valid_commits, opt_commits = set(), set()
 
-    for ct in run0_res:
+    for ct in lrun_res:
         test = ct["test_file"]
         commit = next((c for c in prob.commits if c.quick_hash() == ct["commit"]), None)
 
