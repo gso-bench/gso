@@ -18,6 +18,12 @@ class Tests(BaseModel):
             {"role": "user", "content": task_msg},
         ]
 
+    def add_message(self, role: str, content: str, idx: int = -1):
+        if idx != -1:
+            self.chat_messages.insert(idx, {"role": role, "content": content})
+        else:
+            self.chat_messages.append({"role": role, "content": content})
+
     def add_sample(self, test: str):
         self.samples.append(test + TIMEIT_TEMPLATE + TEST_HARNESS)
 
@@ -101,6 +107,10 @@ class Problem(BaseModel):
         """Filter out commits with less than min_loc"""
         loc_lambda = lambda c: c.stats.get("num_non_test_edited_lines", 0)
         self.commits = [c for c in self.commits if loc_lambda(c) >= min_loc]
+
+    def filter_commit_hashes(self, quick_hashes: list[str]):
+        """Filter commits to a set of quick_hashes"""
+        self.commits = [c for c in self.commits if c.quick_hash() in quick_hashes]
 
     def get_test(self, commit_hash: str, test_id: int) -> str:
         """Get test for a commit"""

@@ -83,3 +83,11 @@ def get_generated_tests(outputs) -> list[list[str]]:
             code_blocks.append(code)
         results.append(code_blocks)
     return results
+
+
+def get_latest_good_tests(prob, commit_hash) -> list[str]:
+    latest_run_key = list(prob.results.keys())[0]
+    latest_results = prob.results[latest_run_key]
+    good_test_ids = [r["test_id"] for r in latest_results if r["commit"] == commit_hash]
+    good_tests = [prob.get_test(commit_hash, tid) for tid in good_test_ids]
+    return good_tests
