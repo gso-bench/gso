@@ -141,9 +141,10 @@ TORNADO_PROBLEMS = [
     ("tornado-baseiostream.write", "1b464c4"),
     ("tornado-addthreadselectoreventloop.remove_reader", "5cfe2fc"),
     ("tornado-http1serverconnection.close", "715ef05"),
-    ("tornado-resolver.resolve", "bc74d7b"),  # NOTE: common PR w/ .close
     ("tornado-future.set_exception", "4d4c1e0"),
     ("tornado-future.done", "ac13ee5"),  # NOTE: common PR w/ set_exception
+    # --- buffer ---
+    ("tornado-resolver.resolve", "bc74d7b"),  # NOTE: common PR w/ .close
     ("tornado-oauth2mixin.oauth2_request", "0ab8263"),  # NOTE: simple?
 ]
 

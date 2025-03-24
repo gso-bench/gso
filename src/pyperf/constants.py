@@ -30,13 +30,13 @@ EVALUATION_REPORTS_DIR = Path("reports")
 
 # --------- Build Constants ---------
 
-MIN_PROB_SPEEDUP = 1.3  # min speedup to consider a problem as a benchmark instance
+MIN_PROB_SPEEDUP = 1.2  # min speedup to consider a problem as a benchmark instance
 MAX_TEST_COUNT = 15  # max number of tests to run per problem
 
 # --------- Grading Constants ---------
 
 # min % speedup to consider a patch as optimized
-OPTIM_THRESH_PERC = 25
+OPTIM_THRESH_PERC = 15
 
 # min factor to consider a patch as optimized
 OPTIM_THRESH_FACTOR = 1 / (1 - (OPTIM_THRESH_PERC / 100))
