@@ -19,7 +19,7 @@ class PerfExpGenerator:
     """Generate performance testing problem/experiment for a repository's APIs"""
 
     def __init__(self, args):
-        self.exp_dir = EXPS_DIR / "pyperf_dataset"
+        self.exp_dir = EXPS_DIR / "oversample"
         self.exp_dir.mkdir(parents=True, exist_ok=True)
 
         exp_ids = TEST_PROBLEMS.keys()
@@ -100,7 +100,7 @@ class PerfExpGenerator:
                     test.add_samples(results[idx])
                     idx += 1
 
-        save_problems(self.exp_dir / f"pyperf_dataset_problems.json", problems)
+        save_problems(self.exp_dir / f"oversample_problems.json", problems)
 
 
 if __name__ == "__main__":
