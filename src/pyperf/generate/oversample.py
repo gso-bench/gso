@@ -22,7 +22,7 @@ class PerfExpGenerator:
         self.exp_dir = EXPS_DIR / "oversample"
         self.exp_dir.mkdir(parents=True, exist_ok=True)
 
-        exp_ids = TEST_PROBLEMS.keys()
+        exp_ids = TEST_PROBLEMS.keys() if args.exp_id is None else [args.exp_id]
         all_problems = [
             problem
             for eid in exp_ids
@@ -99,6 +99,8 @@ class PerfExpGenerator:
                 if idx < len(results):
                     test.add_samples(results[idx])
                     idx += 1
+
+            prob.clear_results()  # clear all previous results if any
 
         save_problems(self.exp_dir / f"oversample_problems.json", problems)
 

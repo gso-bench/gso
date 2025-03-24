@@ -19,6 +19,7 @@ class PerfExpGenArgs(LLMArgs):
 
 
 class OversampleArgs(LLMArgs):
+    exp_id: str = Field(None, description="Experiment ID.")
     model_name: str = Field("gpt-4o", description="Model name.")
     cache_batch_size: int = Field(100, description="Batch size for caching.")
     max_year: int = Field(2016, description="Maximum year for commits.")

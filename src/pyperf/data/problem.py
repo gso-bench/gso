@@ -128,6 +128,10 @@ class Problem(BaseModel):
                 return [test.samples[i] for i in test_ids]
         return None
 
+    def clear_results(self):
+        """Clear results for the problem"""
+        self.results = defaultdict(list)
+
     # helper to get properties of the problem
     def num_commits(self) -> int:
         return len(self.commits)

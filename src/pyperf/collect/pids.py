@@ -72,7 +72,6 @@ NUMPY_PROBLEMS = [
     ("numpy-numpy.sum", "330057f"),
     ("numpy-np.minimum.at", "11a7e2d"),
     ("numpy-np.partition", "ac5c664"),
-    ("numpy-maskedarray.clip", "6d77c59"),
     ("numpy-np.divide.at", "28706af"),
     ("numpy-numpy.repeat", "905d37e"),
     ("numpy-numpy.lib.recfunctions.structured_to_unstructured", "2540554"),
@@ -102,8 +101,9 @@ NUMPY_PROBLEMS = [
     ("numpy-numpy.greater", "ec8d5db"),  # NOTE: low speedup?
     ("numpy-numpy.vecdot", "1fcda82"),  # NOTE: enable BLAS?
     ("numpy-np.sort", "794f474"),  # NOTE: enable AVX2/SIMD?
-    ("numpy-numpy.conjugate", "d352270"),  # NOTE: enable SIMD? (single test)
     # --- buffer ---
+    ("numpy-numpy.conjugate", "d352270"),  # NOTE: enable SIMD? (single test)
+    ("numpy-maskedarray.clip", "6d77c59"),
     # ("numpy-numpy.equal", "1134be2"),  # NOTE: commit slow!
     # ("numpy-np.ma.cov", "9b1a9c5"),  # NOTE: commit slow!
     # ("numpy-numpy.kron", "54605f3"),  # NOTE: simple? 23 loc
