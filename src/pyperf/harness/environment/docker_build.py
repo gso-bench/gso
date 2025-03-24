@@ -133,8 +133,12 @@ def build_image(
 def build_and_push_mp_helper(config: BuildPushConfig) -> str:
     client = docker.from_env(timeout=600)
 
-    # check if already on dockerhub
-    if config.push_to_registry and image_exists_on_dockerhub(config.image_name):
+    # check if already on dockerhub if not rebuilding
+    if (
+        (not config.force_rebuild)
+        and config.push_to_registry
+        and image_exists_on_dockerhub(config.image_name)
+    ):
         print(f"Image {config.image_name} already exists on DockerHub, skipping ...")
         return config.image_name
 
@@ -160,7 +164,7 @@ def build_and_push_mp_helper(config: BuildPushConfig) -> str:
 
     # push to dockerhub
     if config.push_to_registry:
-        push_to_dockerhub(client, config.image_name)
+        push_to_dockerhub(client, config.image_name, force_push=config.force_rebuild)
         remove_image(client, config.image_name, None)  # delete local image
 
     return config.image_name
