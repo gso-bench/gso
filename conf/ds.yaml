@@ -7,5 +7,5 @@ install_commands:
   - which python
   - python --version
   - uv pip install . --reinstall
-  - uv pip install requests dill sqlalchemy pillow absl-py decorator zstandard pyspark
+  - uv pip install requests dill sqlalchemy pillow absl-py decorator zstandard
   - uv pip show datasets
