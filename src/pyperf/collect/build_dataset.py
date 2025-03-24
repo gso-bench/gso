@@ -99,6 +99,16 @@ def build_dataset(problems, exp_id):
     print(f"Speedup dist:\n{speedup_dist}\n")
     print(f"Test dist:\n{test_dist}")
 
+    # show the groups with less than 4 tests
+    # low_tests = (
+    #     opt_problems_df.groupby(["pid", "commit"])
+    #     .filter(lambda x: len(x) < 4)
+    #     .drop_duplicates(subset=["pid", "commit"])
+    # )
+    # if not low_tests.empty:
+    #     print("\nSingle test groups:")
+    #     print(low_tests["pid"].to_string(index=False))
+
     return dataset
 
 
@@ -109,6 +119,9 @@ def main(exp_id, push_to_hf, hf_username, dataset_name=None):
         for eid in exp_ids
         for problem in load_problems((EXPS_DIR / f"{eid}" / f"{eid}_results.json"))
     ]
+
+    if exp_id and exp_id not in TEST_PROBLEMS.keys():
+        exp_id = None  # unset
 
     # Build dataset
     dataset = build_dataset(problems, exp_id)

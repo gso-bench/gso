@@ -66,6 +66,9 @@ def speedup_summary(
         test = ct["test_file"]
         commit = next((c for c in prob.commits if c.quick_hash() == ct["commit"]), None)
 
+        if commit is None:
+            continue
+
         if non_python_only and not has_non_python_changes(commit):
             continue
         elif python_only and has_non_python_changes(commit):
@@ -96,6 +99,7 @@ def speedup_summary(
         opt_perc = ((before_mean - after_mean) / before_mean) * 100
         speedup_factor = before_mean / after_mean
         loc_changed = commit.stats.get("num_non_test_edited_lines", 0)
+        # print(f"  {prob.pid} ({test}): {opt_perc:.2f}% | {speedup_factor:.2f}x")
 
         if before_mean > after_mean and opt_perc > speedup_threshold:
 
@@ -316,12 +320,12 @@ def main(
         f"Optimized problems: {len(opt_problems)} ({len(opt_problems)/num_valid*100:.2f}%)"
     )
     print(f"Optimized APIs: {opt_apis}")
-    # print("\nErrored APIs:")
-    # for p in err_problems:
-    #     commits = ", ".join(
-    #         [f"{c.quick_hash()} ({c.date.strftime("%Y")})" for c in p.commits][:10]
-    #     )
-    #     print(f"  {p.api} : {commits}")
+    print("\nErrored APIs:")
+    for p in err_problems:
+        commits = ", ".join(
+            [f"{c.quick_hash()} ({c.date.strftime("%Y")})" for c in p.commits][:10]
+        )
+        print(f"  {p.api} : {commits}")
 
     print("\nTest Analysis:")
     print(f"  Total tests analyzed: {summary['total_tests']}")
