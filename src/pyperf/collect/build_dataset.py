@@ -1,4 +1,6 @@
 import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
 from dataclasses import asdict
 from argparse import ArgumentParser
 from datasets import Dataset
@@ -99,6 +101,15 @@ def build_dataset(problems, exp_id):
     print(f"Speedup dist:\n{speedup_dist}\n")
     print(f"Test dist:\n{test_dist}")
 
+    # plot the test count distribution in /plots using sns.histplot
+    plt.figure(figsize=(10, 6))
+    plt.title("Test count distribution")
+    plot_data = pd.DataFrame(
+        opt_problems_df.groupby(["pid", "commit"]).size(), columns=["Test Count"]
+    )
+    sns.histplot(plot_data, x="Test Count", bins=range(1, 11), discrete=True)
+    plt.savefig("plots/test_count_dist.png")
+
     # show the groups with less than 4 tests
     # low_tests = (
     #     opt_problems_df.groupby(["pid", "commit"])
@@ -126,6 +137,7 @@ def main(exp_id, push_to_hf, hf_username, dataset_name=None):
     # Build dataset
     dataset = build_dataset(problems, exp_id)
 
+    exit()
     # Save dataset to jsonl file
     DATASET_DIR.mkdir(parents=True, exist_ok=True)
     dataset_df = pd.DataFrame([asdict(inst) for inst in dataset])
