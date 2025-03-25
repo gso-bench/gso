@@ -31,7 +31,7 @@ parser.add_argument(
     "--fixed_first_run", action="store_true", help="Keep first run fixed across trials"
 )
 parser.add_argument(
-    "--num_trials", type=int, default=100, help="Number of bootstrap trials"
+    "--num_trials", type=int, default=500, help="Number of bootstrap trials"
 )
 args = parser.parse_args()
 
@@ -39,14 +39,14 @@ args = parser.parse_args()
 os.makedirs(args.output_dir, exist_ok=True)
 
 # sort report files
-reports = sorted(args.eval_reports, key=natural_sort_key)[: args.k]
+reports = sorted(args.eval_reports, key=natural_sort_key)
 
 # raise if less than k reports are found
 if len(reports) < args.k:
     raise ValueError(f"Found {len(reports)} reports, expected {args.k}")
 
 
-def calculate_beat_at_k_smooth(report_paths, N, fixed_first_run=False, num_trials=100):
+def calculate_beat_at_k_smooth(report_paths, N, fixed_first_run=False, num_trials=500):
     """
     Calculate beat@k rates with bootstrapping, closely following the reference implementation.
     """
