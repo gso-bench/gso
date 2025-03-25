@@ -28,7 +28,7 @@ PANDAS_PROBLEMS = [
     ("pandas-dataframegroupby.nunique", "d377cc9"),
     ("pandas-basemaskedarray._validate_setitem_value", "71c94af"),
     ("pandas-basemaskedarray.reshape", "fa29f09"),
-    ("pandas-dataframe", "9a6c8f0"),  # NOTE: weak test?
+    ("pandas-dataframe", "9a6c8f0"),  # weak test?
     ("pandas-index.union", "c34da50"),
     ("pandas-pandas.testing.assert_frame_equal", "32ebcfc"),
     ("pandas-multiindex.symmetric_difference", "c6cf37a"),
@@ -36,23 +36,23 @@ PANDAS_PROBLEMS = [
     ("pandas-merge_asof", "ad3f3f7"),
     ("pandas-to_datetime", "2421931"),
     ("pandas-pandas.testing.assert_frame_equal", "00d88e9"),
-    ("pandas-datetimeindex.tz_localize", "b731518"),  # NOTE: weak test?
-    ("pandas-indexengine.get_indexer_non_unique", "5d82d8b"),  # NOTE: internal test
-    ("pandas-dataframe.last_valid_index", "65bca65"),  # NOTE: sc, hl
-    ("pandas-merge", "81b5f1d"),  # NOTE: sc, hl
-    ("pandas-multiindex.get_locs", "9d6d587"),  # NOTE: sl
+    ("pandas-datetimeindex.tz_localize", "b731518"),  # weak test?
+    ("pandas-indexengine.get_indexer_non_unique", "5d82d8b"),  # internal test
+    ("pandas-dataframe.last_valid_index", "65bca65"),  # sc, hl
+    ("pandas-merge", "81b5f1d"),  # sc, hl
+    ("pandas-multiindex.get_locs", "9d6d587"),  # sl
     ("pandas-dataframe.duplicated", "235113e"),
     ("pandas-dataframe.all", "28f4942"),
     ("pandas-merge", "c51c2a7"),
     ("pandas-concat", "1c2ad16"),
-    ("pandas-series.__init__", "191557d"),  # NOTE: single test!
-    ("pandas-datetimelikearraymixin.astype", "45f0705"),  # NOTE: single test!
+    ("pandas-series.__init__", "191557d"),  # single test!
+    ("pandas-datetimelikearraymixin.astype", "45f0705"),  # single test!
     # --- buffer ---
-    # ("pandas-index._getitem_slice", "9b4cffc"),  # NOTE: weak tests
-    # ("pandas-concat", "4583a04"),  # NOTE: single test!
+    # ("pandas-index._getitem_slice", "9b4cffc"),  # weak tests
+    # ("pandas-concat", "4583a04"),  # single test!
     # ("pandas-multiindex.equals", "7281475"),
     # ("pandas-datetimelikearraymixin._add_datetimelike_scalar", "a6c0ae4"),
-    # ("pandas-ensure_index_from_sequences", "38086f1"),  # NOTE: single test!
+    # ("pandas-ensure_index_from_sequences", "38086f1"),  # single test!
 ]
 
 NUMPY_PROBLEMS = [
@@ -86,7 +86,6 @@ NUMPY_PROBLEMS = [
     ("numpy-np.char.find", "83c780d"),
     ("numpy-numpy.char.strip", "cb461ba"),
     ("numpy-np.char.isalpha", "ef5e545"),
-    ("numpy-numpy.add.reduce", "3ea71da"),
     ("numpy-np.char.add", "19bfa3f"),
     ("numpy-numpy.char.endswith", "09db9c7"),
     ("numpy-np.add.at", "7853cbc"),
@@ -95,19 +94,20 @@ NUMPY_PROBLEMS = [
     ("numpy-numpy.ufunc.at", "eb21b25"),
     ("numpy-numpy.char.isdecimal", "248c60e"),
     ("numpy-numpy.char.count", "e801e7a"),
-    ("numpy-numpy.finfo", "4aca866"),  # NOTE: sc, hl
-    ("numpy-np.isin", "cedba62"),  # NOTE: related to np.in1d
-    ("numpy-numpy.log", "4973914"),  # NOTE: enable SVML?
-    ("numpy-numpy.greater", "ec8d5db"),  # NOTE: low speedup?
-    ("numpy-numpy.vecdot", "1fcda82"),  # NOTE: enable BLAS?
-    ("numpy-np.sort", "794f474"),  # NOTE: enable AVX2/SIMD?
+    ("numpy-numpy.finfo", "4aca866"),  # sc, hl
+    ("numpy-np.isin", "cedba62"),  # related to np.in1d
+    ("numpy-numpy.log", "4973914"),  # enable SVML?
+    ("numpy-numpy.greater", "ec8d5db"),  # low speedup?
+    ("numpy-numpy.vecdot", "1fcda82"),  # enable BLAS?
+    ("numpy-np.sort", "794f474"),  # enable AVX2/SIMD?
     # --- buffer ---
-    ("numpy-numpy.conjugate", "d352270"),  # NOTE: enable SIMD? (single test)
-    ("numpy-maskedarray.clip", "6d77c59"),
-    # ("numpy-numpy.equal", "1134be2"),  # NOTE: commit slow!
-    # ("numpy-np.ma.cov", "9b1a9c5"),  # NOTE: commit slow!
-    # ("numpy-numpy.kron", "54605f3"),  # NOTE: simple? 23 loc
-    # ("numpy-np.in1d", "91e753c"),  # NOTE: simple?
+    ("numpy-maskedarray.clip", "6d77c59"),  # simple? low speedup?
+    # ("numpy-numpy.add.reduce", "3ea71da"), # flaky speedup
+    # ("numpy-numpy.conjugate", "d352270"),  # flaky speedup
+    # ("numpy-numpy.equal", "1134be2"),
+    # ("numpy-np.ma.cov", "9b1a9c5"),
+    # ("numpy-numpy.kron", "54605f3"),
+    # ("numpy-np.in1d", "91e753c"),
 ]
 
 PILLOW_PROBLEMS = [
@@ -120,8 +120,8 @@ PILLOW_PROBLEMS = [
     ("pillow-imagefilter.kernel", "3b5c2c3"),
     ("pillow-tiffimagefile.is_animated", "fd8ee84"),
     # --- buffer ---
-    ("pillow-imagefilter.color3dlut", "2b09e7f"),  # NOTE: simple? low speedup?
-    ("pillow-image.new", "c82f9fe"),  # NOTE: single test!
+    ("pillow-imagefilter.color3dlut", "2b09e7f"),  # simple? low speedup?
+    ("pillow-image.new", "c82f9fe"),  # single test!
 ]
 
 DATASETS_PROBLEMS = [
@@ -129,29 +129,29 @@ DATASETS_PROBLEMS = [
     ("datasets-dataset.select_columns", "32b206d"),
     ("datasets-iterabledataset.skip", "c5464b3"),
     ("datasets-iterabledataset.filter", "ef2fb35"),
-    ("datasets-dataset._select_contiguous", "5994036"),  # NOTE: single test
-    ("datasets-datasetbuilder.download_and_prepare", "2878019"),  # NOTE: single test
-    ("datasets-image.cast_storage", "d9a8d8a"),  # NOTE: single test
+    ("datasets-dataset._select_contiguous", "5994036"),  # single test
+    ("datasets-datasetbuilder.download_and_prepare", "2878019"),  # single test
+    ("datasets-image.cast_storage", "d9a8d8a"),  # single test
 ]
 
 TORNADO_PROBLEMS = [
-    ("tornado-parse_cookie", "0a39ba8"),  # NOTE: long running!
+    ("tornado-parse_cookie", "0a39ba8"),  # long running!
     ("tornado-tcpserver.__init__", "bf1b21a"),
     ("tornado-tornado.websocket.websocketclientconnection.write_message", "9a18f6c"),
     ("tornado-baseiostream.write", "1b464c4"),
     ("tornado-addthreadselectoreventloop.remove_reader", "5cfe2fc"),
     ("tornado-http1serverconnection.close", "715ef05"),
     ("tornado-future.set_exception", "4d4c1e0"),
-    ("tornado-future.done", "ac13ee5"),  # NOTE: common PR w/ set_exception
+    ("tornado-future.done", "ac13ee5"),  # common PR w/ set_exception
     # --- buffer ---
-    ("tornado-resolver.resolve", "bc74d7b"),  # NOTE: common PR w/ .close
-    ("tornado-oauth2mixin.oauth2_request", "0ab8263"),  # NOTE: simple?
+    ("tornado-oauth2mixin.oauth2_request", "0ab8263"),  # simple? low speedup?
+    # ("tornado-resolver.resolve", "bc74d7b"), # flaky speedup
 ]
 
 PYDANTIC_PROBLEMS = [
     ("pydantic-basemodel.__setattr__", "addf1f9"),
     ("pydantic-genericmodel.__concrete_name__", "4a09447"),
-    ("pydantic-basemodel._iter", "7d9614e"),  # NOTE: long running!
+    ("pydantic-basemodel._iter", "7d9614e"),  # long running!
     ("pydantic-typeadapter.validate_strings", "c2647ab"),
     ("pydantic-typeadapter.validate_python", "ac9e6ee"),
     ("pydantic-typeadapter.__init__", "c5dce37"),
