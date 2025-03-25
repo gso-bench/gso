@@ -2,7 +2,7 @@ import json
 import os
 from pathlib import Path
 
-from flask import Flask, jsonify, render_template
+from flask import Flask, jsonify, render_template, url_for
 
 from pyperf.constants import SUBMISSIONS_DIR, EVALUATION_REPORTS_DIR
 
@@ -102,6 +102,66 @@ def load_jsonl(file_path):
 def index():
     log_files = get_available_logs()
     return render_template("index.html", logs=log_files)
+
+
+@app.route("/matrix")
+def instance_matrix():
+    """Generate a matrix showing instance performance across different runs"""
+    # Get all available log files
+    log_files = get_available_logs()
+
+    # Dictionary to hold the matrix data
+    # Format: {instance_id: {run_id: {"success": bool, "log_url": url}}}
+    matrix = {}
+
+    # Lists to track all unique instances and runs
+    all_instances = set()
+    all_runs = set()
+
+    # Process each log file
+    for log_path in log_files:
+        # Load log if not already loaded
+        if log_path not in conversations:
+            load_jsonl(log_path)
+
+        # Extract run_id from path (folder name containing output.jsonl)
+        run_id = Path(log_path).parent.name
+        all_runs.add(run_id)
+
+        # Process each conversation in this log file
+        for idx, conv in enumerate(conversations[log_path]):
+            instance_id = conv.get("instance_id")
+            if not instance_id:
+                continue
+
+            # Add instance to our tracking set
+            all_instances.add(instance_id)
+
+            # Check if there's test result data
+            test_result = conv.get("test_result", {})
+            success = test_result.get("improved_commit", False)
+
+            # Create URL for this specific conversation
+            log_url = url_for(
+                "view_by_instance_id",
+                log_path=Path(log_path).parent,
+                instance_id=instance_id,
+            )
+
+            # Initialize matrix entry for this instance if needed
+            if instance_id not in matrix:
+                matrix[instance_id] = {}
+
+            # Add result for this run
+            matrix[instance_id][run_id] = {"success": success, "log_url": log_url}
+
+    # Sort runs and instances for consistent display
+    sorted_runs = sorted(all_runs)
+    sorted_instances = sorted(all_instances)
+
+    return render_template(
+        "matrix.html", matrix=matrix, instances=sorted_instances, runs=sorted_runs
+    )
 
 
 @app.route("/view/<path:log_path>")

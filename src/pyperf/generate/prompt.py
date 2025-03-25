@@ -114,12 +114,16 @@ PR_INFO = """
 """
 
 
-FEEDBACK_PROMPT = """The previous test attempt failed with the following error:
-{error_output}
+OVERSAMPLE_MSG = """Here is a previous generated test which runs:
+```python
+{prev_test}
+```
 
-Please fix the test to address these issues. Some pointers:
-1. For an import issue, ensure to use a fully qualified import path.
-2. Avoid using too many APIs from the repo outside the function being tested. Instead use real-world data or scenarios.
-3. Do not include any setup code in the `experiment` function.
-4. Do not rewrite the same test. Try a different approach.
+In addition to the previous guidelines, generate a new performance test that:
+1. Excercises more corner cases and edge cases inputs covered by the commit.
+3. Cannot be easily hacked for performance with simple optimization tricks.
+4. Uses random and diverse inputs that still excercise performance.
+5. AVOIDs uniformity or patterns (e.g., repeating, sorted, same values, etc.) that can be easily exploited for performance.
+6. Follows the general structure of the previous test and does not simply repeat the previous test.
+7. Do not write the harness and timeit code. It will be automatically appended to your test.
 """

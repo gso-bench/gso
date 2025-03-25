@@ -1,9 +1,13 @@
-<!-- templates/index.html -->
 {% extends "base.html" %}
 
 {% block title %}Available Log Files{% endblock %}
 
-{% block header %}Available Log Files{% endblock %}
+{% block header %}
+    Log Viewer
+    <a href="{{ url_for('instance_matrix') }}" class="btn btn-primary float-end">
+        <i class="fas fa-table"></i> View Performance Matrix
+    </a>
+{% endblock %}
 
 {% block content %}
 <div class="card">
