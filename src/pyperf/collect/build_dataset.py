@@ -1,15 +1,23 @@
 import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
 from dataclasses import asdict
 from argparse import ArgumentParser
 from datasets import Dataset
 
-from pyperf.constants import EXPS_DIR, DATASET_DIR, MIN_PROB_SPEEDUP, MAX_TEST_COUNT
+from pyperf.constants import (
+    EXPS_DIR,
+    DATASET_DIR,
+    MIN_PROB_SPEEDUP,
+    MAX_TEST_COUNT,
+    LONG_RUNNING_MAX_TEST_COUNT,
+)
 from pyperf.data.problem import Problem
 from pyperf.data.dataset import PyPerfInstance
 from pyperf.data.perf import PerformanceCommit
 from pyperf.execute.evaluate import speedup_summary, create_analysis_dataframe
 from pyperf.utils.io import load_problems
-from pyperf.collect.pids import TEST_PROBLEMS
+from pyperf.collect.pids import TEST_PROBLEMS, LONG_RUNNING_PROBLEMS
 from pyperf.collect.utils import prepare_prob_script
 
 
@@ -74,6 +82,23 @@ def build_dataset(problems, exp_id):
         .groupby(["pid", "commit"])
         .head(MAX_TEST_COUNT)
     )
+
+    # heuristic: use fewer tests for extremely long runtime problems
+    for pid, commit in LONG_RUNNING_PROBLEMS:
+        long_running_mask = (opt_problems_df["pid"] == pid) & (
+            opt_problems_df["commit"] == commit
+        )
+        if any(long_running_mask):
+            # print(f">>> long running problem: {pid} - {commit}")
+            problem_indices = opt_problems_df.index[long_running_mask]
+            sorted_indices = (
+                opt_problems_df.loc[problem_indices]
+                .sort_values("speedup_factor", ascending=False)
+                .index[:LONG_RUNNING_MAX_TEST_COUNT]
+            )
+            drop_indices = [idx for idx in problem_indices if idx not in sorted_indices]
+            opt_problems_df = opt_problems_df.drop(drop_indices)
+
     unique_pid_commits = set(zip(opt_problems_df["pid"], opt_problems_df["commit"]))
     print(f"Found {len(unique_pid_commits)} / {len(test_pid_commits_set)} probs")
 
@@ -99,6 +124,25 @@ def build_dataset(problems, exp_id):
     print(f"Speedup dist:\n{speedup_dist}\n")
     print(f"Test dist:\n{test_dist}")
 
+    # plot the test count distribution in /plots using sns.histplot
+    plt.figure(figsize=(10, 6))
+    plt.title("Test count distribution")
+    plot_data = pd.DataFrame(
+        opt_problems_df.groupby(["pid", "commit"]).size(), columns=["Test Count"]
+    )
+    sns.histplot(plot_data, x="Test Count", bins=range(1, 11), discrete=True)
+    plt.savefig("plots/test_count_dist.png")
+
+    # show the groups with less than 4 tests
+    # low_tests = (
+    #     opt_problems_df.groupby(["pid", "commit"])
+    #     .filter(lambda x: len(x) < 4)
+    #     .drop_duplicates(subset=["pid", "commit"])
+    # )
+    # if not low_tests.empty:
+    #     print("Low test groups:")
+    #     print(low_tests["pid"].to_string(index=False))
+
     return dataset
 
 
@@ -109,6 +153,9 @@ def main(exp_id, push_to_hf, hf_username, dataset_name=None):
         for eid in exp_ids
         for problem in load_problems((EXPS_DIR / f"{eid}" / f"{eid}_results.json"))
     ]
+
+    if exp_id and exp_id not in TEST_PROBLEMS.keys():
+        exp_id = None  # unset
 
     # Build dataset
     dataset = build_dataset(problems, exp_id)

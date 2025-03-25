@@ -96,7 +96,7 @@ class SkyManager:
             )
         else:
             subprocess.run(cmd, cwd=workspace, text=True)
-        logger.info(f"Launched task: {task_yaml}")
+        logger.info(f"Launched {task_yaml} on cluster: {cluster} from {workspace}")
 
     @staticmethod
     def is_complete(workspace, cluster="sky-pyperf"):

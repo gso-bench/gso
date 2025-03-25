@@ -18,6 +18,12 @@ class Tests(BaseModel):
             {"role": "user", "content": task_msg},
         ]
 
+    def add_message(self, role: str, content: str, idx: int = -1):
+        if idx != -1:
+            self.chat_messages.insert(idx, {"role": role, "content": content})
+        else:
+            self.chat_messages.append({"role": role, "content": content})
+
     def add_sample(self, test: str):
         self.samples.append(test + TIMEIT_TEMPLATE + TEST_HARNESS)
 
@@ -60,15 +66,17 @@ class Problem(BaseModel):
     results: dict[int | str, list[dict]] = defaultdict(list)
 
     def model_post_init(self, __context) -> None:
-        if self.setup_commands == []:
-            self.setup_commands = [
-                "sudo apt update -y && sudo upt upgrade -y",
-                "sudo apt-get install -y libtiff5-dev libjpeg8-dev libopenjp2-7-dev zlib1g-dev",
-                "sudo apt-get install -y libfreetype6-dev liblcms2-dev libwebp-dev tcl8.6-dev tk8.6-dev python3-tk",
-                "sudo apt-get install -y libharfbuzz-dev libfribidi-dev libxcb1-dev libx11-dev libssl-dev",
-                "sudo apt install -y gcc g++ gfortran libopenblas-dev liblapack-dev pkg-config",
-                "sudo apt-get -y install clang",
-            ]
+        self.setup_commands = [
+            "sudo apt update -y && sudo upt upgrade -y",
+            "sudo apt-get install -y libtiff5-dev libjpeg8-dev libopenjp2-7-dev zlib1g-dev",
+            "sudo apt-get install -y libfreetype6-dev liblcms2-dev libwebp-dev tcl8.6-dev tk8.6-dev python3-tk",
+            "sudo apt-get install -y libharfbuzz-dev libfribidi-dev libxcb1-dev libx11-dev libssl-dev",
+            "sudo apt install -y gcc g++ gfortran libopenblas-dev liblapack-dev pkg-config",
+            "sudo apt-get install -y clang",
+            "sudo apt-get install -y llvm",
+            "sudo mkdir -p /tools/llvm/bin",
+            "sudo ln -s $(which llvm-ar) /tools/llvm/bin/llvm-ar",
+        ]
 
         if self.install_commands == []:
             self.install_commands = [
@@ -102,6 +110,10 @@ class Problem(BaseModel):
         loc_lambda = lambda c: c.stats.get("num_non_test_edited_lines", 0)
         self.commits = [c for c in self.commits if loc_lambda(c) >= min_loc]
 
+    def filter_commit_hashes(self, quick_hashes: list[str]):
+        """Filter commits to a set of quick_hashes"""
+        self.commits = [c for c in self.commits if c.quick_hash() in quick_hashes]
+
     def get_test(self, commit_hash: str, test_id: int) -> str:
         """Get test for a commit"""
         for test in self.tests:
@@ -115,6 +127,10 @@ class Problem(BaseModel):
             if test.quick_hash == commit_hash:
                 return [test.samples[i] for i in test_ids]
         return None
+
+    def clear_results(self):
+        """Clear results for the problem"""
+        self.results = defaultdict(list)
 
     # helper to get properties of the problem
     def num_commits(self) -> int:
