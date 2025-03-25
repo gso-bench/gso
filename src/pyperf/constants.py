@@ -32,6 +32,7 @@ EVALUATION_REPORTS_DIR = Path("reports")
 
 MIN_PROB_SPEEDUP = 1.2  # min speedup to consider a problem as a benchmark instance
 MAX_TEST_COUNT = 15  # max number of tests to run per problem
+LONG_RUNNING_MAX_TEST_COUNT = 5  # max number of tests to run per long runtime problem
 
 # --------- Grading Constants ---------
 

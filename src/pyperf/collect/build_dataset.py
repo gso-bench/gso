@@ -5,13 +5,19 @@ from dataclasses import asdict
 from argparse import ArgumentParser
 from datasets import Dataset
 
-from pyperf.constants import EXPS_DIR, DATASET_DIR, MIN_PROB_SPEEDUP, MAX_TEST_COUNT
+from pyperf.constants import (
+    EXPS_DIR,
+    DATASET_DIR,
+    MIN_PROB_SPEEDUP,
+    MAX_TEST_COUNT,
+    LONG_RUNNING_MAX_TEST_COUNT,
+)
 from pyperf.data.problem import Problem
 from pyperf.data.dataset import PyPerfInstance
 from pyperf.data.perf import PerformanceCommit
 from pyperf.execute.evaluate import speedup_summary, create_analysis_dataframe
 from pyperf.utils.io import load_problems
-from pyperf.collect.pids import TEST_PROBLEMS
+from pyperf.collect.pids import TEST_PROBLEMS, LONG_RUNNING_PROBLEMS
 from pyperf.collect.utils import prepare_prob_script
 
 
@@ -76,6 +82,23 @@ def build_dataset(problems, exp_id):
         .groupby(["pid", "commit"])
         .head(MAX_TEST_COUNT)
     )
+
+    # heuristic: use fewer tests for extremely long runtime problems
+    for pid, commit in LONG_RUNNING_PROBLEMS:
+        long_running_mask = (opt_problems_df["pid"] == pid) & (
+            opt_problems_df["commit"] == commit
+        )
+        if any(long_running_mask):
+            # print(f">>> long running problem: {pid} - {commit}")
+            problem_indices = opt_problems_df.index[long_running_mask]
+            sorted_indices = (
+                opt_problems_df.loc[problem_indices]
+                .sort_values("speedup_factor", ascending=False)
+                .index[:LONG_RUNNING_MAX_TEST_COUNT]
+            )
+            drop_indices = [idx for idx in problem_indices if idx not in sorted_indices]
+            opt_problems_df = opt_problems_df.drop(drop_indices)
+
     unique_pid_commits = set(zip(opt_problems_df["pid"], opt_problems_df["commit"]))
     print(f"Found {len(unique_pid_commits)} / {len(test_pid_commits_set)} probs")
 
@@ -137,7 +160,6 @@ def main(exp_id, push_to_hf, hf_username, dataset_name=None):
     # Build dataset
     dataset = build_dataset(problems, exp_id)
 
-    exit()
     # Save dataset to jsonl file
     DATASET_DIR.mkdir(parents=True, exist_ok=True)
     dataset_df = pd.DataFrame([asdict(inst) for inst in dataset])

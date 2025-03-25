@@ -166,3 +166,7 @@ TEST_PROBLEMS = {
     "tornado": TORNADO_PROBLEMS,
     "pydantic": PYDANTIC_PROBLEMS,
 }
+
+
+# add problems here that have long runtimes to reduce number of tests
+LONG_RUNNING_PROBLEMS = [("pandas-dataframe.__setitem__", "e7e3676")]
