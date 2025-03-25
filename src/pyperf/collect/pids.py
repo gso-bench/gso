@@ -48,8 +48,8 @@ PANDAS_PROBLEMS = [
     ("pandas-series.__init__", "191557d"),  # single test!
     ("pandas-datetimelikearraymixin.astype", "45f0705"),  # single test!
     # --- buffer ---
-    # ("pandas-index._getitem_slice", "9b4cffc"),  # weak tests
-    # ("pandas-concat", "4583a04"),  # single test!
+    ("pandas-concat", "4583a04"),
+    # ("pandas-index._getitem_slice", "9b4cffc"),
     # ("pandas-multiindex.equals", "7281475"),
     # ("pandas-datetimelikearraymixin._add_datetimelike_scalar", "a6c0ae4"),
     # ("pandas-ensure_index_from_sequences", "38086f1"),  # single test!
@@ -169,4 +169,8 @@ TEST_PROBLEMS = {
 
 
 # add problems here that have long runtimes to reduce number of tests
-LONG_RUNNING_PROBLEMS = [("pandas-dataframe.__setitem__", "e7e3676")]
+LONG_RUNNING_PROBLEMS = [
+    ("pandas-dataframe.__setitem__", "e7e3676"),
+    ("datasets-load_dataset_builder", "ef3b5dd"),
+    ("datasets-dataset.select_columns", "32b206d"),
+]
