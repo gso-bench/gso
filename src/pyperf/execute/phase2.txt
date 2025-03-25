@@ -24,55 +24,90 @@ run_tests_for_commit() {
 total_pairs=$(jq length working_pairs.json)
 echo "Processing $total_pairs commit-test pairs"
 
+# Group tests by commits to minimize checkouts and installations
+declare -A base_commits
+declare -A working_commits
 
-# First run all base commit tests
+# Build mapping of commits to their tests
 for i in $(seq 0 $(($total_pairs - 1))); do
     commit=$(jq -r ".[$i].commit" working_pairs.json)
     test_file=$(jq -r ".[$i].test_file" working_pairs.json)
-    test_basename=$(basename $test_file)
-    base_result="results/base_${commit}_${test_basename%.py}.txt"
-    commit_result="results/commit_${commit}_${test_basename%.py}.txt"
-    target_result="results/target_${commit}_${test_basename%.py}.txt"
-    file_prefix="${commit}_${test_basename}"
+    base_commit="${commit}^"
+    
+    # Add to base commits mapping
+    if [[ -z "${base_commits[$base_commit]}" ]]; then
+        base_commits[$base_commit]="$test_file"
+    else
+        base_commits[$base_commit]="${base_commits[$base_commit]}|$test_file"
+    fi
+    
+    # Add to working commits mapping
+    if [[ -z "${working_commits[$commit]}" ]]; then
+        working_commits[$commit]="$test_file"
+    else
+        working_commits[$commit]="${working_commits[$commit]}|$test_file"
+    fi
+done
 
-    echo "Processing base commit $commit with test $test_file"
-
-    # Test base commit (parent of working commit)
+# First run all base commit tests (grouped by commit)
+for base_commit in "${!base_commits[@]}"; do
+    echo "Testing base commit: ${base_commit}"
     cd $repo_name && git stash -u
-    echo "Testing base commit: ${commit}^"
-    git checkout "${commit}^"
+    git checkout "${base_commit}"
     $install_commands
     cd ..
+    
+    # Process all tests for this base commit
+    IFS='|' read -ra tests <<< "${base_commits[$base_commit]}"
+    for test_file in "${tests[@]}"; do
+        test_basename=$(basename $test_file)
+        orig_commit=${base_commit%^}  # Remove the ^ to get original commit
+        base_result="results/base_${orig_commit}_${test_basename%.py}.txt"
+        commit_result="results/commit_${orig_commit}_${test_basename%.py}.txt"
+        target_result="results/target_${orig_commit}_${test_basename%.py}.txt"
+        file_prefix="${orig_commit}_${test_basename}"
+        
+        echo "Processing base commit $base_commit with test $test_file"
+        run_tests_for_commit "$test_file" "$base_result" "--reference" "$file_prefix"
+        
+        # Create metadata file for this combination
+        meta_file="results/meta_${orig_commit}_${test_basename%.py}.json"
+        echo "{
+            \"commit\": \"$orig_commit\",
+            \"test_file\": \"$test_file\",
+            \"base_result\": \"$base_result\",
+            \"commit_result\": \"$commit_result\",
+            \"target_result\": \"$target_result\",
+            \"base_commit\": \"${base_commit}\",
+            \"target_commit\": \"${target_commit}\",
+            \"timestamp\": \"$(date -u +"%Y-%m-%dT%H:%M:%SZ")\"
+        }" > "$meta_file"
+    done
+done
 
-    run_tests_for_commit "$test_file" "$base_result" "--reference" "$file_prefix"
-
-    # Create metadata file for this combination
-    meta_file="results/meta_${commit}_${test_basename%.py}.json"
-    echo "{
-        \"commit\": \"$commit\",
-        \"test_file\": \"$test_file\",
-        \"base_result\": \"$base_result\",
-        \"commit_result\": \"$commit_result\",
-        \"target_result\": \"$target_result\",
-        \"base_commit\": \"${commit}^\",
-        \"target_commit\": \"${target_commit}\",
-        \"timestamp\": \"$(date -u +"%Y-%m-%dT%H:%M:%SZ")\"
-    }" > "$meta_file"
-
-    # Test working commit
-    cd $repo_name && git stash -u
+# Then run all working commit tests (grouped by commit)
+for commit in "${!working_commits[@]}"; do
     echo "Testing working commit: ${commit}"
+    cd $repo_name && git stash -u
     git checkout $commit
     $install_commands
     cd ..
-
-    if run_tests_for_commit "$test_file" "$commit_result" "--eqcheck" "$file_prefix"; then
-        echo "Working commit passed performance and equivalence tests"
-    else
-        echo "Working commit failed performance or equivalence tests"
-        continue
-    fi
-
+    
+    # Process all tests for this working commit
+    IFS='|' read -ra tests <<< "${working_commits[$commit]}"
+    for test_file in "${tests[@]}"; do
+        test_basename=$(basename $test_file)
+        commit_result="results/commit_${commit}_${test_basename%.py}.txt"
+        file_prefix="${commit}_${test_basename}"
+        
+        echo "Processing working commit $commit with test $test_file"
+        if run_tests_for_commit "$test_file" "$commit_result" "--eqcheck" "$file_prefix"; then
+            echo "Working commit passed performance and equivalence tests"
+        else
+            echo "Working commit failed performance or equivalence tests"
+            continue
+        fi
+    done
 done
 
 # Now run target commit tests once

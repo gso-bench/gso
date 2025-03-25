@@ -58,13 +58,16 @@ def speedup_summary(
     non_python_only=False,
     python_only=False,
 ):
-    run0_res = list(prob.results.values())[0]
+    lrun_res = list(prob.results.values())[-1]
     stats = {}
     valid_commits, opt_commits = set(), set()
 
-    for ct in run0_res:
+    for ct in lrun_res:
         test = ct["test_file"]
         commit = next((c for c in prob.commits if c.quick_hash() == ct["commit"]), None)
+
+        if commit is None:
+            continue
 
         if non_python_only and not has_non_python_changes(commit):
             continue
@@ -96,6 +99,7 @@ def speedup_summary(
         opt_perc = ((before_mean - after_mean) / before_mean) * 100
         speedup_factor = before_mean / after_mean
         loc_changed = commit.stats.get("num_non_test_edited_lines", 0)
+        # print(f"  {prob.pid} ({test}): {opt_perc:.2f}% | {speedup_factor:.2f}x")
 
         if before_mean > after_mean and opt_perc > speedup_threshold:
 
@@ -207,7 +211,9 @@ def plot_top_pids_by_time(df: pd.DataFrame, output_dir: str, top_n: int = 20):
     top_pids = df.groupby("pid")["base_time"].max().reset_index()
     top_pids = top_pids.nlargest(top_n, "base_time")
     plt.figure(figsize=(12, 8))
-    ax = sns.barplot(data=top_pids, y="pid", x="base_time", palette="viridis")
+    ax = sns.barplot(
+        data=top_pids, y="pid", x="base_time", palette="viridis", hue="pid"
+    )
 
     for i, v in enumerate(top_pids["base_time"]):
         ax.text(v + 0.1, i, f"{v:.2f}s", va="center")
@@ -316,12 +322,12 @@ def main(
         f"Optimized problems: {len(opt_problems)} ({len(opt_problems)/num_valid*100:.2f}%)"
     )
     print(f"Optimized APIs: {opt_apis}")
-    # print("\nErrored APIs:")
-    # for p in err_problems:
-    #     commits = ", ".join(
-    #         [f"{c.quick_hash()} ({c.date.strftime("%Y")})" for c in p.commits][:10]
-    #     )
-    #     print(f"  {p.api} : {commits}")
+    print("\nErrored APIs:")
+    for p in err_problems:
+        commits = ", ".join(
+            [f"{c.quick_hash()} ({c.date.strftime("%Y")})" for c in p.commits][:10]
+        )
+        print(f"  {p.api} : {commits}")
 
     print("\nTest Analysis:")
     print(f"  Total tests analyzed: {summary['total_tests']}")
