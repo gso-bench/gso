@@ -16,6 +16,7 @@ def run_evaluation(
     reformat_reports=False,
     max_workers=10,
     instance_ids=None,
+    rerun_all=False,
 ):
     """Run evaluation script and return path to generated report."""
     cmd = [
@@ -39,6 +40,9 @@ def run_evaluation(
 
     if instance_ids:
         cmd.extend(["--instance_ids", *instance_ids])
+
+    if rerun_all:
+        cmd.append("--rerun_all")
 
     output = subprocess.check_output(cmd, text=True)
     print(output)
@@ -269,6 +273,11 @@ def main():
         help="Reformat and rewrite reports for instances that have already been run",
     )
     parser.add_argument(
+        "--rerun_all",
+        action="store_true",
+        help="Rerun all instances, even if they have already been run. Default: False",
+    )
+    parser.add_argument(
         "--max_workers",
         type=int,
         default=10,
@@ -293,6 +302,7 @@ def main():
             args.reformat_reports,
             args.max_workers,
             args.instance_ids,
+            args.rerun_all,
         )
         report_files.append(report_path)
 
