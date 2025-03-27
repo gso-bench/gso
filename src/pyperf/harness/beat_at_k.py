@@ -104,7 +104,7 @@ def merge_reports(report_files, k):
     report["summary"]["k"] = k
 
     instance_status = {}  # instance_id -> best status across runs
-    instance_opt_stats = {}  # instance_id -> best opt_perc_base across runs
+    instance_opt_stats = {}  # instance_id -> best geomean_speedup_commit across runs
 
     def get_instance_status(instance_id, current_sets):
         """Determine status for an instance based on its presence in status sets."""
@@ -134,18 +134,6 @@ def merge_reports(report_files, k):
                 if new_priority > current_priority:
                     instance_status[instance_id] = status
 
-                # Update opt stats
-                if status == "passed":
-                    current_opt_stats = instance_opt_stats.get(instance_id, {})
-                    new_opt_stats = current_report["opt_stats"].get(instance_id, {})
-                    if new_opt_stats and (
-                        not current_opt_stats
-                        or new_opt_stats["opt_perc_base"]
-                        > current_opt_stats["opt_perc_base"]
-                    ):
-                        new_opt_stats["report_file"] = report_file
-                        instance_opt_stats[instance_id] = new_opt_stats
-
             # Merge improvement tracking
             for metric in IMPROVEMENT_METRICS:
                 report["instance_sets"][metric].update(current_sets[metric])
@@ -157,6 +145,25 @@ def merge_reports(report_files, k):
             report["instance_sets"][f"{status}_ids"].add(instance_id)
 
     # Populate opt stats
+    improved_commit_ids = set(report["instance_sets"]["improved_commit_ids"])
+    for report_file in report_files:
+        with open(report_file) as f:
+            current_report = json.load(f)
+            for instance_id in improved_commit_ids:
+                if instance_id in current_report["opt_stats"]:
+                    new_opt_stats = current_report["opt_stats"][instance_id]
+                    current_opt_stats = instance_opt_stats.get(instance_id, {})
+
+                    if new_opt_stats.get("geomean_speedup_commit"):
+                        if (
+                            not current_opt_stats
+                            or not current_opt_stats.get("geomean_speedup_commit")
+                            or new_opt_stats["geomean_speedup_commit"]
+                            > current_opt_stats.get("geomean_speedup_commit", 0)
+                        ):
+                            new_opt_stats["report_file"] = report_file
+                            instance_opt_stats[instance_id] = new_opt_stats
+
     report["opt_stats"] = instance_opt_stats
 
     # Convert sets to sorted lists
