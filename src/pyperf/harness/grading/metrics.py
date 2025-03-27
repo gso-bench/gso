@@ -5,6 +5,7 @@ from enum import Enum
 from pyperf.constants import OPTIM_THRESH_PERC, OPTIM_THRESH_FACTOR
 from pyperf.data.dataset import PyPerfInstance
 from pyperf.harness.grading.evalscript import (
+    START_EVAL_PATCH,
     APPLY_PATCH_FAIL,
     INSTALL_FAIL,
     TESTS_ERROR,
@@ -23,6 +24,7 @@ from pyperf.harness.grading.evalscript import (
 
 
 class TestStatus(Enum):
+    BASE_FAILED = "BASE_FAILED"
     PATCH_FAILED = "PATCH_FAILED"
     TESTS_ERRORED = "TESTS_ERRORED"
     TESTS_PASSED = "TESTS_PASSED"
@@ -211,8 +213,9 @@ def get_logs_eval(instance: PyPerfInstance, log_fp: str) -> tuple[dict, TestStat
 
     with open(log_fp) as f:
         content = f.read()
-
-        if APPLY_PATCH_FAIL in content or (INSTALL_FAIL in content):
+        if START_EVAL_PATCH not in content:
+            return {}, TestStatus.BASE_FAILED
+        elif APPLY_PATCH_FAIL in content or (INSTALL_FAIL in content):
             return {}, TestStatus.PATCH_FAILED
         elif (TESTS_ERROR in content) or (TESTS_TIMEOUT in content):
             return {}, TestStatus.TESTS_ERRORED
@@ -245,6 +248,7 @@ def get_eval_report(
     report_map[instance_id] = {
         "patch_is_None": False,
         "patch_exists": False,
+        "base_successfully_run": False,
         "patch_successfully_applied": False,
         "test_passed": False,
         "base_times": None,
@@ -266,6 +270,10 @@ def get_eval_report(
 
     # parse the evaluation logs
     time_map, test_status = get_logs_eval(instance, test_log_path)
+
+    if test_status == TestStatus.BASE_FAILED:
+        return report_map
+    report_map[instance_id]["base_successfully_run"] = True
 
     if test_status == TestStatus.PATCH_FAILED:
         return report_map

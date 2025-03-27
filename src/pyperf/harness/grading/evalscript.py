@@ -7,6 +7,7 @@ TESTS_ERROR = ">>>>> Tests Errored"
 TESTS_PASSED = ">>>>> Tests Passed"
 TESTS_TIMEOUT = ">>>>> Tests Timed Out"
 MAIN_REGRESS_WARNING = ">>>>> WARNING: Error in main branch! continuing..."
+START_EVAL_PATCH = "Applying patch..."
 START_BASE_OUTPUT = ">>>>> Start Base Output"
 END_BASE_OUTPUT = ">>>>> End Base Output"
 START_PATCH_OUTPUT = ">>>>> Start Patch Output"
@@ -133,7 +134,7 @@ def get_eval_script(instance) -> str:
         # ----------- base and patch perf testing ------------
         'echo "Running performance test before patch..."',
         *[RUN_BASE.format(i=i) for i in range(test_count)],
-        'echo "Applying patch..."',
+        f'echo "{START_EVAL_PATCH}"',
         'apply_patch "/tmp/patch.diff"',
         'echo "Installing repo..."',
         "install_repo",

@@ -58,10 +58,11 @@ def merge_reports(report_files, k):
     """Merge multiple report files with OR logic for pass status."""
     # Define constants and initial structure
     STATUS_PRIORITY = {
-        "passed": 4,
-        "test_failed": 3,
-        "patch_failed": 2,
-        "empty_patch": 1,
+        "passed": 5,
+        "test_failed": 4,
+        "patch_failed": 3,
+        "empty_patch": 2,
+        "base_failed": 1,
         "error": 0,
         None: -1,
     }
@@ -69,6 +70,7 @@ def merge_reports(report_files, k):
     STATUS_SETS = [
         "completed_ids",
         "passed_ids",
+        "base_failed_ids",
         "patch_failed_ids",
         "test_failed_ids",
         "empty_patch_ids",
@@ -93,6 +95,7 @@ def merge_reports(report_files, k):
                 "completed_instances",
                 "incomplete_instances",
                 "passed_instances",
+                "base_failed_instances",
                 "patch_failed_instances",
                 "test_failed_instances",
                 "empty_patch_instances",
@@ -117,6 +120,7 @@ def merge_reports(report_files, k):
             "patch_failed_ids": "patch_failed",
             "test_failed_ids": "test_failed",
             "empty_patch_ids": "empty_patch",
+            "base_failed_ids": "base_failed",
             "error_ids": "error",
         }
         for set_name, status in status_mapping.items():
@@ -183,6 +187,7 @@ def merge_reports(report_files, k):
         "patch_failed_instances": "patch_failed_ids",
         "test_failed_instances": "test_failed_ids",
         "empty_patch_instances": "empty_patch_ids",
+        "base_failed_instances": "base_failed_ids",
         "error_instances": "error_ids",
         "improved_over_base": "improved_base_ids",
         "improved_over_commit": "improved_commit_ids",
@@ -212,6 +217,7 @@ def merge_reports(report_files, k):
     print(f"Instances with failed tests: {summary['test_failed_instances']}")
     print(f"Instances with failed patch: {summary['patch_failed_instances']}")
     print(f"Instances with empty patches: {summary['empty_patch_instances']}")
+    print(f"Instances with base errors: {summary['base_failed_instances']}")
     print(f"Instances with errors: {summary['error_instances']}")
     print("-" * 10)
     print(f"beat(base)@{k}: {summary['improved_over_base']} ({opt_base*100:.2f}%) ")

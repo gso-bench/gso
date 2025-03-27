@@ -34,6 +34,7 @@ def make_run_report(
     error_ids = set()  # Instances that could not be evaluated due to errors
     completed_ids = set()  # Instances that were run evaluated
     passed_ids = set()  # Instances where tests passed
+    base_failed_ids = set()  # Instances where base failed to run
     patch_failed_ids = set()  # Instances where patch failed to apply
     test_failed_ids = set()  # Instances where tests failed to pass
     improved_base = set()  # Instances that improved over base
@@ -82,6 +83,10 @@ def make_run_report(
                 empty_patch_ids.add(instance_id)
                 continue
 
+            if not instance_report.get("base_successfully_run"):
+                base_failed_ids.add(instance_id)
+                continue
+
             # Check patch application success
             if not instance_report["patch_successfully_applied"]:
                 patch_failed_ids.add(instance_id)
@@ -116,6 +121,7 @@ def make_run_report(
             "completed_instances": len(completed_ids),
             "incomplete_instances": len(incomplete_ids),
             "passed_instances": len(passed_ids),
+            "base_failed_instances": len(base_failed_ids),
             "patch_failed_instances": len(patch_failed_ids),
             "test_failed_instances": len(test_failed_ids),
             "empty_patch_instances": len(empty_patch_ids),
@@ -127,6 +133,7 @@ def make_run_report(
         "instance_sets": {
             "completed_ids": sorted(completed_ids),
             "passed_ids": sorted(passed_ids),
+            "base_failed_ids": sorted(base_failed_ids),
             "patch_failed_ids": sorted(patch_failed_ids),
             "test_failed_ids": sorted(test_failed_ids),
             "incomplete_ids": sorted(incomplete_ids),
