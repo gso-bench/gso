@@ -9,7 +9,13 @@ from pyperf.constants import EVALUATION_REPORTS_DIR
 
 
 def run_evaluation(
-    pred_path, dataset_name, timeout, run_id, reformat_reports=False, max_workers=10
+    pred_path,
+    dataset_name,
+    timeout,
+    run_id,
+    reformat_reports=False,
+    max_workers=10,
+    instance_ids=None,
 ):
     """Run evaluation script and return path to generated report."""
     cmd = [
@@ -30,6 +36,9 @@ def run_evaluation(
 
     if reformat_reports:
         cmd.append("--reformat_reports")
+
+    if instance_ids:
+        cmd.extend(["--instance_ids", *instance_ids])
 
     output = subprocess.check_output(cmd, text=True)
     print(output)
@@ -220,6 +229,12 @@ def main():
         help="Name of HF dataset to use or local json/jsonl file",
     )
     parser.add_argument(
+        "--instance_ids",
+        nargs="+",
+        type=str,
+        help="Instance IDs to run (space separated)",
+    )
+    parser.add_argument(
         "--timeout",
         type=int,
         default=3600,
@@ -270,6 +285,7 @@ def main():
             args.run_id,
             args.reformat_reports,
             args.max_workers,
+            args.instance_ids,
         )
         report_files.append(report_path)
 
