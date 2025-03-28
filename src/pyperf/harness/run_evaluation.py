@@ -2,6 +2,7 @@ from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 from pathlib import Path
 import resource
 import docker
+import time
 from dataclasses import dataclass
 
 from pyperf.utils.io import load_pyperf_dataset, load_pyperf_predictions
@@ -26,14 +27,36 @@ class GradeInstanceTask:
 
 
 def grad_instance_mp(task: GradeInstanceTask):
-    return grade_instance(
-        task.instance,
-        task.pred,
-        task.rm_image,
-        task.run_id,
-        task.timeout,
-        task.reformat_reports,
-    )
+    max_retries = 5
+    sleep_time = 60
+    instance_id = task.instance.instance_id
+
+    for attempt in range(max_retries + 1):
+        result = grade_instance(
+            task.instance,
+            task.pred,
+            task.rm_image,
+            task.run_id,
+            task.timeout,
+            task.reformat_reports,
+            retry_count=attempt,
+        )
+
+        if result is None:
+            return result
+
+        result_id, report = result
+        # if base_successfully_run is False, retry
+        if (
+            report
+            and instance_id in report
+            and not report[instance_id].get("base_successfully_run", False)
+        ):
+            if attempt < max_retries:
+                time.sleep(60)
+                continue
+
+        return result
 
 
 def run_instances(

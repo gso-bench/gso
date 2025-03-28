@@ -64,6 +64,7 @@ def grade_instance(
     run_id: str,
     timeout: int | None = None,
     reformat_reports: bool = False,
+    retry_count: int = 0,
 ):
     """
     Run a single instance with the given prediction.
@@ -105,6 +106,9 @@ def grade_instance(
         container = create_container(instance, client, run_id, logger)
         container.start()
         logger.info(f"Container for {instance_id} started: {container.id}")
+
+        if retry_count > 0:
+            logger.info(f"Retrying ({retry_count}/{3})")
 
         # Copy model prediction as patch file to container
         patch_file = Path(log_dir / "patch.diff")
