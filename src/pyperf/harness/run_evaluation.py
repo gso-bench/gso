@@ -1,9 +1,10 @@
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 from pathlib import Path
+from dataclasses import dataclass
 import resource
 import docker
 import time
-from dataclasses import dataclass
+import re
 
 from pyperf.utils.io import load_pyperf_dataset, load_pyperf_predictions
 from pyperf.harness.environment.docker_utils import list_images
@@ -40,12 +41,18 @@ def grad_instance_mp(task: GradeInstanceTask):
             task.timeout,
             task.reformat_reports,
             retry_count=attempt,
+            max_retries=max_retries,
         )
 
         if result is None:
             return result
 
-        result_id, report = result
+        result_id, report, test_output_path = result
+
+        # read test_output
+        with open(test_output_path, "r") as f:
+            test_output = f.read()
+
         # if base_successfully_run is False, retry
         if (
             report
@@ -53,7 +60,13 @@ def grad_instance_mp(task: GradeInstanceTask):
             and not report[instance_id].get("base_successfully_run", False)
         ):
             if attempt < max_retries:
-                time.sleep(60)
+                time.sleep(sleep_time)
+                continue
+
+        # if HTTP error:
+        if re.search(r"HTTP.*Error|Error.*HTTP", test_output, re.IGNORECASE):
+            if attempt < max_retries:
+                time.sleep(sleep_time)
                 continue
 
         return result
