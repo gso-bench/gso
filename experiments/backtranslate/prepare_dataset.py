@@ -106,13 +106,16 @@ def build_dataset(problems, exp_id):
     return dataset
 
 
-def main(push_to_hf, hf_username, dataset_name):
-    exp_ids = TEST_PROBLEMS.keys()
+def main(exp_id, push_to_hf, hf_username, dataset_name=None):
+    exp_ids = TEST_PROBLEMS.keys() if exp_id is None else [exp_id]
     problems = [
         problem
         for eid in exp_ids
         for problem in load_problems((EXPS_DIR / f"{eid}" / f"{eid}_results.json"))
     ]
+
+    if exp_id and exp_id not in TEST_PROBLEMS.keys():
+        exp_id = None  # unset
 
     # Build dataset
     dataset = build_dataset(problems, exp_id=None)
@@ -133,6 +136,7 @@ def main(push_to_hf, hf_username, dataset_name):
 
 if __name__ == "__main__":
     parser = ArgumentParser(description="Analyze performance results")
+    parser.add_argument("--exp_id", type=str, help="Experiment ID", default=None)
     parser.add_argument("--dataset_name", type=str, help="Dataset name", default=None)
     parser.add_argument(
         "--push_to_hf",
