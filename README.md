@@ -26,10 +26,11 @@ Generating performance tests for python repositories
     uv sync
     ```
 
-3. [Github API token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) and [OpenAI key](https://platform.openai.com/api-keys) setup.
+3. Setup your tokens: [Github API token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens), [OpenAI key](https://platform.openai.com/api-keys), [HuggingFace token](https://huggingface.co/docs/hub/en/security-tokens):
     ```
     export GHAPI_TOKEN="github_token"
     export OPENAI_API_KEY="openai_key"
+    export HF_TOKEN="huggingface_token"
     ```
 
 ## Usage

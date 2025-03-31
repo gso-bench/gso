@@ -1,3 +1,5 @@
+import os
+
 # Constants for the evaluation script
 APPLY_PATCH_FAIL = ">>>>> Patch Apply Failed"
 APPLY_PATCH_PASS = ">>>>> Applied Patch"
@@ -129,8 +131,16 @@ def get_eval_script(instance) -> str:
 
     run_base = "\n".join([RUN_BASE.format(i=i) for i in range(test_count)])
 
+    # Set tokens
+    setup_tokens = [
+        f"export HF_TOKEN={os.getenv('HF_TOKEN')}" if os.getenv("HF_TOKEN") else "",
+    ]
+
     eval_commands = [
         "source .venv/bin/activate",
+        # ----------- set up tokens ------------
+        'echo "Setting up tokens..."',
+        *setup_tokens,
         # ----------- base and patch perf testing ------------
         'echo "Running performance test before patch..."',
         *[RUN_BASE.format(i=i) for i in range(test_count)],
