@@ -164,41 +164,44 @@ plot_data = []
 
 # Add data for base
 for k, rates in enumerate(base_at_k_rates, 1):
+    error = rates[1] if k < args.k else 0
     plot_data.append(
         {
             "k": k,
             "Rate": rates[0],
-            "Error": rates[1],
+            "Error": error,
             "Metric": "beat(base)@k",
-            "Lower": rates[0] - rates[1],
-            "Upper": rates[0] + rates[1],
+            "Lower": rates[0] - error,
+            "Upper": rates[0] + error,
         }
     )
 
 # Add data for commit
 for k, rates in enumerate(commit_at_k_rates, 1):
+    error = rates[1] if k < args.k else 0
     plot_data.append(
         {
             "k": k,
             "Rate": rates[0],
-            "Error": rates[1],
+            "Error": error,
             "Metric": "beat(commit)@k",
-            "Lower": rates[0] - rates[1],
-            "Upper": rates[0] + rates[1],
+            "Lower": rates[0] - error,
+            "Upper": rates[0] + error,
         }
     )
 
 # Add data for main if needed
 if PLOT_MAIN:
     for k, rates in enumerate(main_at_k_rates, 1):
+        error = rates[1] if k < args.k else 0
         plot_data.append(
             {
                 "k": k,
                 "Rate": rates[0],
-                "Error": rates[1],
+                "Error": error,
                 "Metric": "beat(main)@k",
-                "Lower": rates[0] - rates[1],
-                "Upper": rates[0] + rates[1],
+                "Lower": rates[0] - error,
+                "Upper": rates[0] + error,
             }
         )
 
@@ -262,6 +265,7 @@ for metric, color in colors.items():
 plt.xlabel("# Agent Rollouts (K)")
 plt.ylabel("% Problems")
 plt.xticks(k_values)
+plt.ylim(0, 80)
 plt.grid(True, linestyle="-", alpha=0.05)
 plt.legend(title=None)
 
