@@ -12,8 +12,8 @@ from pyperf.generate.helpers import *
 from pyperf.generate.context import prepare
 from pyperf.generate.args import PerfExpGenArgs
 
-# NOTE: Only use for debug; runs testgen for valid probs from previous run
-IS_RERUN_FLAG = False
+IS_RERUN_FLAG = False  # NOTE: runs testgen for valid probs from previous run
+DEBUG_FLAG = False  # NOTE: debug flag to not overwrite existing tests
 
 
 class PerfExpGenerator:
@@ -105,7 +105,8 @@ class PerfExpGenerator:
                     test.add_samples(results[idx])
                     idx += 1
 
-        save_problems(self.exp_dir / f"{self.exp_id}_problems.json", problems)
+        results_json = f"{self.exp_id}_problems{'_DEBUG' if DEBUG_FLAG else ''}.json"
+        save_problems(self.exp_dir / results_json, problems)
         return problems
 
 

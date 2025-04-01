@@ -86,14 +86,10 @@ def prompt_o3_mini(instance, mode="short"):
 
 if __name__ == "__main__":
     args = fire.Fire(LLMArgs)
-    SELECTED_INSTANCES = [
-        "numpy__numpy-7ff7ec7",
-        "numpy__numpy-b862e4f",
-        "numpy__numpy-e801e7a",
-    ]
-
+    repo = "numpy/numpy"
     dataset = load_dataset("manishs/pyperf-extended", split="test")
-    dataset = dataset.filter(lambda x: x["instance_id"] in SELECTED_INSTANCES)
+    dataset = dataset.filter(lambda x: repo == x["repo"])
+    print(f"Dataset size: {len(dataset)}")
 
     # SHORT PLANS
     short_payloads = []
