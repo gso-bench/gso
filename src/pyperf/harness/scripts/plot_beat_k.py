@@ -207,32 +207,39 @@ if PLOT_MAIN:
 
 df_plot = pd.DataFrame(plot_data)
 
-# Set the style (from reference)
-sns.set_style("whitegrid")
+# Set the style
+# sns.set_style("whitegrid")
 
 # Define colors
 colors = {
-    "beat(base)@k": "#1f77b4",  # blue
-    "beat(commit)@k": "#ff7f0e",  # orange
-    "beat(main)@k": "#2ca02c",  # green
+    "beat(base)@k": "#396ab1",  # blue
+    "beat(commit)@k": "#da7c2f",  # orange
+    "beat(main)@k": "#3d9651",  # green
+    # #cd2529: red
 }
 
 plt.figure(figsize=(8, 6))
 plt.rcParams.update({"font.size": 14})
 
-# Create the plot (closely following reference)
+# Create the plot
 sns.lineplot(
     data=df_plot,
     x="k",
     y="Rate",
     hue="Metric",
     style="Metric",
-    markers=True,
+    markers={
+        "beat(commit)@k": "o",
+        "beat(base)@k": "o",
+        "beat(main)@k": "o",
+    },
+    markeredgewidth=0,
+    markersize=5,
     dashes=False,
     palette=colors,
 )
 
-# Add error bands (from reference)
+# Add error bands
 for metric, color in colors.items():
     if metric == "beat(main)@k" and not PLOT_MAIN:
         continue
@@ -243,9 +250,10 @@ for metric, color in colors.items():
         metric_data["Upper"],
         alpha=0.2,
         color=color,
+        linewidth=0,
     )
 
-# Add value labels (from reference)
+# Add value labels
 for metric, color in colors.items():
     if metric == "beat(main)@k" and not PLOT_MAIN:
         continue
@@ -257,16 +265,17 @@ for metric, color in colors.items():
             textcoords="offset points",
             xytext=(0, 8),
             ha="center",
-            color=color,
-            fontsize=9,
+            color="grey",
+            fontsize=8,
         )
 
 # Customize plot
+plt.tick_params(axis="both", direction="out", length=3, width=1)
 plt.xlabel("# Agent Rollouts (K)")
 plt.ylabel("% Problems")
 plt.xticks(k_values)
-plt.ylim(0, 80)
-plt.grid(True, linestyle="-", alpha=0.05)
+plt.ylim(-3, 75)
+plt.grid(False)  #  linestyle="-", alpha=0.005)
 plt.legend(title=None)
 
 # Save the plot
