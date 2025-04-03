@@ -21,6 +21,10 @@ def get_available_logs():
                 if "archives" in root:
                     continue
 
+                # ignore if plans is in the file path
+                if "plans" in root:
+                    continue
+
                 # Get relative path from SUBMISSIONS_DIR
                 rel_path = os.path.relpath(os.path.join(root, file), SUBMISSIONS_DIR)
                 log_files.append(rel_path)

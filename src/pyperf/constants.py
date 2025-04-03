@@ -35,9 +35,6 @@ MAX_TEST_COUNT = 15  # max number of tests to run per problem
 LONG_RUNNING_MAX_TEST_COUNT = 5  # max number of tests to run per long runtime problem
 
 # --------- Grading Constants ---------
-
-# min % speedup to consider a patch as optimized
-OPTIM_THRESH_PERC = 15
-
-# min factor to consider a patch as optimized
-OPTIM_THRESH_FACTOR = 1 / (1 - (OPTIM_THRESH_PERC / 100))
+PERC_TO_FACTOR = lambda p: 1 / (1 - (p / 100))
+BASE_OPT_THRESH = 16.6  # min speedup % to consider as valid optimization
+BEAT_OPT_THRESH = 0  # min speedup % to consider as `beating` commit/main
