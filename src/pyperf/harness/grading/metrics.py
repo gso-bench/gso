@@ -2,7 +2,7 @@ import re
 import numpy as np
 from enum import Enum
 
-from pyperf.constants import PERC_TO_FACTOR, BASE_OPT_THRESH, BEAT_OPT_THRESH
+from pyperf.constants import MIN_PROB_SPEEDUP, BEAT_GM_THRESH, BEAT_GSD_THRESH
 from pyperf.data.dataset import PyPerfInstance
 from pyperf.harness.grading.evalscript import (
     START_EVAL_PATCH,
@@ -30,28 +30,48 @@ class TestStatus(Enum):
     TESTS_PASSED = "TESTS_PASSED"
 
 
-def geometric_mean(nums):
-    return np.exp(np.mean(np.log(nums))) if nums else None
+def beat(gm_speedup, gsd_speedup, perc_slowdowns):
+    """
+    Check if the patch beats the reference based on the speedup and generality.
+
+    Args:
+        gm_speedup (float): geometric mean of the speedups
+        gsd_speedup (float): geometric standard deviation of the speedups
+        perc_slowdowns (float): percentage of tests that regressed
+    Returns:
+        bool: True if the patch `beats` the reference, False otherwise
+    """
+    has_slowdowns = perc_slowdowns > 0.0
+    if has_slowdowns:
+        return gm_speedup > BEAT_GM_THRESH and gsd_speedup < BEAT_GSD_THRESH
+    else:
+        return gm_speedup > BEAT_GM_THRESH
 
 
-def geometric_stdev(nums):
-    return np.exp(np.std(np.log(nums), ddof=1)) if nums else None
+def geometric_stats(nums):
+    if not nums:
+        return None, None
+    logs = np.log(nums)
+    gm = np.exp(np.mean(logs))
+    gsd = np.exp(np.std(logs, ddof=1))
+    return gm, gsd
 
 
 def speedup(before_mean, after_mean, before_test_means, after_test_means):
     if before_mean is None or after_mean is None:
-        return None, None, None
+        return None, None, None, None, None
 
-    # compute speedup and opt% across tests
     mean_opt_perc = ((before_mean - after_mean) / before_mean) * 100
     mean_speedup = before_mean / after_mean
-    # compute per-test ratios and then geometric mean
     ratios = [b / a for b, a in zip(before_test_means, after_test_means)]
-    geomean_speedup = geometric_mean(ratios) if ratios else None
-    return mean_opt_perc, mean_speedup, geomean_speedup
+    slowdowns = [r for r in ratios if r < 1.0]
+    gm_speedup, gsd_speedup = geometric_stats(ratios) if ratios else None
+    perc_slowdowns = len(slowdowns) / len(ratios) * 100 if ratios else None
+
+    return mean_opt_perc, mean_speedup, gm_speedup, gsd_speedup, perc_slowdowns
 
 
-def compute_stats(test_groups):
+def compute_time_stats(test_groups):
     if not test_groups:
         return None, None, []
 
@@ -121,10 +141,10 @@ def get_opt_status(time_map) -> dict:
         "opt_stats": {},
     }
 
-    base_mean, base_std, base_means = compute_stats(time_map["base_times"])
-    patch_mean, patch_std, patch_means = compute_stats(time_map["patch_times"])
-    commit_mean, commit_std, commit_means = compute_stats(time_map["commit_times"])
-    main_mean, main_std, main_means = compute_stats(time_map["main_times"])
+    base_mean, base_std, base_means = compute_time_stats(time_map["base_times"])
+    patch_mean, patch_std, patch_means = compute_time_stats(time_map["patch_times"])
+    commit_mean, commit_std, commit_means = compute_time_stats(time_map["commit_times"])
+    main_mean, main_std, main_means = compute_time_stats(time_map["main_times"])
 
     time_stats = {
         "base_mean": base_mean,
@@ -155,51 +175,52 @@ def get_opt_status(time_map) -> dict:
         "gm_speedup_patch_main": None,
     }
 
-    # 1. Speedup via arithmetic mean of times and geometric mean of ratios
-    patch_base_opt, patch_base_speedup, patch_base_speedup_gm = speedup(
+    pb_opt, pb_speedup, pb_speedup_gm, pb_speedup_gsd, pb_slowdowns = speedup(
         base_mean, patch_mean, base_means, patch_means
     )
-    patch_com_opt, patch_com_speedup, patch_com_speedup_gm = speedup(
+    pc_opt, pc_speedup, pc_speedup_gm, pc_speedup_gsd, pc_slowdowns = speedup(
         commit_mean, patch_mean, commit_means, patch_means
     )
-    patch_main_opt, patch_main_speedup, patch_main_speedup_gm = speedup(
+    pm_opt, pm_speedup, pm_speedup_gm, pm_speedup_gsd, pm_slowdowns = speedup(
         main_mean, patch_mean, main_means, patch_means
     )
 
-    if base_mean > patch_mean and patch_base_speedup_gm >= PERC_TO_FACTOR(
-        BASE_OPT_THRESH
-    ):
+    if base_mean > patch_mean and pb_speedup_gm >= MIN_PROB_SPEEDUP:
         opt_status["beat_base"] = True
         opt_stats.update(
             {
-                "opt_perc_patch_base": patch_base_opt,
-                "speedup_patch_base": patch_base_speedup,
-                "gm_speedup_patch_base": patch_base_speedup_gm,
+                "opt_perc_patch_base": pb_opt,
+                "speedup_patch_base": pb_speedup,
+                "gm_speedup_patch_base": pb_speedup_gm,
+                "gsd_speedup_patch_base": pb_speedup_gsd,
+                "slowdown_perc_patch_base": pb_slowdowns,
             }
         )
 
-        # if patch improves over base, then check how it compares to commit/main
-
-        if patch_com_speedup_gm >= PERC_TO_FACTOR(BEAT_OPT_THRESH):
+        if beat(pc_speedup_gm, pc_speedup_gsd, pc_slowdowns):
             opt_status["beat_commit"] = True
             opt_stats.update(
                 {
-                    "opt_perc_patch_commit": patch_com_opt,
-                    "speedup_patch_commit": patch_com_speedup,
-                    "gm_speedup_patch_commit": patch_com_speedup_gm,
+                    "opt_perc_patch_commit": pc_opt,
+                    "speedup_patch_commit": pc_speedup,
+                    "gm_speedup_patch_commit": pc_speedup_gm,
+                    "gsd_speedup_patch_commit": pc_speedup_gsd,
+                    "slowdown_perc_patch_commit": pc_slowdowns,
                 }
             )
 
         if main_mean is None:
             pass
 
-        elif patch_main_speedup_gm >= PERC_TO_FACTOR(BEAT_OPT_THRESH):
+        elif beat(pm_speedup_gm, pm_speedup_gsd, pm_slowdowns):
             opt_status["beat_main"] = True
             opt_stats.update(
                 {
-                    "opt_perc_patch_main": patch_main_opt,
-                    "speedup_patch_main": patch_main_speedup,
-                    "gm_speedup_patch_main": patch_main_speedup_gm,
+                    "opt_perc_patch_main": pm_opt,
+                    "speedup_patch_main": pm_speedup,
+                    "gm_speedup_patch_main": pm_speedup_gm,
+                    "gsd_speedup_patch_main": pm_speedup_gsd,
+                    "slowdown_perc_patch_main": pm_slowdowns,
                 }
             )
 

@@ -39,6 +39,5 @@ LOW_TEST_IDEAL_TEST_COUNT = 5  # target test count with low test count
 LOW_TEST_FALLBACK_SPEEDUP = 1.1  # min speedup for problems with low test count
 
 # --------- Grading Constants ---------
-PERC_TO_FACTOR = lambda p: 1 / (1 - (p / 100))
-BASE_OPT_THRESH = 16.6  # min speedup % to consider as valid optimization
-BEAT_OPT_THRESH = 0.95  # min speedup % to consider as `beating` commit/main
+BEAT_GM_THRESH = 0.95  # min speedup to consider as `beating` commit/main
+BEAT_GSD_THRESH = 1.3  # max speedup variation to consider as `beating` commit/main
