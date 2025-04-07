@@ -75,15 +75,15 @@ def merge_reports(report_files, k):
         "test_failed_ids",
         "empty_patch_ids",
         "error_ids",
-        "improved_base_ids",
-        "improved_commit_ids",
-        "improved_main_ids",
+        "beat_base_ids",
+        "beat_commit_ids",
+        "beat_main_ids",
     ]
 
     IMPROVEMENT_METRICS = [
-        "improved_base_ids",
-        "improved_commit_ids",
-        "improved_main_ids",
+        "beat_base_ids",
+        "beat_commit_ids",
+        "beat_main_ids",
     ]
 
     report = {
@@ -100,9 +100,9 @@ def merge_reports(report_files, k):
                 "test_failed_instances",
                 "empty_patch_instances",
                 "error_instances",
-                "improved_over_base",
-                "improved_over_commit",
-                "improved_over_main",
+                "beat_base",
+                "beat_commit",
+                "beat_main",
             ]
         },
         "instance_sets": {key: set() for key in STATUS_SETS},
@@ -111,7 +111,7 @@ def merge_reports(report_files, k):
     report["summary"]["k"] = k
 
     instance_status = {}  # instance_id -> best status across runs
-    instance_opt_stats = {}  # instance_id -> best geomean_speedup_commit across runs
+    instance_opt_stats = {}  # instance_id -> best gm_speedup_patch_commit across runs
 
     def get_instance_status(instance_id, current_sets):
         """Determine status for an instance based on its presence in status sets."""
@@ -153,21 +153,21 @@ def merge_reports(report_files, k):
             report["instance_sets"][f"{status}_ids"].add(instance_id)
 
     # Populate opt stats
-    improved_commit_ids = set(report["instance_sets"]["improved_commit_ids"])
+    beat_commit_ids = set(report["instance_sets"]["beat_commit_ids"])
     for report_file in report_files:
         with open(report_file) as f:
             current_report = json.load(f)
-            for instance_id in improved_commit_ids:
+            for instance_id in beat_commit_ids:
                 if instance_id in current_report["opt_stats"]:
                     new_opt_stats = current_report["opt_stats"][instance_id]
                     current_opt_stats = instance_opt_stats.get(instance_id, {})
 
-                    if new_opt_stats.get("geomean_speedup_commit"):
+                    if new_opt_stats.get("gm_speedup_patch_commit"):
                         if (
                             not current_opt_stats
-                            or not current_opt_stats.get("geomean_speedup_commit")
-                            or new_opt_stats["geomean_speedup_commit"]
-                            > current_opt_stats.get("geomean_speedup_commit", 0)
+                            or not current_opt_stats.get("gm_speedup_patch_commit")
+                            or new_opt_stats["gm_speedup_patch_commit"]
+                            > current_opt_stats.get("gm_speedup_patch_commit", 0)
                         ):
                             new_opt_stats["report_file"] = report_file
                             instance_opt_stats[instance_id] = new_opt_stats
@@ -189,9 +189,9 @@ def merge_reports(report_files, k):
         "empty_patch_instances": "empty_patch_ids",
         "base_failed_instances": "base_failed_ids",
         "error_instances": "error_ids",
-        "improved_over_base": "improved_base_ids",
-        "improved_over_commit": "improved_commit_ids",
-        "improved_over_main": "improved_main_ids",
+        "beat_base": "beat_base_ids",
+        "beat_commit": "beat_commit_ids",
+        "beat_main": "beat_main_ids",
     }
 
     for summary_key, instance_set_key in summary_mapping.items():
@@ -204,9 +204,9 @@ def merge_reports(report_files, k):
 
     # Print summary
     summary = report["summary"]
-    opt_base = summary["improved_over_base"] / summary["total_instances"]
-    opt_commit = summary["improved_over_commit"] / summary["total_instances"]
-    opt_main = summary["improved_over_main"] / summary["total_instances"]
+    opt_base = summary["beat_base"] / summary["total_instances"]
+    opt_commit = summary["beat_commit"] / summary["total_instances"]
+    opt_main = summary["beat_main"] / summary["total_instances"]
     print("\n=== Evaluation Summary ===")
     print(f"Total instances: {summary['total_instances']}")
     print(f"Instances submitted: {summary['total_predictions']}")
@@ -220,11 +220,9 @@ def merge_reports(report_files, k):
     print(f"Instances with base errors: {summary['base_failed_instances']}")
     print(f"Instances with errors: {summary['error_instances']}")
     print("-" * 10)
-    print(f"beat(base)@{k}: {summary['improved_over_base']} ({opt_base*100:.2f}%) ")
-    print(
-        f"beat(commit)@{k}: {summary['improved_over_commit']} ({opt_commit*100:.2f}%)"
-    )
-    print(f"beat(main)@{k}: {summary['improved_over_main']} ({opt_main*100:.2f}%) ")
+    print(f"beat(base)@{k}: {summary['beat_base']} ({opt_base*100:.2f}%) ")
+    print(f"beat(commit)@{k}: {summary['beat_commit']} ({opt_commit*100:.2f}%)")
+    print(f"beat(main)@{k}: {summary['beat_main']} ({opt_main*100:.2f}%) ")
 
     return report
 

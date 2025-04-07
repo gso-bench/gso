@@ -34,6 +34,10 @@ def geometric_mean(nums):
     return np.exp(np.mean(np.log(nums))) if nums else None
 
 
+def geometric_stdev(nums):
+    return np.exp(np.std(np.log(nums), ddof=1)) if nums else None
+
+
 def speedup(before_mean, after_mean, before_test_means, after_test_means):
     if before_mean is None or after_mean is None:
         return None, None, None
@@ -110,9 +114,9 @@ def get_opt_status(time_map) -> dict:
         opt_status (dict): a dictionary containing the optimization status of the patch
     """
     opt_status = {
-        "improved_base": False,
-        "improved_commit": False,
-        "improved_main": False,
+        "beat_base": False,
+        "beat_commit": False,
+        "beat_main": False,
         "time_stats": {},
         "opt_stats": {},
     }
@@ -140,15 +144,15 @@ def get_opt_status(time_map) -> dict:
     }
 
     opt_stats = {
-        "opt_perc_base": None,
-        "opt_perc_commit": None,
-        "opt_perc_main": None,
-        "speedup_base": None,
-        "speedup_commit": None,
-        "speedup_main": None,
-        "geomean_speedup_base": None,
-        "geomean_speedup_commit": None,
-        "geomean_speedup_main": None,
+        "opt_perc_patch_base": None,
+        "opt_perc_patch_commit": None,
+        "opt_perc_patch_main": None,
+        "speedup_patch_base": None,
+        "speedup_patch_commit": None,
+        "speedup_patch_main": None,
+        "gm_speedup_patch_base": None,
+        "gm_speedup_patch_commit": None,
+        "gm_speedup_patch_main": None,
     }
 
     # 1. Speedup via arithmetic mean of times and geometric mean of ratios
@@ -165,24 +169,24 @@ def get_opt_status(time_map) -> dict:
     if base_mean > patch_mean and patch_base_speedup_gm >= PERC_TO_FACTOR(
         BASE_OPT_THRESH
     ):
-        opt_status["improved_base"] = True
+        opt_status["beat_base"] = True
         opt_stats.update(
             {
-                "opt_perc_base": patch_base_opt,
-                "speedup_base": patch_base_speedup,
-                "geomean_speedup_base": patch_base_speedup_gm,
+                "opt_perc_patch_base": patch_base_opt,
+                "speedup_patch_base": patch_base_speedup,
+                "gm_speedup_patch_base": patch_base_speedup_gm,
             }
         )
 
         # if patch improves over base, then check how it compares to commit/main
 
         if patch_com_speedup_gm >= PERC_TO_FACTOR(BEAT_OPT_THRESH):
-            opt_status["improved_commit"] = True
+            opt_status["beat_commit"] = True
             opt_stats.update(
                 {
-                    "opt_perc_commit": patch_com_opt,
-                    "speedup_commit": patch_com_speedup,
-                    "geomean_speedup_commit": patch_com_speedup_gm,
+                    "opt_perc_patch_commit": patch_com_opt,
+                    "speedup_patch_commit": patch_com_speedup,
+                    "gm_speedup_patch_commit": patch_com_speedup_gm,
                 }
             )
 
@@ -190,12 +194,12 @@ def get_opt_status(time_map) -> dict:
             pass
 
         elif patch_main_speedup_gm >= PERC_TO_FACTOR(BEAT_OPT_THRESH):
-            opt_status["improved_main"] = True
+            opt_status["beat_main"] = True
             opt_stats.update(
                 {
-                    "opt_perc_main": patch_main_opt,
-                    "speedup_main": patch_main_speedup,
-                    "geomean_speedup_main": patch_main_speedup_gm,
+                    "opt_perc_patch_main": patch_main_opt,
+                    "speedup_patch_main": patch_main_speedup,
+                    "gm_speedup_patch_main": patch_main_speedup_gm,
                 }
             )
 
@@ -258,9 +262,9 @@ def get_eval_report(
         "patch_times": None,
         "commit_times": None,
         "main_times": None,
-        "improved_base": False,
-        "improved_commit": False,
-        "improved_main": False,
+        "beat_base": False,
+        "beat_commit": False,
+        "beat_main": False,
         "time_stats": {},
         "opt_stats": {},
     }

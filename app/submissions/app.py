@@ -80,13 +80,13 @@ def load_jsonl(file_path):
                             with open(report_path, "r") as report_file:
                                 report_data = json.load(report_file)
 
-                                # Check if instance is in improved_commit_ids
-                                improved_commit = instance_id in report_data.get(
+                                # Check if instance is in beat_commit_ids
+                                beat_commit = instance_id in report_data.get(
                                     "instance_sets", {}
-                                ).get("improved_commit_ids", [])
-                                improved_main = instance_id in report_data.get(
+                                ).get("beat_commit_ids", [])
+                                beat_main = instance_id in report_data.get(
                                     "instance_sets", {}
-                                ).get("improved_main_ids", [])
+                                ).get("beat_main_ids", [])
 
                                 # Get optimization stats if available
                                 opt_stats = report_data.get("opt_stats", {}).get(
@@ -97,8 +97,8 @@ def load_jsonl(file_path):
                                 if "test_result" not in conv:
                                     conv["test_result"] = {}
 
-                                conv["test_result"]["improved_commit"] = improved_commit
-                                conv["test_result"]["improved_main"] = improved_main
+                                conv["test_result"]["beat_commit"] = beat_commit
+                                conv["test_result"]["beat_main"] = beat_main
                                 conv["test_result"]["opt_stats"] = opt_stats
                     except Exception as e:
                         print(f"Error loading report for {instance_id}: {e}")
@@ -157,7 +157,7 @@ def instance_matrix():
 
             # Check if there's test result data
             test_result = conv.get("test_result", {})
-            success = test_result.get("improved_commit", False)
+            success = test_result.get("beat_commit", False)
 
             # Create URL for this specific conversation
             log_url = url_for(

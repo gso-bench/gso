@@ -61,11 +61,9 @@ def calculate_beat_at_k_smooth(report_paths, N, fixed_first_run=False, num_trial
     id_rankings_dict = {}
     for run_id, report in enumerate(all_report_data):
         # Extract all instance IDs that have improvement metrics
-        improved_base_ids = set(report["instance_sets"].get("improved_base_ids", []))
-        improved_commit_ids = set(
-            report["instance_sets"].get("improved_commit_ids", [])
-        )
-        improved_main_ids = set(report["instance_sets"].get("improved_main_ids", []))
+        beat_base_ids = set(report["instance_sets"].get("beat_base_ids", []))
+        beat_commit_ids = set(report["instance_sets"].get("beat_commit_ids", []))
+        beat_main_ids = set(report["instance_sets"].get("beat_main_ids", []))
 
         # All instance IDs: (just take any that appear in any of the classes)
         all_instance_ids = set()
@@ -77,11 +75,11 @@ def calculate_beat_at_k_smooth(report_paths, N, fixed_first_run=False, num_trial
             if instance_id not in id_rankings_dict:
                 id_rankings_dict[instance_id] = {}
 
-            # Store (improved_over_base, improved_over_commit, improved_over_main)
+            # Store (beat_base, beat_commit, beat_main)
             id_rankings_dict[instance_id][run_id] = (
-                instance_id in improved_base_ids,
-                instance_id in improved_commit_ids,
-                instance_id in improved_main_ids,
+                instance_id in beat_base_ids,
+                instance_id in beat_commit_ids,
+                instance_id in beat_main_ids,
             )
 
         # assert len(id_rankings_dict) == 122, f"Expected 122 instances"

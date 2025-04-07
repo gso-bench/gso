@@ -61,8 +61,8 @@ def add_top_labels(bars):
 instances = list(opt_stats.keys())
 
 # Filter to instances where model outperforms commit unless show_all_probs is enabled
-if not args.show_all_probs and "improved_commit_ids" in instance_sets:
-    improved_instances = instance_sets["improved_commit_ids"]
+if not args.show_all_probs and "beat_commit_ids" in instance_sets:
+    improved_instances = instance_sets["beat_commit_ids"]
     instances = [instance for instance in instances if instance in improved_instances]
 
 
