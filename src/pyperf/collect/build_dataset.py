@@ -149,7 +149,8 @@ def build_dataset(problems, exp_id):
         opt_problems_df.groupby(["pid", "commit"]).size(), columns=["Test Count"]
     )
     sns.histplot(plot_data, x="Test Count", bins=range(1, 11), discrete=True)
-    plt.savefig("plots/test_count_dist.png")
+    PLOTS_DIR.mkdir(parents=True, exist_ok=True)
+    plt.savefig(PLOTS_DIR / "test_count_dist.png")
 
     # show the groups with less than 6 tests
     low_tests = opt_problems_df.groupby(["pid", "commit"]).filter(lambda x: len(x) < 4)

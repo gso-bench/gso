@@ -27,6 +27,7 @@ DATASET_DIR = PYPERF_BUCKET_DIR / "datasets"
 INSTANCE_IMAGE_BUILD_DIR = Path("logs/build_images/instances")
 RUN_EVALUATION_LOG_DIR = Path("logs/run_evaluation")
 EVALUATION_REPORTS_DIR = Path("reports")
+PLOTS_DIR = Path("plots")
 
 # --------- Build Constants ---------
 
