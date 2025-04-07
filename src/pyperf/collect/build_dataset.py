@@ -152,7 +152,7 @@ def build_dataset(problems, exp_id):
     plt.savefig("plots/test_count_dist.png")
 
     # show the groups with less than 6 tests
-    low_tests = opt_problems_df.groupby(["pid", "commit"]).filter(lambda x: len(x) < 6)
+    low_tests = opt_problems_df.groupby(["pid", "commit"]).filter(lambda x: len(x) < 4)
     if not low_tests.empty:
         print(
             f"Low test groups (Count: {len(low_tests.drop_duplicates(subset=["pid", "commit"]))})"
@@ -179,20 +179,20 @@ def main(exp_id, push_to_hf, hf_username, dataset_name=None):
     # Build dataset
     dataset = build_dataset(problems, exp_id)
 
-    # # Save dataset to jsonl file
-    # DATASET_DIR.mkdir(parents=True, exist_ok=True)
-    # dataset_df = pd.DataFrame([asdict(inst) for inst in dataset])
-    # if not dataset_name:
-    #     dataset_name = f"pyperf_{exp_id}" if exp_id else "pyperf"
-    # dataset_df.to_json(
-    #     DATASET_DIR / f"{dataset_name}_dataset.jsonl", orient="records", lines=True
-    # )
+    # Save dataset to jsonl file
+    DATASET_DIR.mkdir(parents=True, exist_ok=True)
+    dataset_df = pd.DataFrame([asdict(inst) for inst in dataset])
+    if not dataset_name:
+        dataset_name = f"pyperf_{exp_id}" if exp_id else "pyperf"
+    dataset_df.to_json(
+        DATASET_DIR / f"{dataset_name}_dataset.jsonl", orient="records", lines=True
+    )
 
-    # if push_to_hf:
-    #     hf_dataset = Dataset.from_pandas(dataset_df)
-    #     hf_dataset.push_to_hub(
-    #         f"{hf_username}/{dataset_name}", split="test", private=True
-    #     )
+    if push_to_hf:
+        hf_dataset = Dataset.from_pandas(dataset_df)
+        hf_dataset.push_to_hub(
+            f"{hf_username}/{dataset_name}", split="test", private=True
+        )
 
 
 if __name__ == "__main__":
