@@ -86,9 +86,8 @@ def prompt_o3_mini(instance, mode="short"):
 
 if __name__ == "__main__":
     args = fire.Fire(LLMArgs)
-    repo = "numpy/numpy"
     dataset = load_dataset("manishs/pyperf-extended", split="test")
-    dataset = dataset.filter(lambda x: repo == x["repo"])
+    # dataset = dataset.filter(lambda x: "numpy/numpy" == x["repo"])
     print(f"Dataset size: {len(dataset)}")
 
     # SHORT PLANS
