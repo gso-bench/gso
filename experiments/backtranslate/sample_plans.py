@@ -91,39 +91,39 @@ if __name__ == "__main__":
     dataset = dataset.filter(lambda x: repo == x["repo"])
     print(f"Dataset size: {len(dataset)}")
 
-    # # SHORT PLANS
-    # short_payloads = []
-    # for row in dataset:
-    #     prompt = prompt_o3_mini(row, mode="short")
-    #     short_payloads.append([{"role": "user", "content": prompt}])
+    # SHORT PLANS
+    short_payloads = []
+    for row in dataset:
+        prompt = prompt_o3_mini(row, mode="short")
+        short_payloads.append([{"role": "user", "content": prompt}])
 
-    # short_payloads = [p for p in short_payloads for _ in range(args.n)]
-    # outputs = LLMCompletions.get_llm_completions(args, short_payloads)
-    # outputs = [item for sublist in outputs for item in sublist]
-    # grouped_outputs = []
-    # for i in range(0, len(outputs), args.n):
-    #     grouped_outputs.append(outputs[i : i + args.n])
-    # short_plans = get_generated_plans(grouped_outputs)
-    # # print(short_plans)
+    short_payloads = [p for p in short_payloads for _ in range(args.n)]
+    outputs = LLMCompletions.get_llm_completions(args, short_payloads)
+    outputs = [item for sublist in outputs for item in sublist]
+    grouped_outputs = []
+    for i in range(0, len(outputs), args.n):
+        grouped_outputs.append(outputs[i : i + args.n])
+    short_plans = get_generated_plans(grouped_outputs)
+    # print(short_plans)
 
-    # # DETAILED PLANS
-    # detailed_payloads = []
-    # for row in dataset:
-    #     prompt = prompt_o3_mini(row, mode="detailed")
-    #     detailed_payloads.append([{"role": "user", "content": prompt}])
+    # DETAILED PLANS
+    detailed_payloads = []
+    for row in dataset:
+        prompt = prompt_o3_mini(row, mode="detailed")
+        detailed_payloads.append([{"role": "user", "content": prompt}])
 
-    # detailed_payloads = [p for p in detailed_payloads for _ in range(args.n)]
-    # outputs = LLMCompletions.get_llm_completions(args, detailed_payloads)
-    # detailed_outputs = [item for sublist in outputs for item in sublist]
-    # grouped_outputs = []
-    # for i in range(0, len(detailed_outputs), args.n):
-    #     grouped_outputs.append(detailed_outputs[i : i + args.n])
-    # detailed_plans = get_generated_plans(grouped_outputs)
-    # # print(detailed_plans)
+    detailed_payloads = [p for p in detailed_payloads for _ in range(args.n)]
+    outputs = LLMCompletions.get_llm_completions(args, detailed_payloads)
+    detailed_outputs = [item for sublist in outputs for item in sublist]
+    grouped_outputs = []
+    for i in range(0, len(detailed_outputs), args.n):
+        grouped_outputs.append(detailed_outputs[i : i + args.n])
+    detailed_plans = get_generated_plans(grouped_outputs)
+    # print(detailed_plans)
 
-    # # Convert the dataset to a dictionary
-    # dataset_dict = dataset.to_dict()
-    # dataset_dict["short_plans"] = short_plans
-    # dataset_dict["detailed_plans"] = detailed_plans
-    # new_dataset = Dataset.from_dict(dataset_dict)
-    # new_dataset.push_to_hub("manishs/pyperf-planned", split="test", private=True)
+    # Convert the dataset to a dictionary
+    dataset_dict = dataset.to_dict()
+    dataset_dict["short_plans"] = short_plans
+    dataset_dict["detailed_plans"] = detailed_plans
+    new_dataset = Dataset.from_dict(dataset_dict)
+    new_dataset.push_to_hub("manishs/pyperf-planned", split="test", private=True)
