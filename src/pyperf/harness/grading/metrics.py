@@ -65,7 +65,7 @@ def speedup(before_mean, after_mean, before_test_means, after_test_means):
     mean_speedup = before_mean / after_mean
     ratios = [b / a for b, a in zip(before_test_means, after_test_means)]
     slowdowns = [r for r in ratios if r < 1.0]
-    gm_speedup, gsd_speedup = geometric_stats(ratios) if ratios else None
+    gm_speedup, gsd_speedup = geometric_stats(ratios) if ratios else (None, None)
     perc_slowdowns = len(slowdowns) / len(ratios) * 100 if ratios else None
 
     return mean_opt_perc, mean_speedup, gm_speedup, gsd_speedup, perc_slowdowns

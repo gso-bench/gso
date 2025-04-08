@@ -36,7 +36,7 @@ instance_sets = report["instance_sets"]
 def geomean_speedup(before_test_means, after_test_means):
     before_mean = np.mean(before_test_means)
     after_mean = np.mean(after_test_means)
-    _, _, speedup_gm = speedup(
+    _, _, speedup_gm, speedup_gsd, _ = speedup(
         before_mean, after_mean, before_test_means, after_test_means
     )
     return speedup_gm
