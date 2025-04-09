@@ -6,6 +6,7 @@ import glob
 
 from pyperf.harness.utils import natural_sort_key
 from pyperf.constants import EVALUATION_REPORTS_DIR
+from pyperf.utils.io import load_pyperf_dataset
 
 
 def run_evaluation(
@@ -54,7 +55,7 @@ def run_evaluation(
     return report_path
 
 
-def merge_reports(report_files, k):
+def merge_reports(full_dataset, report_files, k):
     """Merge multiple report files with OR logic for pass status."""
     # Define constants and initial structure
     STATUS_PRIORITY = {
@@ -180,7 +181,7 @@ def merge_reports(report_files, k):
 
     # Update summary counts
     summary_mapping = {
-        "total_instances": len(instance_status),
+        "total_instances": len(full_dataset),
         "total_predictions": len(instance_status),
         "completed_instances": "completed_ids",
         "passed_instances": "passed_ids",
@@ -312,7 +313,8 @@ def main():
 
     # Merge reports
     print("\nMerging reports...")
-    merged_results = merge_reports(report_files, args.k)
+    full_dataset = load_pyperf_dataset(args.dataset_name, "test")
+    merged_results = merge_reports(full_dataset, report_files, args.k)
 
     # Save report results
     EVALUATION_REPORTS_DIR.mkdir(parents=True, exist_ok=True)
