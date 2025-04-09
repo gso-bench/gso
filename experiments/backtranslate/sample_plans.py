@@ -32,7 +32,7 @@ To improve performance, we can <Your plan here>
 
 
 DETAILED_PLAN_PROMPT = """You are a performance testing expert. You will generate a description of a performance improving commit for a Python repository.
-The description MUST be a maximum of 5 point detailed description with sufficient detail, and sound like a plan.
+The description MUST be a 10 point description with sufficient detail, and sound like a plan.
 
 ## Repo: {repo}
 ## Commit Message: {commit_message}
@@ -42,12 +42,19 @@ The description MUST be a maximum of 5 point detailed description with sufficien
 
 Guidelines:
 - Carefully read and try to understand the commit and interpret the changes made in the commit. Then, write a plan that describes the high-level idea of the optimization.
-- The description should detail the high-level ideas of the optimization
+- The description should detail the high-level ideas of the bottleneck, reasoning, and optimization
 - The description should be concise and clear
 - The description should be specific to the commit and can describe the identified bottleneck if any
-- Distill the ideas into a maximum of 5 points when there are multiple ideas being used
+- Distill the ideas into a maximum of 10 points when there are multiple ideas being used
+- Only focus on core optimization ideas but be as clear as possible with the localization of the changes as possible
+    - USE file paths to CLEARLY indicate which files are to be changed. Use relative paths.
+    - INDICATE what changes are to be made in these files. 
+    - The change should be described in a way that an engineer can understand the bottleneck and a potential solution.
+    - Still keep the description concise and natural, not too verbose.
+- DO NOT REFER to the "commit" anywhere in the description. The engineer should not know there is an existing solution.
 - Completely ignore changes to comments, documentation, testing, formatting, CI, etc.
-- Only focus on core optimization ideas
+- ALSO ignore non-optimization changes like bug fixes, completely irrelevant feature additions, etc.
+- AGAIN DO NOT ask for changes to TESTS, CI, DOCUMENTATION, ETC. ONLY focus on core optimization ideas
 
 Respond in the following format:
 [[PLAN]]
