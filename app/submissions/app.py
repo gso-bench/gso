@@ -5,7 +5,11 @@ from pathlib import Path
 
 from flask import Flask, jsonify, render_template, url_for
 
-from pyperf.constants import SUBMISSIONS_DIR, EVALUATION_REPORTS_DIR
+from pyperf.constants import (
+    SUBMISSIONS_DIR,
+    EVALUATION_REPORTS_DIR,
+    RUN_EVALUATION_LOG_DIR,
+)
 
 app = Flask(__name__)
 
@@ -23,6 +27,10 @@ def get_available_logs():
 
                 # ignore if plans is in the file path
                 if "plans" in root:
+                    continue
+
+                # ignore gpt-4o submissions
+                if "gpt-4o" in root:
                     continue
 
                 # Get relative path from SUBMISSIONS_DIR
@@ -68,6 +76,15 @@ def load_jsonl(file_path):
                     ]
                     if not analysis.empty:
                         conv["analysis"] = analysis.iloc[0].get("analysis", "")
+
+                    test_output_path = os.path.join(
+                        RUN_EVALUATION_LOG_DIR, "test", run_id, instance_id
+                    )
+                    test_output_file = os.path.join(test_output_path, "test_output.txt")
+                    if os.path.exists(test_output_file):
+                        with open(test_output_file, "r") as test_output:
+                            test_output_data = test_output.read()
+                            conv["test_output"] = test_output_data
 
                     try:
                         # Look for report in the reports directory
