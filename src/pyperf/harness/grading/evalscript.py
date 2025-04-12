@@ -32,17 +32,20 @@ apply_patch() {{
         echo "{failed}"
         exit 1
     fi
+    
+    # file patterns to exclude
+    local exclude_options="--exclude=.venv/* --exclude=.git/* --exclude=__pycache__/* --exclude=*.egg-info/* --exclude=*.json --exclude=*.txt --exclude=*.csv --exclude=*.log --exclude=*.pkl"
 
     # Try git apply with verbose output
-    if git apply --verbose "$patch_file" 2>&1; then
+    if git apply --verbose $exclude_options "$patch_file" 2>&1; then
         echo "Successfully applied patch using git apply --verbose"
         echo "{passed}"
         applied=true
-    elif git apply --verbose --ignore-space-change "$patch_file" 2>&1; then
+    elif git apply --verbose --ignore-space-change $exclude_options "$patch_file" 2>&1; then
         echo "Successfully applied patch using git apply --verbose --ignore-space-change"
         echo "{passed}"
         applied=true
-    elif git apply --verbose --ignore-space-change --reject "$patch_file" 2>&1; then
+    elif git apply --verbose --ignore-space-change --reject $exclude_options "$patch_file" 2>&1; then
         echo "Successfully applied patch using git apply --verbose --ignore-space-change --reject"
         echo "{passed}"
         applied=true
