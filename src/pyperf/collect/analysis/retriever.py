@@ -6,7 +6,7 @@ from collections import deque
 from pyperf.data import PerformanceCommit
 from r2e.llms.llm_args import LLMArgs
 from r2e.llms.completions import LLMCompletions
-from pyperf.analysis.utils import *
+from pyperf.collect.analysis.utils import *
 
 MAX_COMMIT_TOKENS = 30000
 IGNORE_DIRECTORY_SIZE = 500
