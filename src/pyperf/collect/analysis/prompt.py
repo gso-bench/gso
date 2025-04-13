@@ -7,6 +7,8 @@ You will be given a GitHub commit patch content. Your goal is to identify whethe
 4. BE CRITICAL in your analysis: A commit message mentioning 'optimize' might be a fix to a function/module named 'optimize' and not a performance optimization. e.g., `optimize.linprog: make HiGHS default and deprecate old methods`.
 5. The changes should not be related to bug fixes, simple refactoring, or adding new features.
 6. The changes should preferably affect the performance of existing high-level or top-level APIs in the repo. This can be directly or indirectly via changes to internal APIs.
+7. The commit should affect performance on CPU and should be testable without a GPU. Ignore commits related to GPU/TPU workloads only.
+8. Ignore commits that only work on specific hardware (e.g., Qualcomm GPUs). Keep generalization and testability in mind.
 
 Analyze the commit using natural language reasoning enclosed in [REASON] [/REASON] tags.
 Then write YES or NO based on the conditions mentioned above enclosed in [ANSWER] [/ANSWER] tags.
@@ -32,6 +34,7 @@ You will be given a performance or optimization related GitHub commit patch cont
 6. NOTE: FOCUS ON PYTHON APIs ONLY.
     - Do not include backend APIs like C/C++/Rust functions that python APIs call. Instead, add the Python APIs that potentially call them.
     - Especially in the case of repos with interfaces via python bindings (e.g., huggingface/tokenizers), find and include the python APIs affected by the commit.
+    - HOWEVER, if any backend (e.g., C/C++/Rust) code affects any Python API or bindings, YOU MUST include that Python API in the list.
 """
 
 PERF_IDENTIFY_API_TASK = """Analyze the commit using natural language reasoning enclosed in [REASON] [/REASON] tags.
