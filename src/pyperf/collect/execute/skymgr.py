@@ -6,7 +6,7 @@ import subprocess
 from pathlib import Path
 from string import Template
 
-from pyperf.execute.helpers import zip_results
+from pyperf.collect.execute.helpers import zip_results, add_tokens_to_prob
 from pyperf.constants import *
 from pyperf.logger import logger
 
@@ -21,6 +21,7 @@ class SkyManager:
 
     @staticmethod
     def build_templates(temp_dir, task, phase1, phase2, problem):
+        problem = add_tokens_to_prob(problem)
         setup_commands = "\n  ".join(problem.setup_commands)
         install_commands = "\n        ".join(problem.install_commands)
         candidates = " ".join(t.quick_hash for t in problem.tests)
@@ -134,7 +135,7 @@ class SkyManager:
             target_file = files.get("target")
             meta_file = files.get("meta")
 
-            if base_file and target_file and meta_file:
+            if base_file and meta_file:
                 with open(meta_file, "r") as f:
                     meta = json.load(f)
                     meta["test_id"] = int(meta["test_file"][:-3].split("_")[-1])
@@ -142,8 +143,9 @@ class SkyManager:
                 with open(base_file, "r") as f:
                     meta["base_result"] = f.read()
 
-                with open(target_file, "r") as f:
-                    meta["target_result"] = f.read()
+                if target_file:
+                    with open(target_file, "r") as f:
+                        meta["target_result"] = f.read()
 
                 if commit_file:
                     with open(commit_file, "r") as f:

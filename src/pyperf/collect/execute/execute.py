@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from concurrent.futures import ThreadPoolExecutor
 import functools
 
-from pyperf.execute.skymgr import SkyManager
+from pyperf.collect.execute.skymgr import SkyManager
 from pyperf.utils.io import load_problems, save_problems
 from pyperf.data import Problem
 from pyperf.constants import *

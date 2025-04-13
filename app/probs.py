@@ -6,7 +6,7 @@ from collections import defaultdict
 
 from pyperf.constants import EXPS_DIR
 from pyperf.utils.io import load_problems
-from pyperf.execute.evaluate import speedup_summary
+from pyperf.collect.execute.evaluate import speedup_summary
 
 app = Flask(__name__)
 
@@ -41,7 +41,7 @@ def load_repo_data(repo_name, page=1, per_page=APIS_PER_PAGE, search_query=None)
     api_groups = defaultdict(list)
 
     # Get speedup mode from request args, default to "target"
-    speedup_mode = request.args.get("speedup_mode", "target")
+    speedup_mode = request.args.get("speedup_mode", "commit")
 
     for prob in all_problems:
         if prob.is_valid():

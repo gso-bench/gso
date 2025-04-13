@@ -1,7 +1,7 @@
 from collections import defaultdict
 
 from pydantic import BaseModel, Field, HttpUrl
-from pyperf.generate.harness import TEST_HARNESS, TIMEIT_TEMPLATE
+from pyperf.collect.generate.harness import TEST_HARNESS, TIMEIT_TEMPLATE
 from pyperf.data.repo import Repo
 from pyperf.data.perf import PerformanceCommit
 
