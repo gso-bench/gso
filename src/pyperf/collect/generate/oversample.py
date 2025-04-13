@@ -8,10 +8,10 @@ from pyperf.logger import logger
 from pyperf.constants import EXPS_DIR
 
 from pyperf.utils.io import *
-from pyperf.generate.prompt import *
-from pyperf.generate.helpers import *
-from pyperf.generate.context import prepare_oversample
-from pyperf.generate.args import OversampleArgs
+from pyperf.collect.generate.prompt import *
+from pyperf.collect.generate.helpers import *
+from pyperf.collect.generate.context import prepare_oversample
+from pyperf.collect.generate.args import OversampleArgs
 from pyperf.collect.pids import TEST_PROBLEMS
 
 

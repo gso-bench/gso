@@ -16,9 +16,9 @@ ANALYSIS_COMMITS_DIR = ANALYSIS_DIR / "commits"
 ANALYSIS_APIS_DIR = ANALYSIS_DIR / "apis"
 
 EXPS_DIR = PYPERF_BUCKET_DIR / "experiments"
-SKYGEN_TEMPLATE = current_dir / "execute" / "template.yaml"
-PHASE1_TEMPLATE = current_dir / "execute" / "phase1.txt"
-PHASE2_TEMPLATE = current_dir / "execute" / "phase2.txt"
+SKYGEN_TEMPLATE = current_dir / "collect" / "execute" / "template.yaml"
+PHASE1_TEMPLATE = current_dir / "collect" / "execute" / "phase1.txt"
+PHASE2_TEMPLATE = current_dir / "collect" / "execute" / "phase2.txt"
 
 # --------- Harness/Evals Constants ---------
 

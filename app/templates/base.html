@@ -170,7 +170,7 @@
             {% endfor %}
         </select>
         <select id="speedup-mode-select" class="my-select" onchange="handleSpeedupModeChange()">
-            <option value="target" selected>Rank by Base→Main Δ</option>
+            <!-- <option value="target" selected>Rank by Base→Main Δ</option> -->
             <option value="commit">Rank by Base→Commit Δ</option>
         </select>
         <select id="file-type-filter" class="my-select">
@@ -556,7 +556,6 @@
                             <br/>
                             <span class="stat-item"><strong>Base:</strong> ${prob.base_mean.toFixed(6)} (± ${prob.base_std.toFixed(6)})</span>
                             <span class="stat-item"><strong>Commit:</strong> ${prob.commit_mean.toFixed(6)} (± ${prob.commit_std.toFixed(6)})</span>
-                            <span class="stat-item"><strong>Target:</strong> ${prob.target_mean.toFixed(6)} (± ${prob.target_std.toFixed(6)})</span>
                         </div>
                         <span class="toggle-section" onclick="toggleSection(event, this)">
                             Generated Test

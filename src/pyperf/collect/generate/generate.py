@@ -7,10 +7,10 @@ from pyperf.logger import logger
 from pyperf.constants import EXPS_DIR, ANALYSIS_APIS_DIR
 
 from pyperf.utils.io import *
-from pyperf.generate.prompt import *
-from pyperf.generate.helpers import *
-from pyperf.generate.context import prepare
-from pyperf.generate.args import PerfExpGenArgs
+from pyperf.collect.generate.prompt import *
+from pyperf.collect.generate.helpers import *
+from pyperf.collect.generate.context import prepare
+from pyperf.collect.generate.args import PerfExpGenArgs
 
 IS_RERUN_FLAG = False  # NOTE: runs testgen for valid probs from previous run
 DEBUG_FLAG = False  # NOTE: debug flag to not overwrite existing tests

@@ -12,10 +12,10 @@ from r2e.llms.llm_args import LLMArgs
 from r2e.llms.completions import LLMCompletions
 
 from pyperf.data import PerformanceCommit, PerfAnalysis
-from pyperf.analysis.parser import CommitParser
-from pyperf.analysis.retriever import Retriever
-from pyperf.analysis.prompt import *
-from pyperf.analysis.utils import *
+from pyperf.collect.analysis.parser import CommitParser
+from pyperf.collect.analysis.retriever import Retriever
+from pyperf.collect.analysis.prompt import *
+from pyperf.collect.analysis.utils import *
 from pyperf.constants import *
 from pyperf.utils.io import *
 
@@ -130,10 +130,11 @@ class PerfCommitAnalyzer:
         prompts = [PerfCommitAnalyzer.analysis_prompt(commit) for commit in commits]
 
         args = LLMArgs(
-            model_name="gpt-4o",
+            model_name="o3-mini",
             cache_batch_size=100,
             multiprocess=60,
             use_cache=True,
+            max_tokens=10000,
         )  # type: ignore
 
         responses = LLMCompletions.get_llm_completions(args, prompts)
@@ -164,7 +165,7 @@ class PerfCommitAnalyzer:
     def retrieve_affected_files(commits: list[PerformanceCommit], repo_path: Path):
         retriever = Retriever(repo_path)
         llm_args = LLMArgs(
-            model_name="gpt-4o",
+            model_name="o3-mini",
             cache_batch_size=100,
             multiprocess=60,
             use_cache=True,
@@ -222,10 +223,11 @@ class PerfCommitAnalyzer:
         ]
 
         args = LLMArgs(
-            model_name="gpt-4o",
+            model_name="o3-mini",
             cache_batch_size=100,
             multiprocess=60,
-            use_cache=True,
+            use_cache=False,
+            max_tokens=24000,
         )  # type: ignore
 
         responses = LLMCompletions.get_llm_completions(args, prompts)
@@ -238,6 +240,7 @@ class PerfCommitAnalyzer:
                 apis = [api.strip() for api in apis.split(",")]
             except:
                 apis = []
+                reasoning = "No APIs found"
             commit.add_apis(apis)
             commit.add_llm_api_reason(reasoning)
 

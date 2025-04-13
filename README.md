@@ -57,12 +57,12 @@ You can add the repository URL and custom python version & installation commands
 
 ### 2. Commit Analysis Pipeline
 
-The [analysis/](/src/pyperf/analysis/) directory contains the performance commit analysis pipeline. It identifies and analyzes performance-related commits in Python repositories and then maps them to high-level APIs that are affected by the changes. More details in the [readme](/src/pyperf/analysis/README.md).
+The [analysis/](/src/pyperf/collect/analysis/) directory contains the performance commit analysis pipeline. It identifies and analyzes performance-related commits in Python repositories and then maps them to high-level APIs that are affected by the changes. More details in the [readme](/src/pyperf/collect/analysis/README.md).
 
 Run the pipeline on any repository using the `commits.py` script:
 ```bash
-python src/pyperf/analysis/commits.py /path/to/experiment.yaml
-python src/pyperf/analysis/apis.py repo
+python src/pyperf/collect/analysis/commits.py /path/to/experiment.yaml
+python src/pyperf/collect/analysis/apis.py repo
 ```
 
 The commit analysis results are saved as a JSON file in `ANALYSIS_DIR/commits/repo_commits.json`. Then, the API analysis results are saved in `ANALYSIS_DIR/apis/repo_ac_map.json`. You can use the `--no-grep` flag to disable the grep-based filtering and the `--max_year` flag to filter commits by year.
@@ -72,7 +72,7 @@ The commit analysis results are saved as a JSON file in `ANALYSIS_DIR/commits/re
 
 Run the following to generate performance tests for the configured experiment:
 ```bash
-python src/pyperf/generate/generate.py /path/to/experiment.yaml
+python src/pyperf/collect/generate/generate.py /path/to/experiment.yaml
 ```
 
 Remember to set [`GHAPI_TOKEN`](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) env var. Creates an experiment workspace in `EXPERIMENTS_DIR/{exp_id}` and moves your configuration file there. It then generates performance tests for the configured experiment and saves it in the workspace as `{exp_id}_problems.json`.
@@ -83,14 +83,14 @@ Remember to set [`GHAPI_TOKEN`](https://docs.github.com/en/authentication/keepin
 Run `sky check` and follow the instructions it provides to set up credentials.
 Then, run the following to execute the generated performance tests:
 ```bash
-python src/pyperf/execute/execute.py --exp_id repo --machines K
+python src/pyperf/collect/execute/execute.py --exp_id repo --machines K
 ```
 
 This runs performance tests for the configured experiment on `K` machines and saves results in the workspace in `{exp_id}_results.json`. Optionally use `--api` to run tests for a single API. Use `--interactive` to run tests in interactive mode (for debugging).
 
 View the stats of the results using:
 ```bash
-python src/pyperf/execute/evaluate.py --exp_id repo
+python src/pyperf/collect/execute/evaluate.py --exp_id repo
 ```
 
 
