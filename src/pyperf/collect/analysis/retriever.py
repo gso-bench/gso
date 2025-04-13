@@ -48,7 +48,9 @@ class Retriever:
                         path_parts = relative_path.split(os.sep)
 
                         if entry.is_file():
-                            if entry.name.endswith(".py"):
+                            if entry.name.endswith(
+                                (".py", ".pyi", ".c", ".cpp", ".rs", ".pyx", ".pxd")
+                            ):
                                 if entry.name.endswith("__init__.py"):
                                     continue
 
@@ -139,6 +141,8 @@ class Retriever:
             f"By high/top-level, we mean APIs that are not internal helper functions. "
             f"E.g., pd.read_csv (pandas), requests.get (requests), model.generate (transformers), etc."
         )
+
+        system_prompt += "\nNOTE: If the repo uses python bindings to C/C++/Rust (e.g., huggingface/tokenizers), make sure to identify ALL (1) Python files, (2) Interface files (e.g., .pyi), (3) C/C++/Rust files affected by the commit."
 
         if count_tokens(commit.diff_text) > MAX_COMMIT_TOKENS:
             diff_text = commit.diff_text[:MAX_COMMIT_TOKENS] + "...(truncated)..."

@@ -110,32 +110,36 @@ for commit in "${!working_commits[@]}"; do
     done
 done
 
-# Now run target commit tests once
-echo "Testing target commit: ${target_commit}"
-cd $repo_name && git stash -u
-git checkout ${target_commit}
-$install_commands
-cd ..
+if [ "${run_target_tests}" = "true" ]; then
+    # Now run target commit tests once
+    echo "Testing target commit: ${target_commit}"
+    cd $repo_name && git stash -u
+    git checkout ${target_commit}
+    $install_commands
+    cd ..
 
 
-# Run each test once for target commit
-for i in $(seq 0 $(($total_pairs - 1))); do
-    commit=$(jq -r ".[$i].commit" working_pairs.json)
-    test_file=$(jq -r ".[$i].test_file" working_pairs.json)
-    test_basename=$(basename $test_file)
-    target_result="results/target_${commit}_${test_basename%.py}.txt"
-    file_prefix="${commit}_${test_basename}"
+    # Run each test once for target commit
+    for i in $(seq 0 $(($total_pairs - 1))); do
+        commit=$(jq -r ".[$i].commit" working_pairs.json)
+        test_file=$(jq -r ".[$i].test_file" working_pairs.json)
+        test_basename=$(basename $test_file)
+        target_result="results/target_${commit}_${test_basename%.py}.txt"
+        file_prefix="${commit}_${test_basename}"
 
-    echo "Processing target commit main with test $test_file"
+        echo "Processing target commit main with test $test_file"
 
-    # Run target commit tests
-    if run_tests_for_commit "$test_file" "$target_result" "--eqcheck" "$file_prefix"; then
-        echo "Target commit passed performance and equivalence tests"
-    else
-        echo "Target commit failed performance or equivalence tests"
-        continue
-    fi
-done
+        # Run target commit tests
+        if run_tests_for_commit "$test_file" "$target_result" "--eqcheck" "$file_prefix"; then
+            echo "Target commit passed performance and equivalence tests"
+        else
+            echo "Target commit failed performance or equivalence tests"
+            continue
+        fi
+    done
+else
+    echo "Skipping target commit tests."
+fi
 
 echo "Phase 2 complete. Results saved in results directory."
 echo "Task complete on $(hostname)"

@@ -227,6 +227,7 @@ class PerfCommitAnalyzer:
             cache_batch_size=100,
             multiprocess=60,
             use_cache=False,
+            max_tokens=24000,
         )  # type: ignore
 
         responses = LLMCompletions.get_llm_completions(args, prompts)

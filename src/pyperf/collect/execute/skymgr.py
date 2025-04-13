@@ -47,6 +47,7 @@ class SkyManager:
             target_commit=problem.target_commit,
             file_before="results_a.txt",
             file_after="results_b.txt",
+            run_target_tests="false",
         )
 
         with open(temp_dir / f"{problem.pid}_task.yaml", "w") as yaml_file:
