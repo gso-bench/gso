@@ -7,7 +7,7 @@ from pyperf.constants import *
 from pyperf.data.problem import Problem
 from pyperf.data.dataset import PyPerfInstance
 from pyperf.data.perf import PerformanceCommit
-from pyperf.execute.evaluate import speedup_summary, create_analysis_dataframe
+from pyperf.collect.execute.evaluate import speedup_summary, create_analysis_dataframe
 from pyperf.utils.io import load_problems
 from pyperf.collect.pids import TEST_PROBLEMS, LONG_RUNNING_PROBLEMS
 from pyperf.collect.utils import prepare_prob_script

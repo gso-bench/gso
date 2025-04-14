@@ -17,7 +17,9 @@ The test will also include equivalence checks and storing reference results for 
     - The experiment does not need to be limited to the API, but MUST use the API under test.
     - Think of complex, interesting and challenging real-world example use cases of the repository in standalone scripts.
     - Make it a comprehensive experiment and use several API combinations if necessary.
-    - WRITE EXPERIMENTS WITHOUT USING HACKABLE CORNER CASES.
+    - WRITE EXPERIMENTS WITHOUT USING HACKABLE CORNER CASES. Cannot be easily hacked for performance with simple optimization tricks.
+    - Uses random and diverse inputs that still excercise performance.
+    - AVOIDs uniformity or patterns (e.g., repeating, sorted, same values, etc.) that can be easily exploited for performance.
 
 4. **Storing and Loading Reference Results**: Write two custom functions `store_result` and `load_result` to store and load the results returned by the `experiment` function.
     - Use the appropriate serialization approach in these functions (e.g., dill, pickle, json, csv, image, custom, etc.) as per the data returned by the `experiment` function.
