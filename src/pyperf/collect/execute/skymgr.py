@@ -7,6 +7,7 @@ from pathlib import Path
 from string import Template
 
 from pyperf.collect.execute.helpers import zip_results, add_tokens_to_prob
+from pyperf.harness.environment.patches import apply_patches_to_tests
 from pyperf.constants import *
 from pyperf.logger import logger
 
@@ -75,9 +76,13 @@ class SkyManager:
             for commit_tests in problem.tests:
                 commit_dir = temp_dir / commit_tests.quick_hash
                 commit_dir.mkdir(parents=True, exist_ok=True)
+                test_samples = commit_tests.samples
+
+                # optional: uncomment to not apply patched requests.get function
+                test_samples = apply_patches_to_tests("requests", test_samples)
 
                 # write sampled tests for each commit
-                for i, sample in enumerate(commit_tests.samples):
+                for i, sample in enumerate(test_samples):
                     with open(commit_dir / f"test_{i}.py", "w") as test_file:
                         test_file.write(sample)
 

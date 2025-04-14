@@ -1,4 +1,4 @@
-def apply_ssl_patch(test: str) -> str:
+def apply_patch_requests(test: str) -> str:
     patch_code = """
 import requests
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
@@ -7,18 +7,24 @@ original_get = requests.get
 def patched_get(*args, **kwargs):
     if 'verify' not in kwargs:
         kwargs["verify"] = False
+
+    if 'headers' not in kwargs:
+        kwargs['headers'] = {}
+    if 'User-Agent' not in kwargs['headers']:
+        kwargs['headers']['User-Agent'] = "CoolBot/1.0 (https://example.org/coolbot/; coolbot@example.org)"
+
     return original_get(*args, **kwargs)
 
-# patch to disable SSL verification
+# replace w/ patched version
 requests.get = patched_get
 """
     return patch_code + "\n\n" + test
 
 
 PATCH_REGISTRY = {
-    "ssl": {
-        "description": "Disable SSL verification in requests",
-        "apply": apply_ssl_patch,
+    "requests": {
+        "description": "Disable SSL verification and add User-agent in requests",
+        "apply": apply_patch_requests,
         "instances": [
             "numpy__numpy-09db9c7",
             "numpy__numpy-e801e7a",
@@ -49,4 +55,16 @@ def apply_patches(instance_id: str, tests: list[str]) -> list[str]:
             if patch_func:
                 patched_tests = [patch_func(test) for test in patched_tests]
 
+    return patched_tests
+
+
+def apply_patches_to_tests(patch_name: str, tests: list[str]) -> list[str]:
+    """Apply a patch to a given list of tests"""
+    patch_fn = PATCH_REGISTRY.get(patch_name, {}).get("apply")
+
+    if not patch_fn:
+        raise ValueError(f"Patch '{patch_name}' not found in registry.")
+    patched_tests = []
+    for test in tests:
+        patched_tests.append(patch_fn(test))
     return patched_tests
