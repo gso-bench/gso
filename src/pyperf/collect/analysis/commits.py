@@ -168,7 +168,8 @@ class PerfCommitAnalyzer:
             model_name="o3-mini",
             cache_batch_size=100,
             multiprocess=60,
-            use_cache=True,
+            use_cache=False,
+            max_tokens=24000,
         )  # type: ignore
         retriever.retrieve_affected_files(commits, llm_args)
         return retriever

@@ -30,11 +30,12 @@ You will be given a performance or optimization related GitHub commit patch cont
 2. By high/top-level, we mean APIs that are not internal helper functions.
 3. If the commit affects multiple APIs, list them all separated by commas.
 4. For methods, use the format "ClassName.method_name" (e.g., DataFrame.dropna).
-5. If the commit does not affect any high-level or top-level APIs, write "None".
-6. NOTE: FOCUS ON PYTHON APIs ONLY.
-    - Do not include backend APIs like C/C++/Rust functions that python APIs call. Instead, add the Python APIs that potentially call them.
+5. NOTE: Find Affected PYTHON APIs only
+    - Do not add backend APIs like C/C++/Rust functions. Instead, you MUST add the Python APIs that call them.
+    - IMPORTANT: Just because a commit does not directly mention or update python APIs, does not mean changes to internal code do not affect any python APIs.
+    - So, if any backend (e.g., C/C++/Rust) code affects any Python API or bindings, YOU MUST include that Python API in the list.
     - Especially in the case of repos with interfaces via python bindings (e.g., huggingface/tokenizers), find and include the python APIs affected by the commit.
-    - HOWEVER, if any backend (e.g., C/C++/Rust) code affects any Python API or bindings, YOU MUST include that Python API in the list.
+6. Finally, if all else, and the commit does not affect any APIs, write "None".
 """
 
 PERF_IDENTIFY_API_TASK = """Analyze the commit using natural language reasoning enclosed in [REASON] [/REASON] tags.
