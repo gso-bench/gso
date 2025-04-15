@@ -114,7 +114,7 @@ def speedup_summary(
                 "base_mean": base_mean,
                 "base_std": base_std,
                 "commit_mean": comm_mean,
-                "commit_std": comm_std,
+                "commit_std": comm_std if not np.isnan(comm_std) else 0,
                 "target_mean": target_mean,
                 "target_std": target_std,
                 "opt_perc": opt_perc,
