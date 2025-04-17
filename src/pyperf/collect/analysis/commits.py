@@ -23,6 +23,7 @@ GHAPI_TOKEN = os.environ.get("GHAPI_TOKEN")
 MAX_COMMIT_TOKENS = 20000
 MAX_OAI_TOKENS = 90000
 THRESHOLD = 200
+SKIP_API_ANALYSIS = False  # Set to True to skip API analysis
 
 
 class PerfCommitAnalyzer:
@@ -218,6 +219,15 @@ class PerfCommitAnalyzer:
 
     @staticmethod
     def llm_get_apis(commits: list[PerformanceCommit], retriever: Retriever):
+
+        if SKIP_API_ANALYSIS:
+            for commit in commits:
+                commit.add_apis(["SkippedAPIAnalysis"])
+                commit.add_llm_api_reason(
+                    "Skipped API analysis likely due to non python repo"
+                )
+            return
+
         prompts = [
             PerfCommitAnalyzer.identify_api_prompt(commit, retriever)
             for commit in commits
@@ -261,6 +271,8 @@ class PerfCommitAnalyzer:
             "--grep=speedup",
             "--grep=is slow",
             "--grep=faster",
+            "--grep=overhead",
+            "--grep=latency",
         ]
 
         # use grep to cut down commits to process
