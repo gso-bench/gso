@@ -1,4 +1,4 @@
-PERF_ANALYSIS_MESSAGE = """You are an expert python programmer who is annotating data for training and testing code language models.
+PERF_ANALYSIS_MESSAGE = """You are an expert programmer who is annotating data for training and testing code language models.
 
 You will be given a GitHub commit patch content. Your goal is to identify whether the commit is performance or optimization related. The commit should satisfy the following conditions:
 1. The commit should modify at least one non-test file. It modify source code in a non-trivial manner and not just fix comments or documentation.
@@ -23,7 +23,7 @@ Commit Message:
 
 PERF_IDENTIFY_API_DOCS = ""
 
-PERF_IDENTIFY_API_SYSTEM = """You are an expert python programmer who is annotating data for training and testing code language models.
+PERF_IDENTIFY_API_SYSTEM = """You are an expert programmer who is annotating data for training and testing code language models.
 
 You will be given a performance or optimization related GitHub commit patch content. Your goal is to identify a list of APIs (functions or methods of a class) that are affected by the commit. Some additional instructions:
 1. The APIs should be high-level or top-level APIs in the repo. E.g., pd.read_csv (pandas), requests.get (requests), model.generate (transformers), etc.
