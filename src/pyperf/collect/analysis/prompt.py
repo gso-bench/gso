@@ -8,7 +8,7 @@ You will be given a GitHub commit patch content. Your goal is to identify whethe
 5. The changes should not be related to bug fixes, simple refactoring, or adding new features.
 6. The changes should preferably affect the performance of existing high-level or top-level APIs in the repo. This can be directly or indirectly via changes to internal APIs.
 7. The commit should affect performance on CPU and should be testable without a GPU. Ignore commits related to GPU/TPU workloads only.
-8. Ignore commits that only work on specific hardware (e.g., Qualcomm GPUs). Keep generalization and testability in mind.
+8. Ignore commits that only work on specific hardware (e.g., Qualcomm GPUs, Metal, Vulkan, etc.). Keep generalization and testability in mind.
 
 Analyze the commit using natural language reasoning enclosed in [REASON] [/REASON] tags.
 Then write YES or NO based on the conditions mentioned above enclosed in [ANSWER] [/ANSWER] tags.
