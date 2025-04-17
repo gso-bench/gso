@@ -61,6 +61,7 @@ def calculate_beat_at_k_smooth(report_paths, N, fixed_first_run=False, num_trial
     id_rankings_dict = {}
     for run_id, report in enumerate(all_report_data):
         # Extract all instance IDs that have improvement metrics
+        passed_ids = set(report["instance_sets"].get("passed_ids", []))
         beat_base_ids = set(report["instance_sets"].get("beat_base_ids", []))
         beat_commit_ids = set(report["instance_sets"].get("beat_commit_ids", []))
         beat_main_ids = set(report["instance_sets"].get("beat_main_ids", []))
@@ -77,6 +78,7 @@ def calculate_beat_at_k_smooth(report_paths, N, fixed_first_run=False, num_trial
 
             # Store (beat_base, beat_commit, beat_main)
             id_rankings_dict[instance_id][run_id] = (
+                instance_id in passed_ids,
                 instance_id in beat_base_ids,
                 instance_id in beat_commit_ids,
                 instance_id in beat_main_ids,
@@ -85,12 +87,14 @@ def calculate_beat_at_k_smooth(report_paths, N, fixed_first_run=False, num_trial
         # assert len(id_rankings_dict) == 122, f"Expected 122 instances"
 
     total_instances = len(id_rankings_dict)
+    passed_at_n_trials = np.zeros((num_trials, N))
     base_at_n_trials = np.zeros((num_trials, N))
     commit_at_n_trials = np.zeros((num_trials, N))
     main_at_n_trials = np.zeros((num_trials, N))
 
     # Run multiple trials
     for trial in range(num_trials):
+        pass_at_n = np.zeros(N)
         base_at_n = np.zeros(N)
         commit_at_n = np.zeros(N)
         main_at_n = np.zeros(N)
@@ -110,24 +114,31 @@ def calculate_beat_at_k_smooth(report_paths, N, fixed_first_run=False, num_trial
 
                 n_rankings = rankings[: idx + 1]
 
-                # Check if beat base in any
+                # Check if passed in any
                 if any(r[1][0] for r in n_rankings):
+                    pass_at_n[idx] += 1
+
+                # Check if beat base in any
+                if any(r[1][1] for r in n_rankings):
                     base_at_n[idx] += 1
 
                 # Check if beat commit in any
-                if any(r[1][1] for r in n_rankings):
+                if any(r[1][2] for r in n_rankings):
                     commit_at_n[idx] += 1
 
                 # Check if beat main in any
-                if any(r[1][2] for r in n_rankings):
+                if any(r[1][3] for r in n_rankings):
                     main_at_n[idx] += 1
 
         # Store results for this trial
+        passed_at_n_trials[trial] = pass_at_n
         base_at_n_trials[trial] = base_at_n
         commit_at_n_trials[trial] = commit_at_n
         main_at_n_trials[trial] = main_at_n
 
     # Calculate means and standard deviations
+    passed_at_n_mean = np.mean(passed_at_n_trials, axis=0)
+    passed_at_n_std = np.std(passed_at_n_trials, axis=0)
     base_at_n_mean = np.mean(base_at_n_trials, axis=0)
     base_at_n_std = np.std(base_at_n_trials, axis=0)
     commit_at_n_mean = np.mean(commit_at_n_trials, axis=0)
@@ -136,6 +147,8 @@ def calculate_beat_at_k_smooth(report_paths, N, fixed_first_run=False, num_trial
     main_at_n_std = np.std(main_at_n_trials, axis=0)
 
     # Convert to percentages
+    passed_at_n_mean_pct = [x / total_instances * 100 for x in passed_at_n_mean]
+    passed_at_n_std_pct = [x / total_instances * 100 for x in passed_at_n_std]
     base_at_n_mean_pct = [x / total_instances * 100 for x in base_at_n_mean]
     base_at_n_std_pct = [x / total_instances * 100 for x in base_at_n_std]
     commit_at_n_mean_pct = [x / total_instances * 100 for x in commit_at_n_mean]
@@ -144,21 +157,37 @@ def calculate_beat_at_k_smooth(report_paths, N, fixed_first_run=False, num_trial
     main_at_n_std_pct = [x / total_instances * 100 for x in main_at_n_std]
 
     # Format results for plotting
+    passed_at_k_rates = list(zip(passed_at_n_mean_pct, passed_at_n_std_pct))
     base_at_k_rates = list(zip(base_at_n_mean_pct, base_at_n_std_pct))
     commit_at_k_rates = list(zip(commit_at_n_mean_pct, commit_at_n_std_pct))
     main_at_k_rates = list(zip(main_at_n_mean_pct, main_at_n_std_pct))
 
-    return base_at_k_rates, commit_at_k_rates, main_at_k_rates
+    return passed_at_k_rates, base_at_k_rates, commit_at_k_rates, main_at_k_rates
 
 
 # Calculate beat@k with the reference approach
-base_at_k_rates, commit_at_k_rates, main_at_k_rates = calculate_beat_at_k_smooth(
-    reports, args.k, args.fixed_first_run, args.num_trials
+passed_at_k_rates, base_at_k_rates, commit_at_k_rates, main_at_k_rates = (
+    calculate_beat_at_k_smooth(reports, args.k, args.fixed_first_run, args.num_trials)
 )
 
 # Create a DataFrame in long format for seaborn (directly from reference)
 k_values = list(range(1, args.k + 1))
 plot_data = []
+
+
+# Add data for passed
+# for k, rates in enumerate(passed_at_k_rates, 1):
+#     error = rates[1] if k < args.k else 0
+#     plot_data.append(
+#         {
+#             "k": k,
+#             "Rate": rates[0],
+#             "Error": error,
+#             "Metric": "Passed",
+#             "Lower": rates[0] - error,
+#             "Upper": rates[0] + error,
+#         }
+#     )
 
 # Add data for base
 for k, rates in enumerate(base_at_k_rates, 1):
@@ -195,10 +224,9 @@ df_plot = pd.DataFrame(plot_data)
 
 # Define colors
 colors = {
+    "Passed": "#b3b3b3",  # gray
     "Valid": "#396ab1",  # blue
     "Beat@K": "#da7c2f",  # orange
-    # #3d9651 # green
-    # #cd2529 # red
 }
 
 plt.figure(figsize=(8, 6))
@@ -211,7 +239,7 @@ sns.lineplot(
     y="Rate",
     hue="Metric",
     style="Metric",
-    markers={"Beat@K": "o", "Valid": "o"},
+    markers={"Beat@K": "o", "Valid": "o", "Passed": "o"},
     markeredgewidth=0,
     markersize=5,
     dashes=False,
