@@ -10,6 +10,7 @@ class PerfExpGenArgs(LLMArgs):
     min_loc: int = Field(0, description="Minimum LOC for a commit.")
     multiprocess: int = Field(30, description="Num parallel processes for generation.")
     n: int = Field(5, description="Num samples per generation.")
+    api: str = Field(None, description="API to generate tests for.")
 
     @classmethod
     def parse(cls, *args, **kwargs):

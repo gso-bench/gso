@@ -45,6 +45,11 @@ class PerfExpGenerator:
             for api, commits in self.candidates.items()
         ]
 
+        if args.api:
+            problems = [p for p in problems if p.api == args.api]
+            if not problems:
+                raise ValueError(f"No problem found for API: {args.api}")
+
         # filter out invalid problems from previous run
         if IS_RERUN_FLAG:
             prev_run = load_problems(self.exp_dir / f"{self.exp_id}_results.json")
@@ -72,7 +77,12 @@ class PerfExpGenerator:
                 prob = output.result
                 problems.append(prob)
                 for test in prob.tests:
-                    if args.model_name in ["o1-mini", "o3-mini", "o1-preview"]:
+                    if args.model_name in [
+                        "o1-mini",
+                        "o3-mini",
+                        "o1-preview",
+                        "o4-mini",
+                    ]:
                         prompt = "\n\n".join(
                             msg["content"] for msg in test.chat_messages
                         )
@@ -84,7 +94,7 @@ class PerfExpGenerator:
 
         print(f"Generating {len(problems)} problems with {len(payloads)} payloads")
 
-        if args.model_name in ["o1-mini", "o3-mini", "o1-preview"]:
+        if args.model_name in ["o1-mini", "o3-mini", "o1-preview", "o4-mini"]:
             payloads = [p for p in payloads for _ in range(args.n)]
             outputs = LLMCompletions.get_llm_completions(args, payloads)
             outputs = [item for sublist in outputs for item in sublist]
