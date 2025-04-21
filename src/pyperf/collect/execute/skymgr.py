@@ -6,7 +6,8 @@ import subprocess
 from pathlib import Path
 from string import Template
 
-from pyperf.execute.helpers import zip_results
+from pyperf.collect.execute.helpers import zip_results, add_tokens_to_prob
+from pyperf.harness.environment.patches import apply_patches_to_tests
 from pyperf.constants import *
 from pyperf.logger import logger
 
@@ -21,6 +22,7 @@ class SkyManager:
 
     @staticmethod
     def build_templates(temp_dir, task, phase1, phase2, problem):
+        problem = add_tokens_to_prob(problem)
         setup_commands = "\n  ".join(problem.setup_commands)
         install_commands = "\n        ".join(problem.install_commands)
         candidates = " ".join(t.quick_hash for t in problem.tests)
@@ -46,6 +48,7 @@ class SkyManager:
             target_commit=problem.target_commit,
             file_before="results_a.txt",
             file_after="results_b.txt",
+            run_target_tests="false",
         )
 
         with open(temp_dir / f"{problem.pid}_task.yaml", "w") as yaml_file:
@@ -73,9 +76,13 @@ class SkyManager:
             for commit_tests in problem.tests:
                 commit_dir = temp_dir / commit_tests.quick_hash
                 commit_dir.mkdir(parents=True, exist_ok=True)
+                test_samples = commit_tests.samples
+
+                # optional: uncomment to not apply patched requests.get function
+                test_samples = apply_patches_to_tests("requests", test_samples)
 
                 # write sampled tests for each commit
-                for i, sample in enumerate(commit_tests.samples):
+                for i, sample in enumerate(test_samples):
                     with open(commit_dir / f"test_{i}.py", "w") as test_file:
                         test_file.write(sample)
 
@@ -134,7 +141,7 @@ class SkyManager:
             target_file = files.get("target")
             meta_file = files.get("meta")
 
-            if base_file and target_file and meta_file:
+            if base_file and meta_file:
                 with open(meta_file, "r") as f:
                     meta = json.load(f)
                     meta["test_id"] = int(meta["test_file"][:-3].split("_")[-1])
@@ -142,8 +149,9 @@ class SkyManager:
                 with open(base_file, "r") as f:
                     meta["base_result"] = f.read()
 
-                with open(target_file, "r") as f:
-                    meta["target_result"] = f.read()
+                if target_file:
+                    with open(target_file, "r") as f:
+                        meta["target_result"] = f.read()
 
                 if commit_file:
                     with open(commit_file, "r") as f:

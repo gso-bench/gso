@@ -1,3 +1,5 @@
+import os
+
 # Constants for the evaluation script
 APPLY_PATCH_FAIL = ">>>>> Patch Apply Failed"
 APPLY_PATCH_PASS = ">>>>> Applied Patch"
@@ -7,6 +9,7 @@ TESTS_ERROR = ">>>>> Tests Errored"
 TESTS_PASSED = ">>>>> Tests Passed"
 TESTS_TIMEOUT = ">>>>> Tests Timed Out"
 MAIN_REGRESS_WARNING = ">>>>> WARNING: Error in main branch! continuing..."
+START_EVAL_PATCH = "Applying patch..."
 START_BASE_OUTPUT = ">>>>> Start Base Output"
 END_BASE_OUTPUT = ">>>>> End Base Output"
 START_PATCH_OUTPUT = ">>>>> Start Patch Output"
@@ -29,17 +32,20 @@ apply_patch() {{
         echo "{failed}"
         exit 1
     fi
+    
+    # file patterns to exclude
+    local exclude_options="--exclude=.venv/* --exclude=.git/* --exclude=__pycache__/* --exclude=*.egg-info/* --exclude=*.json --exclude=*.txt --exclude=*.csv --exclude=*.log --exclude=*.pkl"
 
     # Try git apply with verbose output
-    if git apply --verbose "$patch_file" 2>&1; then
+    if git apply --verbose $exclude_options "$patch_file" 2>&1; then
         echo "Successfully applied patch using git apply --verbose"
         echo "{passed}"
         applied=true
-    elif git apply --verbose --ignore-space-change "$patch_file" 2>&1; then
+    elif git apply --verbose --ignore-space-change $exclude_options "$patch_file" 2>&1; then
         echo "Successfully applied patch using git apply --verbose --ignore-space-change"
         echo "{passed}"
         applied=true
-    elif git apply --verbose --ignore-space-change --reject "$patch_file" 2>&1; then
+    elif git apply --verbose --ignore-space-change --reject $exclude_options "$patch_file" 2>&1; then
         echo "Successfully applied patch using git apply --verbose --ignore-space-change --reject"
         echo "{passed}"
         applied=true
@@ -128,12 +134,20 @@ def get_eval_script(instance) -> str:
 
     run_base = "\n".join([RUN_BASE.format(i=i) for i in range(test_count)])
 
+    # Set tokens
+    setup_tokens = [
+        f"export HF_TOKEN={os.getenv('HF_TOKEN')}" if os.getenv("HF_TOKEN") else "",
+    ]
+
     eval_commands = [
         "source .venv/bin/activate",
+        # ----------- set up tokens ------------
+        'echo "Setting up tokens..."',
+        *setup_tokens,
         # ----------- base and patch perf testing ------------
         'echo "Running performance test before patch..."',
         *[RUN_BASE.format(i=i) for i in range(test_count)],
-        'echo "Applying patch..."',
+        f'echo "{START_EVAL_PATCH}"',
         'apply_patch "/tmp/patch.diff"',
         'echo "Installing repo..."',
         "install_repo",

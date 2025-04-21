@@ -6,10 +6,18 @@ import glob
 
 from pyperf.harness.utils import natural_sort_key
 from pyperf.constants import EVALUATION_REPORTS_DIR
+from pyperf.utils.io import load_pyperf_dataset
 
 
 def run_evaluation(
-    pred_path, dataset_name, timeout, run_id, reformat_reports=False, max_workers=10
+    pred_path,
+    dataset_name,
+    timeout,
+    run_id,
+    reformat_reports=False,
+    max_workers=10,
+    instance_ids=None,
+    rerun_all=False,
 ):
     """Run evaluation script and return path to generated report."""
     cmd = [
@@ -31,6 +39,12 @@ def run_evaluation(
     if reformat_reports:
         cmd.append("--reformat_reports")
 
+    if instance_ids:
+        cmd.extend(["--instance_ids", *instance_ids])
+
+    if rerun_all:
+        cmd.append("--rerun_all")
+
     output = subprocess.check_output(cmd, text=True)
     print(output)
     report_path = next(
@@ -41,14 +55,15 @@ def run_evaluation(
     return report_path
 
 
-def merge_reports(report_files, k):
+def merge_reports(full_dataset, report_files, k):
     """Merge multiple report files with OR logic for pass status."""
     # Define constants and initial structure
     STATUS_PRIORITY = {
-        "passed": 4,
-        "test_failed": 3,
-        "patch_failed": 2,
-        "empty_patch": 1,
+        "passed": 5,
+        "test_failed": 4,
+        "patch_failed": 3,
+        "empty_patch": 2,
+        "base_failed": 1,
         "error": 0,
         None: -1,
     }
@@ -56,19 +71,20 @@ def merge_reports(report_files, k):
     STATUS_SETS = [
         "completed_ids",
         "passed_ids",
+        "base_failed_ids",
         "patch_failed_ids",
         "test_failed_ids",
         "empty_patch_ids",
         "error_ids",
-        "improved_base_ids",
-        "improved_commit_ids",
-        "improved_main_ids",
+        "beat_base_ids",
+        "beat_commit_ids",
+        "beat_main_ids",
     ]
 
     IMPROVEMENT_METRICS = [
-        "improved_base_ids",
-        "improved_commit_ids",
-        "improved_main_ids",
+        "beat_base_ids",
+        "beat_commit_ids",
+        "beat_main_ids",
     ]
 
     report = {
@@ -80,13 +96,14 @@ def merge_reports(report_files, k):
                 "completed_instances",
                 "incomplete_instances",
                 "passed_instances",
+                "base_failed_instances",
                 "patch_failed_instances",
                 "test_failed_instances",
                 "empty_patch_instances",
                 "error_instances",
-                "improved_over_base",
-                "improved_over_commit",
-                "improved_over_main",
+                "beat_base",
+                "beat_commit",
+                "beat_main",
             ]
         },
         "instance_sets": {key: set() for key in STATUS_SETS},
@@ -95,7 +112,7 @@ def merge_reports(report_files, k):
     report["summary"]["k"] = k
 
     instance_status = {}  # instance_id -> best status across runs
-    instance_opt_stats = {}  # instance_id -> best opt_perc_base across runs
+    instance_opt_stats = {}  # instance_id -> best gm_speedup_patch_commit across runs
 
     def get_instance_status(instance_id, current_sets):
         """Determine status for an instance based on its presence in status sets."""
@@ -104,6 +121,7 @@ def merge_reports(report_files, k):
             "patch_failed_ids": "patch_failed",
             "test_failed_ids": "test_failed",
             "empty_patch_ids": "empty_patch",
+            "base_failed_ids": "base_failed",
             "error_ids": "error",
         }
         for set_name, status in status_mapping.items():
@@ -125,18 +143,6 @@ def merge_reports(report_files, k):
                 if new_priority > current_priority:
                     instance_status[instance_id] = status
 
-                # Update opt stats
-                if status == "passed":
-                    current_opt_stats = instance_opt_stats.get(instance_id, {})
-                    new_opt_stats = current_report["opt_stats"].get(instance_id, {})
-                    if new_opt_stats and (
-                        not current_opt_stats
-                        or new_opt_stats["opt_perc_base"]
-                        > current_opt_stats["opt_perc_base"]
-                    ):
-                        new_opt_stats["report_file"] = report_file
-                        instance_opt_stats[instance_id] = new_opt_stats
-
             # Merge improvement tracking
             for metric in IMPROVEMENT_METRICS:
                 report["instance_sets"][metric].update(current_sets[metric])
@@ -148,6 +154,25 @@ def merge_reports(report_files, k):
             report["instance_sets"][f"{status}_ids"].add(instance_id)
 
     # Populate opt stats
+    beat_commit_ids = set(report["instance_sets"]["beat_commit_ids"])
+    for report_file in report_files:
+        with open(report_file) as f:
+            current_report = json.load(f)
+            for instance_id in beat_commit_ids:
+                if instance_id in current_report["opt_stats"]:
+                    new_opt_stats = current_report["opt_stats"][instance_id]
+                    current_opt_stats = instance_opt_stats.get(instance_id, {})
+
+                    if new_opt_stats.get("gm_speedup_patch_commit"):
+                        if (
+                            not current_opt_stats
+                            or not current_opt_stats.get("gm_speedup_patch_commit")
+                            or new_opt_stats["gm_speedup_patch_commit"]
+                            > current_opt_stats.get("gm_speedup_patch_commit", 0)
+                        ):
+                            new_opt_stats["report_file"] = report_file
+                            instance_opt_stats[instance_id] = new_opt_stats
+
     report["opt_stats"] = instance_opt_stats
 
     # Convert sets to sorted lists
@@ -156,17 +181,18 @@ def merge_reports(report_files, k):
 
     # Update summary counts
     summary_mapping = {
-        "total_instances": len(instance_status),
+        "total_instances": len(full_dataset),
         "total_predictions": len(instance_status),
         "completed_instances": "completed_ids",
         "passed_instances": "passed_ids",
         "patch_failed_instances": "patch_failed_ids",
         "test_failed_instances": "test_failed_ids",
         "empty_patch_instances": "empty_patch_ids",
+        "base_failed_instances": "base_failed_ids",
         "error_instances": "error_ids",
-        "improved_over_base": "improved_base_ids",
-        "improved_over_commit": "improved_commit_ids",
-        "improved_over_main": "improved_main_ids",
+        "beat_base": "beat_base_ids",
+        "beat_commit": "beat_commit_ids",
+        "beat_main": "beat_main_ids",
     }
 
     for summary_key, instance_set_key in summary_mapping.items():
@@ -179,9 +205,9 @@ def merge_reports(report_files, k):
 
     # Print summary
     summary = report["summary"]
-    opt_base = summary["improved_over_base"] / summary["total_instances"]
-    opt_commit = summary["improved_over_commit"] / summary["total_instances"]
-    opt_main = summary["improved_over_main"] / summary["total_instances"]
+    opt_base = summary["beat_base"] / summary["total_instances"]
+    opt_commit = summary["beat_commit"] / summary["total_instances"]
+    opt_main = summary["beat_main"] / summary["total_instances"]
     print("\n=== Evaluation Summary ===")
     print(f"Total instances: {summary['total_instances']}")
     print(f"Instances submitted: {summary['total_predictions']}")
@@ -192,13 +218,12 @@ def merge_reports(report_files, k):
     print(f"Instances with failed tests: {summary['test_failed_instances']}")
     print(f"Instances with failed patch: {summary['patch_failed_instances']}")
     print(f"Instances with empty patches: {summary['empty_patch_instances']}")
+    print(f"Instances with base errors: {summary['base_failed_instances']}")
     print(f"Instances with errors: {summary['error_instances']}")
     print("-" * 10)
-    print(f"beat(base)@{k}: {summary['improved_over_base']} ({opt_base*100:.2f}%) ")
-    print(
-        f"beat(commit)@{k}: {summary['improved_over_commit']} ({opt_commit*100:.2f}%)"
-    )
-    print(f"beat(main)@{k}: {summary['improved_over_main']} ({opt_main*100:.2f}%) ")
+    print(f"beat(base)@{k}: {summary['beat_base']} ({opt_base*100:.2f}%) ")
+    print(f"beat(commit)@{k}: {summary['beat_commit']} ({opt_commit*100:.2f}%)")
+    print(f"beat(main)@{k}: {summary['beat_main']} ({opt_main*100:.2f}%) ")
 
     return report
 
@@ -218,6 +243,12 @@ def main():
         type=str,
         default="manishs/pyperf",
         help="Name of HF dataset to use or local json/jsonl file",
+    )
+    parser.add_argument(
+        "--instance_ids",
+        nargs="+",
+        type=str,
+        help="Instance IDs to run (space separated)",
     )
     parser.add_argument(
         "--timeout",
@@ -247,6 +278,11 @@ def main():
         help="Reformat and rewrite reports for instances that have already been run",
     )
     parser.add_argument(
+        "--rerun_all",
+        action="store_true",
+        help="Rerun all instances, even if they have already been run. Default: False",
+    )
+    parser.add_argument(
         "--max_workers",
         type=int,
         default=10,
@@ -270,12 +306,15 @@ def main():
             args.run_id,
             args.reformat_reports,
             args.max_workers,
+            args.instance_ids,
+            args.rerun_all,
         )
         report_files.append(report_path)
 
     # Merge reports
     print("\nMerging reports...")
-    merged_results = merge_reports(report_files, args.k)
+    full_dataset = load_pyperf_dataset(args.dataset_name, "test")
+    merged_results = merge_reports(full_dataset, report_files, args.k)
 
     # Save report results
     EVALUATION_REPORTS_DIR.mkdir(parents=True, exist_ok=True)

@@ -169,3 +169,4 @@ plots/
 tmp/
 eval_outputs
 *.report.json
+*.csv

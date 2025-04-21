@@ -1,8 +1,8 @@
 from r2e.multiprocess import run_tasks_in_parallel_iter
 
 from pyperf.data import Repo, Problem, Tests, PerformanceCommit
-from pyperf.generate.prompt import *
-from pyperf.generate.helpers import *
+from pyperf.collect.generate.prompt import *
+from pyperf.collect.generate.helpers import *
 from pyperf.logger import logger
 
 MAX_COMMIT_TOKENS = 50000

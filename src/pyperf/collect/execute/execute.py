@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from concurrent.futures import ThreadPoolExecutor
 import functools
 
-from pyperf.execute.skymgr import SkyManager
+from pyperf.collect.execute.skymgr import SkyManager
 from pyperf.utils.io import load_problems, save_problems
 from pyperf.data import Problem
 from pyperf.constants import *
@@ -64,7 +64,11 @@ class ExecutionManager:
         for prob in self.problems:
             for run_idx in range(self.runs):
                 cluster = self.get_next_cluster_name()
-                wspace = SkyManager.create_workspace(prob)
+                try:
+                    wspace = SkyManager.create_workspace(prob)
+                except Exception as e:
+                    continue
+
                 self.tasks[cluster] = TaskState(
                     problem=prob, workspace=wspace, cluster=cluster, run_index=run_idx
                 )

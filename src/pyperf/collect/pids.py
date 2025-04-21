@@ -11,14 +11,12 @@ PANDAS_PROBLEMS = [
     ("pandas-merge_asof", "2f4c93e"),
     ("pandas-rangeindex.dtype", "1e03419"),
     ("pandas-pandas.isna", "9097263"),
-    ("pandas-block.make_block", "15fd7d7"),
     ("pandas-ensure_string_array", "2a08b05"),
     ("pandas-maybe_sequence_to_range", "bfaf917"),
     ("pandas-index.infer_dtype", "12faa2e"),
     ("pandas-multiindex.argsort", "609c3b7"),
     ("pandas-dataframe.__setitem__", "e7e3676"),
     ("pandas-rangeindex.take", "fd43d4b"),
-    ("pandas-dataframe.apply", "5555c51"),
     ("pandas-multiindex.get_locs", "2278923"),
     ("pandas-series.loc", "6466fc6"),
     ("pandas-dataframe.transpose", "f1211e7"),
@@ -36,19 +34,21 @@ PANDAS_PROBLEMS = [
     ("pandas-merge_asof", "ad3f3f7"),
     ("pandas-to_datetime", "2421931"),
     ("pandas-pandas.testing.assert_frame_equal", "00d88e9"),
-    ("pandas-datetimeindex.tz_localize", "b731518"),  # weak test?
     ("pandas-indexengine.get_indexer_non_unique", "5d82d8b"),  # internal test
     ("pandas-dataframe.last_valid_index", "65bca65"),  # sc, hl
     ("pandas-merge", "81b5f1d"),  # sc, hl
     ("pandas-multiindex.get_locs", "9d6d587"),  # sl
     ("pandas-dataframe.duplicated", "235113e"),
-    ("pandas-dataframe.all", "28f4942"),
     ("pandas-merge", "c51c2a7"),
     ("pandas-concat", "1c2ad16"),
     ("pandas-series.__init__", "191557d"),  # single test!
     ("pandas-datetimelikearraymixin.astype", "45f0705"),  # single test!
-    # --- buffer ---
     ("pandas-concat", "4583a04"),
+    # --- buffer ---
+    # ("pandas-block.make_block", "15fd7d7"), # few tests
+    # ("pandas-datetimeindex.tz_localize", "b731518"),  # few weak test?
+    # ("pandas-dataframe.all", "28f4942"),
+    # ("pandas-dataframe.apply", "5555c51"),
     # ("pandas-index._getitem_slice", "9b4cffc"),
     # ("pandas-multiindex.equals", "7281475"),
     # ("pandas-datetimelikearraymixin._add_datetimelike_scalar", "a6c0ae4"),
@@ -97,11 +97,11 @@ NUMPY_PROBLEMS = [
     ("numpy-numpy.finfo", "4aca866"),  # sc, hl
     ("numpy-np.isin", "cedba62"),  # related to np.in1d
     ("numpy-numpy.log", "4973914"),  # enable SVML?
-    ("numpy-numpy.greater", "ec8d5db"),  # low speedup?
     ("numpy-numpy.vecdot", "1fcda82"),  # enable BLAS?
     ("numpy-np.sort", "794f474"),  # enable AVX2/SIMD?
     # --- buffer ---
-    ("numpy-maskedarray.clip", "6d77c59"),  # simple? low speedup?
+    # ("numpy-numpy.greater", "ec8d5db"),  # low speedup; weak tests!
+    # ("numpy-maskedarray.clip", "6d77c59"),  # simple? single test!
     # ("numpy-numpy.add.reduce", "3ea71da"), # flaky speedup
     # ("numpy-numpy.conjugate", "d352270"),  # flaky speedup
     # ("numpy-numpy.equal", "1134be2"),
@@ -116,22 +116,23 @@ PILLOW_PROBLEMS = [
     ("pillow-imaginggetbbox", "63f398b"),
     ("pillow-imagecolor.getcolor", "99760f4"),
     ("pillow-gifimagefile.n_frames", "f854676"),
-    ("pillow-image.rotate", "929c561"),
-    ("pillow-imagefilter.kernel", "3b5c2c3"),
     ("pillow-tiffimagefile.is_animated", "fd8ee84"),
+    ("pillow-image.new", "c82f9fe"),
     # --- buffer ---
     ("pillow-imagefilter.color3dlut", "2b09e7f"),  # simple? low speedup?
-    ("pillow-image.new", "c82f9fe"),  # single test!
+    # ("pillow-imagefilter.kernel", "3b5c2c3"),  # few tests
+    # ("pillow-image.rotate", "929c561"),  # single test!
 ]
 
 DATASETS_PROBLEMS = [
     ("datasets-load_dataset_builder", "ef3b5dd"),
-    ("datasets-dataset.select_columns", "32b206d"),
-    ("datasets-iterabledataset.skip", "c5464b3"),
+    ("datasets-dataset.select_columns", "32b206d"),  # hackable
+    ("datasets-iterabledataset.skip", "c5464b3"),  # hackable
     ("datasets-iterabledataset.filter", "ef2fb35"),
-    ("datasets-dataset._select_contiguous", "5994036"),  # single test
-    ("datasets-datasetbuilder.download_and_prepare", "2878019"),  # single test
-    ("datasets-image.cast_storage", "d9a8d8a"),  # single test
+    ("datasets-dataset._select_contiguous", "5994036"),
+    # --- buffer ---
+    # ("datasets-datasetbuilder.download_and_prepare", "2878019"),  # single test
+    # ("datasets-image.cast_storage", "d9a8d8a"),  # single test
 ]
 
 TORNADO_PROBLEMS = [
@@ -139,12 +140,12 @@ TORNADO_PROBLEMS = [
     ("tornado-tcpserver.__init__", "bf1b21a"),
     ("tornado-tornado.websocket.websocketclientconnection.write_message", "9a18f6c"),
     ("tornado-baseiostream.write", "1b464c4"),
-    ("tornado-addthreadselectoreventloop.remove_reader", "5cfe2fc"),
     ("tornado-http1serverconnection.close", "715ef05"),
     ("tornado-future.set_exception", "4d4c1e0"),
     ("tornado-future.done", "ac13ee5"),  # common PR w/ set_exception
     # --- buffer ---
-    ("tornado-oauth2mixin.oauth2_request", "0ab8263"),  # simple? low speedup?
+    # ("tornado-addthreadselectoreventloop.remove_reader", "5cfe2fc"),  # few tests
+    # ("tornado-oauth2mixin.oauth2_request", "0ab8263"),  # simple? single test!
     # ("tornado-resolver.resolve", "bc74d7b"), # flaky speedup
 ]
 

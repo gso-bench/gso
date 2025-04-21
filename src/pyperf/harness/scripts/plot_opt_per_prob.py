@@ -36,7 +36,7 @@ instance_sets = report["instance_sets"]
 def geomean_speedup(before_test_means, after_test_means):
     before_mean = np.mean(before_test_means)
     after_mean = np.mean(after_test_means)
-    _, _, speedup_gm = speedup(
+    _, _, speedup_gm, speedup_gsd, _ = speedup(
         before_mean, after_mean, before_test_means, after_test_means
     )
     return speedup_gm
@@ -61,8 +61,8 @@ def add_top_labels(bars):
 instances = list(opt_stats.keys())
 
 # Filter to instances where model outperforms commit unless show_all_probs is enabled
-if not args.show_all_probs and "improved_commit_ids" in instance_sets:
-    improved_instances = instance_sets["improved_commit_ids"]
+if not args.show_all_probs and "beat_commit_ids" in instance_sets:
+    improved_instances = instance_sets["beat_commit_ids"]
     instances = [instance for instance in instances if instance in improved_instances]
 
 
@@ -89,7 +89,7 @@ speedups_main = [
     )
     for p in instances
 ]
-# speedups_main = [s if s else 0 for s in speedups_main]
+speedups_main = [s if s else 0 for s in speedups_main]
 
 max_speedup = max(speedups_model + speedups_commit + speedups_main)
 

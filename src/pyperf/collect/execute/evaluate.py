@@ -6,7 +6,6 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from scipy import stats
 import numpy as np
-from typing import Dict, List
 
 from pyperf.constants import EXPS_DIR
 from pyperf.utils.io import load_problems
@@ -115,7 +114,7 @@ def speedup_summary(
                 "base_mean": base_mean,
                 "base_std": base_std,
                 "commit_mean": comm_mean,
-                "commit_std": comm_std,
+                "commit_std": comm_std if not np.isnan(comm_std) else 0,
                 "target_mean": target_mean,
                 "target_std": target_std,
                 "opt_perc": opt_perc,
@@ -232,7 +231,7 @@ def plot_top_pids_by_time(df: pd.DataFrame, output_dir: str, top_n: int = 20):
 #########  Performance Summary #########
 
 
-def create_performance_summary(df: pd.DataFrame) -> Dict:
+def create_performance_summary(df: pd.DataFrame) -> dict:
     """Generate comprehensive performance statistics."""
     summary = {
         "total_tests": len(df),

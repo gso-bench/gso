@@ -15,6 +15,7 @@ from pyperf.utils.multiprocess import run_tasks_in_parallel_iter
 from pyperf.harness.utils import setup_logger, close_logger
 from pyperf.harness.environment.dockerfile import get_dockerfile_instance
 from pyperf.harness.grading.evalscript import get_eval_script
+from pyperf.harness.environment.patches import apply_patches
 from pyperf.harness.environment.docker_utils import (
     image_exists_on_dockerhub,
     push_to_dockerhub,
@@ -203,6 +204,8 @@ def build_instance_images(
         instance_build_dir = INSTANCE_IMAGE_BUILD_DIR / inst.instance_image_key.replace(
             ":", "__"
         )
+
+        inst.tests = apply_patches(inst.instance_id, inst.tests)
 
         build_push_tasks.append(
             BuildPushConfig(

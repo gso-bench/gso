@@ -1,8 +1,10 @@
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 from pathlib import Path
+from dataclasses import dataclass
 import resource
 import docker
-from dataclasses import dataclass
+import time
+import re
 
 from pyperf.utils.io import load_pyperf_dataset, load_pyperf_predictions
 from pyperf.harness.environment.docker_utils import list_images
@@ -26,14 +28,52 @@ class GradeInstanceTask:
 
 
 def grad_instance_mp(task: GradeInstanceTask):
-    return grade_instance(
-        task.instance,
-        task.pred,
-        task.rm_image,
-        task.run_id,
-        task.timeout,
-        task.reformat_reports,
-    )
+    max_retries = 5
+    sleep_time = 60
+    instance_id = task.instance.instance_id
+
+    # if reformat_reports, set max_retries to 0
+    if task.reformat_reports:
+        max_retries = 0
+
+    for attempt in range(max_retries + 1):
+        result = grade_instance(
+            task.instance,
+            task.pred,
+            task.rm_image,
+            task.run_id,
+            task.timeout,
+            task.reformat_reports,
+            retry_count=attempt,
+            max_retries=max_retries,
+        )
+
+        if result is None:
+            return result
+
+        result_id, report, test_output_path = result
+
+        # read test_output
+        with open(test_output_path, "r") as f:
+            test_output = f.read()
+
+        # if base_successfully_run is False, retry
+        if (
+            report
+            and instance_id in report
+            and not report[instance_id].get("base_successfully_run", False)
+        ):
+            if attempt < max_retries:
+                time.sleep(sleep_time)
+                continue
+
+        # if HTTP error:
+        if re.search(r"HTTP.*Error|Error.*HTTP", test_output, re.IGNORECASE):
+            if attempt < max_retries:
+                time.sleep(sleep_time)
+                continue
+
+        return result
 
 
 def run_instances(

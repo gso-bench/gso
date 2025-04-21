@@ -3,13 +3,13 @@ from dataclasses import asdict
 from argparse import ArgumentParser
 from datasets import Dataset
 
-from pyperf.constants import EXPS_DIR, DATASET_DIR, MIN_PROB_SPEEDUP, MAX_TEST_COUNT
+from pyperf.constants import *
 from pyperf.data.problem import Problem
 from pyperf.data.dataset import PyPerfInstance
 from pyperf.data.perf import PerformanceCommit
-from pyperf.execute.evaluate import speedup_summary, create_analysis_dataframe
+from pyperf.collect.execute.evaluate import speedup_summary, create_analysis_dataframe
 from pyperf.utils.io import load_problems
-from pyperf.collect.pids import TEST_PROBLEMS
+from pyperf.collect.pids import TEST_PROBLEMS, LONG_RUNNING_PROBLEMS
 from pyperf.collect.utils import prepare_prob_script
 
 
@@ -66,19 +66,54 @@ def build_dataset(problems, exp_id):
             opt_stats[prob.pid] = stats
 
     # create dataframe and filter to test commits
-    opt_problems_df = create_analysis_dataframe(opt_stats)
-    mask = opt_problems_df.apply(
+    analysis_df = create_analysis_dataframe(opt_stats)
+    mask = analysis_df.apply(
         lambda r: (r["pid"], r["commit"]) in test_pid_commits_set, axis=1
     )
-    opt_problems_df = opt_problems_df[mask]
+    analysis_df = analysis_df[mask]
 
     # Filter by minimum speedup and take top K tests per prob
     opt_problems_df = (
-        opt_problems_df[opt_problems_df["speedup_factor"] >= MIN_PROB_SPEEDUP]
+        analysis_df[analysis_df["speedup_factor"] >= MIN_PROB_SPEEDUP]
         .sort_values(["pid", "commit", "speedup_factor"], ascending=[True, True, False])
         .groupby(["pid", "commit"])
         .head(MAX_TEST_COUNT)
     )
+
+    # heuristic: if a problem has < 5 tests, add some tests with lower speedup
+    for (pid, commit), group in opt_problems_df.groupby(["pid", "commit"]):
+        if len(group) < LOW_TEST_IDEAL_TEST_COUNT:
+            additional_tests = (
+                analysis_df[
+                    (analysis_df["pid"] == pid)
+                    & (analysis_df["commit"] == commit)
+                    & (analysis_df["speedup_factor"] > LOW_TEST_FALLBACK_SPEEDUP)
+                    & (analysis_df["speedup_factor"] < MIN_PROB_SPEEDUP)
+                    & (~analysis_df["test_id"].isin(group["test_id"]))
+                ]
+                .sort_values("speedup_factor", ascending=False)
+                .head(LOW_TEST_IDEAL_TEST_COUNT - len(group))
+            )
+
+            if not additional_tests.empty:
+                opt_problems_df = pd.concat([opt_problems_df, additional_tests])
+
+    # heuristic: use fewer tests for extremely long runtime problems
+    for pid, commit in LONG_RUNNING_PROBLEMS:
+        long_running_mask = (opt_problems_df["pid"] == pid) & (
+            opt_problems_df["commit"] == commit
+        )
+        if any(long_running_mask):
+            # print(f">>> long running problem: {pid} - {commit}")
+            problem_indices = opt_problems_df.index[long_running_mask]
+            sorted_indices = (
+                opt_problems_df.loc[problem_indices]
+                .sort_values("speedup_factor", ascending=False)
+                .index[:LONG_RUNNING_MAX_TEST_COUNT]
+            )
+            drop_indices = [idx for idx in problem_indices if idx not in sorted_indices]
+            opt_problems_df = opt_problems_df.drop(drop_indices)
+
     unique_pid_commits = set(zip(opt_problems_df["pid"], opt_problems_df["commit"]))
     print(f"Found {len(unique_pid_commits)} / {len(test_pid_commits_set)} probs")
 
@@ -106,13 +141,16 @@ def build_dataset(problems, exp_id):
     return dataset
 
 
-def main(push_to_hf, hf_username, dataset_name):
-    exp_ids = TEST_PROBLEMS.keys()
+def main(exp_id, push_to_hf, hf_username, dataset_name=None):
+    exp_ids = TEST_PROBLEMS.keys() if exp_id is None else [exp_id]
     problems = [
         problem
         for eid in exp_ids
         for problem in load_problems((EXPS_DIR / f"{eid}" / f"{eid}_results.json"))
     ]
+
+    if exp_id and exp_id not in TEST_PROBLEMS.keys():
+        exp_id = None  # unset
 
     # Build dataset
     dataset = build_dataset(problems, exp_id=None)
@@ -133,6 +171,7 @@ def main(push_to_hf, hf_username, dataset_name):
 
 if __name__ == "__main__":
     parser = ArgumentParser(description="Analyze performance results")
+    parser.add_argument("--exp_id", type=str, help="Experiment ID", default=None)
     parser.add_argument("--dataset_name", type=str, help="Dataset name", default=None)
     parser.add_argument(
         "--push_to_hf",

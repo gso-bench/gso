@@ -31,7 +31,7 @@ parser.add_argument(
     "--fixed_first_run", action="store_true", help="Keep first run fixed across trials"
 )
 parser.add_argument(
-    "--num_trials", type=int, default=100, help="Number of bootstrap trials"
+    "--num_trials", type=int, default=500, help="Number of bootstrap trials"
 )
 args = parser.parse_args()
 
@@ -39,14 +39,14 @@ args = parser.parse_args()
 os.makedirs(args.output_dir, exist_ok=True)
 
 # sort report files
-reports = sorted(args.eval_reports, key=natural_sort_key)[: args.k]
+reports = sorted(args.eval_reports, key=natural_sort_key)
 
 # raise if less than k reports are found
 if len(reports) < args.k:
     raise ValueError(f"Found {len(reports)} reports, expected {args.k}")
 
 
-def calculate_beat_at_k_smooth(report_paths, N, fixed_first_run=False, num_trials=100):
+def calculate_beat_at_k_smooth(report_paths, N, fixed_first_run=False, num_trials=500):
     """
     Calculate beat@k rates with bootstrapping, closely following the reference implementation.
     """
@@ -61,11 +61,10 @@ def calculate_beat_at_k_smooth(report_paths, N, fixed_first_run=False, num_trial
     id_rankings_dict = {}
     for run_id, report in enumerate(all_report_data):
         # Extract all instance IDs that have improvement metrics
-        improved_base_ids = set(report["instance_sets"].get("improved_base_ids", []))
-        improved_commit_ids = set(
-            report["instance_sets"].get("improved_commit_ids", [])
-        )
-        improved_main_ids = set(report["instance_sets"].get("improved_main_ids", []))
+        passed_ids = set(report["instance_sets"].get("passed_ids", []))
+        beat_base_ids = set(report["instance_sets"].get("beat_base_ids", []))
+        beat_commit_ids = set(report["instance_sets"].get("beat_commit_ids", []))
+        beat_main_ids = set(report["instance_sets"].get("beat_main_ids", []))
 
         # All instance IDs: (just take any that appear in any of the classes)
         all_instance_ids = set()
@@ -77,22 +76,25 @@ def calculate_beat_at_k_smooth(report_paths, N, fixed_first_run=False, num_trial
             if instance_id not in id_rankings_dict:
                 id_rankings_dict[instance_id] = {}
 
-            # Store (improved_over_base, improved_over_commit, improved_over_main)
+            # Store (beat_base, beat_commit, beat_main)
             id_rankings_dict[instance_id][run_id] = (
-                instance_id in improved_base_ids,
-                instance_id in improved_commit_ids,
-                instance_id in improved_main_ids,
+                instance_id in passed_ids,
+                instance_id in beat_base_ids,
+                instance_id in beat_commit_ids,
+                instance_id in beat_main_ids,
             )
 
         # assert len(id_rankings_dict) == 122, f"Expected 122 instances"
 
     total_instances = len(id_rankings_dict)
+    passed_at_n_trials = np.zeros((num_trials, N))
     base_at_n_trials = np.zeros((num_trials, N))
     commit_at_n_trials = np.zeros((num_trials, N))
     main_at_n_trials = np.zeros((num_trials, N))
 
     # Run multiple trials
     for trial in range(num_trials):
+        pass_at_n = np.zeros(N)
         base_at_n = np.zeros(N)
         commit_at_n = np.zeros(N)
         main_at_n = np.zeros(N)
@@ -112,24 +114,31 @@ def calculate_beat_at_k_smooth(report_paths, N, fixed_first_run=False, num_trial
 
                 n_rankings = rankings[: idx + 1]
 
-                # Check if beat base in any
+                # Check if passed in any
                 if any(r[1][0] for r in n_rankings):
+                    pass_at_n[idx] += 1
+
+                # Check if beat base in any
+                if any(r[1][1] for r in n_rankings):
                     base_at_n[idx] += 1
 
                 # Check if beat commit in any
-                if any(r[1][1] for r in n_rankings):
+                if any(r[1][2] for r in n_rankings):
                     commit_at_n[idx] += 1
 
                 # Check if beat main in any
-                if any(r[1][2] for r in n_rankings):
+                if any(r[1][3] for r in n_rankings):
                     main_at_n[idx] += 1
 
         # Store results for this trial
+        passed_at_n_trials[trial] = pass_at_n
         base_at_n_trials[trial] = base_at_n
         commit_at_n_trials[trial] = commit_at_n
         main_at_n_trials[trial] = main_at_n
 
     # Calculate means and standard deviations
+    passed_at_n_mean = np.mean(passed_at_n_trials, axis=0)
+    passed_at_n_std = np.std(passed_at_n_trials, axis=0)
     base_at_n_mean = np.mean(base_at_n_trials, axis=0)
     base_at_n_std = np.std(base_at_n_trials, axis=0)
     commit_at_n_mean = np.mean(commit_at_n_trials, axis=0)
@@ -138,6 +147,8 @@ def calculate_beat_at_k_smooth(report_paths, N, fixed_first_run=False, num_trial
     main_at_n_std = np.std(main_at_n_trials, axis=0)
 
     # Convert to percentages
+    passed_at_n_mean_pct = [x / total_instances * 100 for x in passed_at_n_mean]
+    passed_at_n_std_pct = [x / total_instances * 100 for x in passed_at_n_std]
     base_at_n_mean_pct = [x / total_instances * 100 for x in base_at_n_mean]
     base_at_n_std_pct = [x / total_instances * 100 for x in base_at_n_std]
     commit_at_n_mean_pct = [x / total_instances * 100 for x in commit_at_n_mean]
@@ -146,93 +157,97 @@ def calculate_beat_at_k_smooth(report_paths, N, fixed_first_run=False, num_trial
     main_at_n_std_pct = [x / total_instances * 100 for x in main_at_n_std]
 
     # Format results for plotting
+    passed_at_k_rates = list(zip(passed_at_n_mean_pct, passed_at_n_std_pct))
     base_at_k_rates = list(zip(base_at_n_mean_pct, base_at_n_std_pct))
     commit_at_k_rates = list(zip(commit_at_n_mean_pct, commit_at_n_std_pct))
     main_at_k_rates = list(zip(main_at_n_mean_pct, main_at_n_std_pct))
 
-    return base_at_k_rates, commit_at_k_rates, main_at_k_rates
+    return passed_at_k_rates, base_at_k_rates, commit_at_k_rates, main_at_k_rates
 
 
 # Calculate beat@k with the reference approach
-base_at_k_rates, commit_at_k_rates, main_at_k_rates = calculate_beat_at_k_smooth(
-    reports, args.k, args.fixed_first_run, args.num_trials
+passed_at_k_rates, base_at_k_rates, commit_at_k_rates, main_at_k_rates = (
+    calculate_beat_at_k_smooth(reports, args.k, args.fixed_first_run, args.num_trials)
 )
 
 # Create a DataFrame in long format for seaborn (directly from reference)
 k_values = list(range(1, args.k + 1))
 plot_data = []
 
+
+# Add data for passed
+# for k, rates in enumerate(passed_at_k_rates, 1):
+#     error = rates[1] if k < args.k else 0
+#     plot_data.append(
+#         {
+#             "k": k,
+#             "Rate": rates[0],
+#             "Error": error,
+#             "Metric": "Passed",
+#             "Lower": rates[0] - error,
+#             "Upper": rates[0] + error,
+#         }
+#     )
+
 # Add data for base
 for k, rates in enumerate(base_at_k_rates, 1):
+    error = rates[1] if k < args.k else 0
     plot_data.append(
         {
             "k": k,
             "Rate": rates[0],
-            "Error": rates[1],
-            "Metric": "beat(base)@k",
-            "Lower": rates[0] - rates[1],
-            "Upper": rates[0] + rates[1],
+            "Error": error,
+            "Metric": "Valid",
+            "Lower": rates[0] - error,
+            "Upper": rates[0] + error,
         }
     )
 
 # Add data for commit
 for k, rates in enumerate(commit_at_k_rates, 1):
+    error = rates[1] if k < args.k else 0
     plot_data.append(
         {
             "k": k,
             "Rate": rates[0],
-            "Error": rates[1],
-            "Metric": "beat(commit)@k",
-            "Lower": rates[0] - rates[1],
-            "Upper": rates[0] + rates[1],
+            "Error": error,
+            "Metric": "Beat@K",
+            "Lower": rates[0] - error,
+            "Upper": rates[0] + error,
         }
     )
 
-# Add data for main if needed
-if PLOT_MAIN:
-    for k, rates in enumerate(main_at_k_rates, 1):
-        plot_data.append(
-            {
-                "k": k,
-                "Rate": rates[0],
-                "Error": rates[1],
-                "Metric": "beat(main)@k",
-                "Lower": rates[0] - rates[1],
-                "Upper": rates[0] + rates[1],
-            }
-        )
-
 df_plot = pd.DataFrame(plot_data)
 
-# Set the style (from reference)
-sns.set_style("whitegrid")
+# Set the style
+# sns.set_style("whitegrid")
 
 # Define colors
 colors = {
-    "beat(base)@k": "#1f77b4",  # blue
-    "beat(commit)@k": "#ff7f0e",  # orange
-    "beat(main)@k": "#2ca02c",  # green
+    "Passed": "#b3b3b3",  # gray
+    "Valid": "#396ab1",  # blue
+    "Beat@K": "#da7c2f",  # orange
 }
 
 plt.figure(figsize=(8, 6))
 plt.rcParams.update({"font.size": 14})
 
-# Create the plot (closely following reference)
+# Create the plot
 sns.lineplot(
     data=df_plot,
     x="k",
     y="Rate",
     hue="Metric",
     style="Metric",
-    markers=True,
+    markers={"Beat@K": "o", "Valid": "o", "Passed": "o"},
+    markeredgewidth=0,
+    markersize=5,
     dashes=False,
     palette=colors,
 )
 
-# Add error bands (from reference)
+# Add error bands
 for metric, color in colors.items():
-    if metric == "beat(main)@k" and not PLOT_MAIN:
-        continue
     metric_data = df_plot[df_plot["Metric"] == metric]
     plt.fill_between(
         metric_data["k"],
@@ -240,12 +255,11 @@ for metric, color in colors.items():
         metric_data["Upper"],
         alpha=0.2,
         color=color,
+        linewidth=0,
     )
 
-# Add value labels (from reference)
+# Add value labels
 for metric, color in colors.items():
-    if metric == "beat(main)@k" and not PLOT_MAIN:
-        continue
     metric_data = df_plot[df_plot["Metric"] == metric]
     for _, row in metric_data.iterrows():
         plt.annotate(
@@ -254,15 +268,17 @@ for metric, color in colors.items():
             textcoords="offset points",
             xytext=(0, 8),
             ha="center",
-            color=color,
-            fontsize=9,
+            color="#3b3b3b",
+            fontsize=8,
         )
 
 # Customize plot
+plt.tick_params(axis="both", direction="out", length=3, width=1)
 plt.xlabel("# Agent Rollouts (K)")
 plt.ylabel("% Problems")
 plt.xticks(k_values)
-plt.grid(True, linestyle="-", alpha=0.05)
+plt.ylim(-3, 75)
+plt.grid(False)  #  linestyle="-", alpha=0.005)
 plt.legend(title=None)
 
 # Save the plot

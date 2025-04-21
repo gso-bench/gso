@@ -5,17 +5,11 @@ from dataclasses import asdict
 from argparse import ArgumentParser
 from datasets import Dataset
 
-from pyperf.constants import (
-    EXPS_DIR,
-    DATASET_DIR,
-    MIN_PROB_SPEEDUP,
-    MAX_TEST_COUNT,
-    LONG_RUNNING_MAX_TEST_COUNT,
-)
+from pyperf.constants import *
 from pyperf.data.problem import Problem
 from pyperf.data.dataset import PyPerfInstance
 from pyperf.data.perf import PerformanceCommit
-from pyperf.execute.evaluate import speedup_summary, create_analysis_dataframe
+from pyperf.collect.execute.evaluate import speedup_summary, create_analysis_dataframe
 from pyperf.utils.io import load_problems
 from pyperf.collect.pids import TEST_PROBLEMS, LONG_RUNNING_PROBLEMS
 from pyperf.collect.utils import prepare_prob_script
@@ -69,19 +63,37 @@ def build_dataset(problems, exp_id):
             opt_stats[prob.pid] = stats
 
     # create dataframe and filter to test commits
-    opt_problems_df = create_analysis_dataframe(opt_stats)
-    mask = opt_problems_df.apply(
+    analysis_df = create_analysis_dataframe(opt_stats)
+    mask = analysis_df.apply(
         lambda r: (r["pid"], r["commit"]) in test_pid_commits_set, axis=1
     )
-    opt_problems_df = opt_problems_df[mask]
+    analysis_df = analysis_df[mask]
 
     # Filter by minimum speedup and take top K tests per prob
     opt_problems_df = (
-        opt_problems_df[opt_problems_df["speedup_factor"] >= MIN_PROB_SPEEDUP]
+        analysis_df[analysis_df["speedup_factor"] >= MIN_PROB_SPEEDUP]
         .sort_values(["pid", "commit", "speedup_factor"], ascending=[True, True, False])
         .groupby(["pid", "commit"])
         .head(MAX_TEST_COUNT)
     )
+
+    # heuristic: if a problem has < 5 tests, add some tests with lower speedup
+    for (pid, commit), group in opt_problems_df.groupby(["pid", "commit"]):
+        if len(group) < LOW_TEST_IDEAL_TEST_COUNT:
+            additional_tests = (
+                analysis_df[
+                    (analysis_df["pid"] == pid)
+                    & (analysis_df["commit"] == commit)
+                    & (analysis_df["speedup_factor"] > LOW_TEST_FALLBACK_SPEEDUP)
+                    & (analysis_df["speedup_factor"] < MIN_PROB_SPEEDUP)
+                    & (~analysis_df["test_id"].isin(group["test_id"]))
+                ]
+                .sort_values("speedup_factor", ascending=False)
+                .head(LOW_TEST_IDEAL_TEST_COUNT - len(group))
+            )
+
+            if not additional_tests.empty:
+                opt_problems_df = pd.concat([opt_problems_df, additional_tests])
 
     # heuristic: use fewer tests for extremely long runtime problems
     for pid, commit in LONG_RUNNING_PROBLEMS:
@@ -104,7 +116,11 @@ def build_dataset(problems, exp_id):
 
     loc_dist = opt_problems_df["loc_changed"].describe()
     speedup_dist = opt_problems_df["speedup_factor"].describe()
-    test_dist = opt_problems_df.groupby(["pid", "commit"]).size().describe()
+    test_dist = (
+        opt_problems_df.groupby(["pid", "commit"])
+        .size()
+        .describe(percentiles=[0.05, 0.1, 0.2, 0.25, 0.3, 0.4, 0.5, 0.75, 0.9])
+    )
 
     # Create dataset instances for selected (problem, commit, test)
     dataset = []
@@ -114,6 +130,8 @@ def build_dataset(problems, exp_id):
         inst = PyPerfInstance(**inst_dict)
         dataset.append(inst)
 
+    dataset_df = pd.DataFrame([asdict(inst) for inst in dataset])
+
     pd.set_option("display.float_format", "{:.2f}".format)
     print("Created dataset!\n\n------ Dataset Summary ------")
     print(f"Size: {len(dataset)}")
@@ -121,8 +139,8 @@ def build_dataset(problems, exp_id):
     print(f"Avg Speedup: {speedup_dist['mean']:.2f}X\n")
 
     print(f"LoC dist:\n{loc_dist}\n")
-    print(f"Speedup dist:\n{speedup_dist}\n")
-    print(f"Test dist:\n{test_dist}")
+    print(f"Test dist:\n{test_dist}\n")
+    print(f"Repo dist:\n{dataset_df['repo'].value_counts()}\n")
 
     # plot the test count distribution in /plots using sns.histplot
     plt.figure(figsize=(10, 6))
@@ -131,17 +149,19 @@ def build_dataset(problems, exp_id):
         opt_problems_df.groupby(["pid", "commit"]).size(), columns=["Test Count"]
     )
     sns.histplot(plot_data, x="Test Count", bins=range(1, 11), discrete=True)
-    plt.savefig("plots/test_count_dist.png")
+    PLOTS_DIR.mkdir(parents=True, exist_ok=True)
+    plt.savefig(PLOTS_DIR / "test_count_dist.png")
 
-    # show the groups with less than 4 tests
-    # low_tests = (
-    #     opt_problems_df.groupby(["pid", "commit"])
-    #     .filter(lambda x: len(x) < 4)
-    #     .drop_duplicates(subset=["pid", "commit"])
-    # )
-    # if not low_tests.empty:
-    #     print("Low test groups:")
-    #     print(low_tests["pid"].to_string(index=False))
+    # show the groups with less than 6 tests
+    low_tests = opt_problems_df.groupby(["pid", "commit"]).filter(lambda x: len(x) < 4)
+    if not low_tests.empty:
+        print(
+            f"Low test groups (Count: {len(low_tests.drop_duplicates(subset=["pid", "commit"]))})"
+        )
+        low_tests_df = pd.DataFrame(
+            low_tests.groupby(["pid", "commit"]).size(), columns=["Test Count"]
+        ).reset_index()
+        print(low_tests_df)
 
     return dataset
 

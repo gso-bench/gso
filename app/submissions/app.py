@@ -5,7 +5,11 @@ from pathlib import Path
 
 from flask import Flask, jsonify, render_template, url_for
 
-from pyperf.constants import SUBMISSIONS_DIR, EVALUATION_REPORTS_DIR
+from pyperf.constants import (
+    SUBMISSIONS_DIR,
+    EVALUATION_REPORTS_DIR,
+    RUN_EVALUATION_LOG_DIR,
+)
 
 app = Flask(__name__)
 
@@ -19,6 +23,14 @@ def get_available_logs():
             if file.endswith(".jsonl") and file == "output.jsonl":
                 # ignore if archive is in the file path
                 if "archives" in root:
+                    continue
+
+                # ignore if plans is in the file path
+                if "plans" in root:
+                    continue
+
+                # ignore gpt-4o submissions
+                if "gpt-4o" in root:
                     continue
 
                 # Get relative path from SUBMISSIONS_DIR
@@ -65,6 +77,15 @@ def load_jsonl(file_path):
                     if not analysis.empty:
                         conv["analysis"] = analysis.iloc[0].get("analysis", "")
 
+                    test_output_path = os.path.join(
+                        RUN_EVALUATION_LOG_DIR, "test", run_id, instance_id
+                    )
+                    test_output_file = os.path.join(test_output_path, "test_output.txt")
+                    if os.path.exists(test_output_file):
+                        with open(test_output_file, "r") as test_output:
+                            test_output_data = test_output.read()
+                            conv["test_output"] = test_output_data
+
                     try:
                         # Look for report in the reports directory
                         possible_reports = list(
@@ -76,13 +97,13 @@ def load_jsonl(file_path):
                             with open(report_path, "r") as report_file:
                                 report_data = json.load(report_file)
 
-                                # Check if instance is in improved_commit_ids
-                                improved_commit = instance_id in report_data.get(
+                                # Check if instance is in beat_commit_ids
+                                beat_commit = instance_id in report_data.get(
                                     "instance_sets", {}
-                                ).get("improved_commit_ids", [])
-                                improved_main = instance_id in report_data.get(
+                                ).get("beat_commit_ids", [])
+                                beat_main = instance_id in report_data.get(
                                     "instance_sets", {}
-                                ).get("improved_main_ids", [])
+                                ).get("beat_main_ids", [])
 
                                 # Get optimization stats if available
                                 opt_stats = report_data.get("opt_stats", {}).get(
@@ -93,8 +114,8 @@ def load_jsonl(file_path):
                                 if "test_result" not in conv:
                                     conv["test_result"] = {}
 
-                                conv["test_result"]["improved_commit"] = improved_commit
-                                conv["test_result"]["improved_main"] = improved_main
+                                conv["test_result"]["beat_commit"] = beat_commit
+                                conv["test_result"]["beat_main"] = beat_main
                                 conv["test_result"]["opt_stats"] = opt_stats
                     except Exception as e:
                         print(f"Error loading report for {instance_id}: {e}")
@@ -153,7 +174,7 @@ def instance_matrix():
 
             # Check if there's test result data
             test_result = conv.get("test_result", {})
-            success = test_result.get("improved_commit", False)
+            success = test_result.get("beat_commit", False)
 
             # Create URL for this specific conversation
             log_url = url_for(
@@ -253,4 +274,4 @@ def previous_conversation(log_path):
 
 
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=5760)
+    app.run(debug=False, host="0.0.0.0", port=5760)

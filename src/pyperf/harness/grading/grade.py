@@ -64,6 +64,8 @@ def grade_instance(
     run_id: str,
     timeout: int | None = None,
     reformat_reports: bool = False,
+    retry_count: int = 0,
+    max_retries: int = 5,
 ):
     """
     Run a single instance with the given prediction.
@@ -96,7 +98,7 @@ def grade_instance(
         # Write report to report.json
         with open(report_path, "w") as f:
             f.write(json.dumps(report, indent=4))
-        return instance_id, report
+        return instance_id, report, test_output_path
 
     # Run the instance
     container = None
@@ -105,6 +107,9 @@ def grade_instance(
         container = create_container(instance, client, run_id, logger)
         container.start()
         logger.info(f"Container for {instance_id} started: {container.id}")
+
+        if retry_count > 0:
+            logger.info(f"Retrying ({retry_count}/{max_retries})")
 
         # Copy model prediction as patch file to container
         patch_file = Path(log_dir / "patch.diff")
@@ -149,7 +154,7 @@ def grade_instance(
         # Write report to report.json
         with open(report_path, "w") as f:
             f.write(json.dumps(report, indent=4))
-        return instance_id, report
+        return instance_id, report, test_output_path
     except EvaluationError as e:
         error_msg = traceback.format_exc()
         logger.info(error_msg)
