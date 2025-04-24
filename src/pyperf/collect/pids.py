@@ -158,6 +158,41 @@ PYDANTIC_PROBLEMS = [
     ("pydantic-typeadapter.__init__", "c5dce37"),
 ]
 
+PILLOW_SIMD_PROBLEMS = [
+    ("pillow-simd-imagingfilter", "2818b90"),
+    ("pillow-simd-image.resize", "b4045cf"),
+    ("pillow-simd-color3dlut.generate", "6eacce9"),
+    ("pillow-simd-image.gaussian_blur", "9e60023"),
+    ("pillow-simd-imagingalphacomposite", "0514e20"),
+    ("pillow-simd-image.reduce", "7511039"),
+    ("pillow-simd-image.reduce", "d970a39"),
+    # -- buffer ---
+    # ("pillow-simd-image.rotate", "929c561"), # better than pillow version
+]
+
+TOKENIZERS_PROBLEMS = [
+    ("tokenizers-normalizedstring.replace", "c893204"),
+    ("tokenizers-tokenizer.encode", "076319d"),
+    ("tokenizers-tokenizer.encode_batch_fast", "bfd9cde"),
+    ("tokenizers-tokenizers.trainers.unigramtrainer.train", "fc76ad4"),
+    # --- buffer ---
+    # ("tokenizers-tokenizers.models.unigram.encode", "0b0103a"), # single test; small diff
+]
+
+TRANSFORMERS_PROBLEMS = [
+    ("transformers-gptneoxdynamicntkscalingrotaryembedding", "253f9a3"),
+    ("transformers-nobadwordslogitsprocessor.__call__", "63b90a5"),
+    ("transformers-whispertokenizer._preprocess_token_ids", "211f93a"),
+    # --- buffer ---
+    ("transformers-xlnetlmheadmodel.forward", "d51b589"),  # simple, but exploratory
+    # ("transformers-no_init_weights", "0676d99"), # simple?
+    # ("transformers-byt5tokenizer._tokenize", "6626d8a"), # single test
+]
+
+ONNX_PROBLEMS = [
+    ("onnxruntime-onnxruntime.quantization.quant_utils.quantize_data", "df28c7d"),
+]
+
 
 TEST_PROBLEMS = {
     "pandas": PANDAS_PROBLEMS,
@@ -166,6 +201,11 @@ TEST_PROBLEMS = {
     "datasets": DATASETS_PROBLEMS,
     "tornado": TORNADO_PROBLEMS,
     "pydantic": PYDANTIC_PROBLEMS,
+    "pillow-simd": PILLOW_SIMD_PROBLEMS,
+    "tokenizers": TOKENIZERS_PROBLEMS,
+    "transformers": TRANSFORMERS_PROBLEMS,
+    "onnx": ONNX_PROBLEMS,
+    # "llama-cpp-python": LLAMA_CPP_PROBLEMS,
 }
 
 
