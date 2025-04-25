@@ -13,7 +13,6 @@ PANDAS_PROBLEMS = [
     ("pandas-pandas.isna", "9097263"),
     ("pandas-ensure_string_array", "2a08b05"),
     ("pandas-maybe_sequence_to_range", "bfaf917"),
-    ("pandas-index.infer_dtype", "12faa2e"),
     ("pandas-multiindex.argsort", "609c3b7"),
     ("pandas-dataframe.__setitem__", "e7e3676"),
     ("pandas-rangeindex.take", "fd43d4b"),
@@ -45,6 +44,7 @@ PANDAS_PROBLEMS = [
     ("pandas-datetimelikearraymixin.astype", "45f0705"),  # single test!
     ("pandas-concat", "4583a04"),
     # --- buffer ---
+    # ("pandas-index.infer_dtype", "12faa2e"),
     # ("pandas-block.make_block", "15fd7d7"), # few tests
     # ("pandas-datetimeindex.tz_localize", "b731518"),  # few weak test?
     # ("pandas-dataframe.all", "28f4942"),
@@ -90,16 +90,16 @@ NUMPY_PROBLEMS = [
     ("numpy-numpy.char.endswith", "09db9c7"),
     ("numpy-np.add.at", "7853cbc"),
     ("numpy-numpy.char.replace", "1b861a2"),
-    ("numpy-flatiter.__getitem__", "f69f273"),
     ("numpy-numpy.ufunc.at", "eb21b25"),
     ("numpy-numpy.char.isdecimal", "248c60e"),
     ("numpy-numpy.char.count", "e801e7a"),
     ("numpy-numpy.finfo", "4aca866"),  # sc, hl
     ("numpy-np.isin", "cedba62"),  # related to np.in1d
-    ("numpy-numpy.log", "4973914"),  # enable SVML?
     ("numpy-numpy.vecdot", "1fcda82"),  # enable BLAS?
     ("numpy-np.sort", "794f474"),  # enable AVX2/SIMD?
     # --- buffer ---
+    # ("numpy-numpy.log", "4973914"),  # enable SVML?
+    # ("numpy-flatiter.__getitem__", "f69f273"),
     # ("numpy-numpy.greater", "ec8d5db"),  # low speedup; weak tests!
     # ("numpy-maskedarray.clip", "6d77c59"),  # simple? single test!
     # ("numpy-numpy.add.reduce", "3ea71da"), # flaky speedup
@@ -119,20 +119,20 @@ PILLOW_PROBLEMS = [
     ("pillow-tiffimagefile.is_animated", "fd8ee84"),
     ("pillow-image.new", "c82f9fe"),
     # --- buffer ---
-    ("pillow-imagefilter.color3dlut", "2b09e7f"),  # simple? low speedup?
+    # ("pillow-imagefilter.color3dlut", "2b09e7f"),  # simple? low speedup?
     # ("pillow-imagefilter.kernel", "3b5c2c3"),  # few tests
     # ("pillow-image.rotate", "929c561"),  # single test!
 ]
 
 DATASETS_PROBLEMS = [
     ("datasets-load_dataset_builder", "ef3b5dd"),
-    ("datasets-dataset.select_columns", "32b206d"),  # hackable
-    ("datasets-iterabledataset.skip", "c5464b3"),  # hackable
-    ("datasets-iterabledataset.filter", "ef2fb35"),
+    ("datasets-iterabledataset.skip", "c5464b3"),  # simple?
     ("datasets-dataset._select_contiguous", "5994036"),
     # --- buffer ---
     # ("datasets-datasetbuilder.download_and_prepare", "2878019"),  # single test
     # ("datasets-image.cast_storage", "d9a8d8a"),  # single test
+    # ("datasets-dataset.select_columns", "32b206d"),  # hackable
+    # ("datasets-iterabledataset.filter", "ef2fb35"),
 ]
 
 TORNADO_PROBLEMS = [
@@ -152,10 +152,11 @@ TORNADO_PROBLEMS = [
 PYDANTIC_PROBLEMS = [
     ("pydantic-basemodel.__setattr__", "addf1f9"),
     ("pydantic-genericmodel.__concrete_name__", "4a09447"),
-    ("pydantic-basemodel._iter", "7d9614e"),  # long running!
     ("pydantic-typeadapter.validate_strings", "c2647ab"),
     ("pydantic-typeadapter.validate_python", "ac9e6ee"),
     ("pydantic-typeadapter.__init__", "c5dce37"),
+    # --- buffer ---
+    # ("pydantic-basemodel._iter", "7d9614e"),  # long running!
 ]
 
 PILLOW_SIMD_PROBLEMS = [
@@ -190,8 +191,8 @@ TRANSFORMERS_PROBLEMS = [
 ]
 
 LLAMA_CPP_PROBLEMS = [
-    ("llama-cpp-python-llama_cpp.default_a", "218d361"),
-    ("llama-cpp-python-llama_cpp.default_b", "2bc1d97"),
+    ("llama-cpp-python-llama_cpp.gen_a", "218d361"),
+    ("llama-cpp-python-llama_cpp.gen_b", "2bc1d97"),
 ]
 
 ONNX_PROBLEMS = [
@@ -218,5 +219,4 @@ TEST_PROBLEMS = {
 LONG_RUNNING_PROBLEMS = [
     ("pandas-dataframe.__setitem__", "e7e3676"),
     ("datasets-load_dataset_builder", "ef3b5dd"),
-    ("datasets-dataset.select_columns", "32b206d"),
 ]
