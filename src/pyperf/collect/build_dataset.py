@@ -21,13 +21,17 @@ def create_instance(prob: Problem, commit_hash: str, test_ids: list[int]):
         c for c in prob.commits if c.quick_hash() == commit_hash
     ][0]
 
+    base_commit = (
+        prob.base_commit if prob.base_commit != "" else commit.commit_hash + "^"
+    )
+
     test_samples = prob.get_tests(commit_hash, test_ids)
     prob_script = prepare_prob_script(test_samples)
 
     return {
         "instance_id": (prob.repo.full_name + "-" + commit_hash).replace("/", "__"),
         "repo": prob.repo.full_name,
-        "base_commit": commit.commit_hash + "^",
+        "base_commit": base_commit,
         "api": prob.api,
         "prob_script": prob_script,
         "tests": test_samples,
