@@ -12,7 +12,7 @@ from pyperf.data.perf import PerformanceCommit
 from pyperf.collect.execute.evaluate import speedup_summary, create_analysis_dataframe
 from pyperf.utils.io import load_problems
 from pyperf.collect.pids import TEST_PROBLEMS, LONG_RUNNING_PROBLEMS
-from pyperf.collect.utils import prepare_prob_script
+from pyperf.collect.utils import prepare_prob_script, prepare_install_commands
 
 
 def create_instance(prob: Problem, commit_hash: str, test_ids: list[int]):
@@ -26,6 +26,7 @@ def create_instance(prob: Problem, commit_hash: str, test_ids: list[int]):
     )
 
     test_samples = prob.get_tests(commit_hash, test_ids)
+    install_commands = prepare_install_commands(prob.install_commands)
     prob_script = prepare_prob_script(test_samples)
 
     return {
@@ -37,7 +38,7 @@ def create_instance(prob: Problem, commit_hash: str, test_ids: list[int]):
         "tests": test_samples,
         "hints_text": commit.message,
         "setup_commands": prob.setup_commands,
-        "install_commands": prob.install_commands,
+        "install_commands": install_commands,
         "created_at": commit.date.strftime("%Y-%m-%d %H:%M:%S"),
     }
 

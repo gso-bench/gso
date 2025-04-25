@@ -1,6 +1,34 @@
 import ast
 
 
+def prepare_install_commands(install_commands: list[str]) -> list[str]:
+    """Clean and prepare install commands for a problem instance"""
+    # remove any sudo commands
+    install_commands = [cmd for cmd in install_commands if not cmd.startswith("sudo")]
+
+    # remove any token exports
+    install_commands = [
+        cmd for cmd in install_commands if not cmd.startswith("export HF_TOKEN=")
+    ]
+
+    # special case: onnxruntime
+    install_commands = [
+        (
+            cmd + " --allow_running_as_root"
+            if cmd.startswith("./build.sh --config RelWithDebInfo")
+            else cmd
+        )
+        for cmd in install_commands
+    ]
+
+    # special case: pillow-simd
+    install_commands = [
+        cmd for cmd in install_commands if not cmd == "uv pip show pillow-simd"
+    ]
+
+    return install_commands
+
+
 def prepare_prob_script(tests: list[str]) -> str:
     """Clean and prepare a problem script for a problem instance"""
     # pick the first test
