@@ -189,6 +189,11 @@ TRANSFORMERS_PROBLEMS = [
     # ("transformers-byt5tokenizer._tokenize", "6626d8a"), # single test
 ]
 
+LLAMA_CPP_PROBLEMS = [
+    ("llama-cpp-python-llama_cpp.default_a", "218d361"),
+    ("llama-cpp-python-llama_cpp.default_b", "2bc1d97"),
+]
+
 ONNX_PROBLEMS = [
     ("onnxruntime-onnxruntime.quantization.quant_utils.quantize_data", "df28c7d"),
 ]
@@ -204,8 +209,8 @@ TEST_PROBLEMS = {
     "pillow-simd": PILLOW_SIMD_PROBLEMS,
     "tokenizers": TOKENIZERS_PROBLEMS,
     "transformers": TRANSFORMERS_PROBLEMS,
+    "llama-cpp-python": LLAMA_CPP_PROBLEMS,
     "onnx": ONNX_PROBLEMS,
-    # "llama-cpp-python": LLAMA_CPP_PROBLEMS,
 }
 
 
