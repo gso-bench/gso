@@ -6,7 +6,7 @@ import subprocess
 from pathlib import Path
 from string import Template
 
-from pyperf.collect.execute.helpers import zip_results, add_tokens_to_prob
+from pyperf.collect.execute.helpers import zip_results, add_tokens_to_installs
 from pyperf.harness.environment.patches import apply_patches_to_tests
 from pyperf.constants import *
 from pyperf.logger import logger
@@ -22,9 +22,9 @@ class SkyManager:
 
     @staticmethod
     def build_templates(temp_dir, task, phase1, phase2, problem):
-        problem = add_tokens_to_prob(problem)
         setup_commands = "\n  ".join(problem.setup_commands)
-        install_commands = "\n        ".join(problem.install_commands)
+        install_commands = add_tokens_to_installs(problem.install_commands)
+        install_commands = "\n        ".join(install_commands)
         candidates = " ".join(t.quick_hash for t in problem.tests)
 
         task = task.safe_substitute(

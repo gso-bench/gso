@@ -18,9 +18,9 @@ def zip_results(results_dir: Path):
     return file_groups
 
 
-def add_tokens_to_prob(problem):
-    """Add tokens to the problem's install commands if set in the environment"""
-    problem.install_commands.append(
+def add_tokens_to_installs(install_commands):
+    """Add tokens to a problem's install commands if set in the environment"""
+    install_commands.append(
         f"export HF_TOKEN={os.getenv('HF_TOKEN')}" if os.getenv("HF_TOKEN") else ""
     )
-    return problem
+    return install_commands
