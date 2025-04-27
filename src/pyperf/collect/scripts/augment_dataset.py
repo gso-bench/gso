@@ -99,7 +99,7 @@ def build_dataset(problems, exp_id):
                 opt_problems_df = pd.concat([opt_problems_df, additional_tests])
 
     # heuristic: use fewer tests for extremely long runtime problems
-    for pid, commit in LONG_RUNNING_PROBLEMS:
+    for pid, commit, max_test_count in LONG_RUNNING_PROBLEMS:
         long_running_mask = (opt_problems_df["pid"] == pid) & (
             opt_problems_df["commit"] == commit
         )
@@ -109,7 +109,7 @@ def build_dataset(problems, exp_id):
             sorted_indices = (
                 opt_problems_df.loc[problem_indices]
                 .sort_values("speedup_factor", ascending=False)
-                .index[:LONG_RUNNING_MAX_TEST_COUNT]
+                .index[:max_test_count]
             )
             drop_indices = [idx for idx in problem_indices if idx not in sorted_indices]
             opt_problems_df = opt_problems_df.drop(drop_indices)

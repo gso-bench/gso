@@ -175,7 +175,7 @@ TOKENIZERS_PROBLEMS = [
     ("tokenizers-normalizedstring.replace", "c893204"),
     ("tokenizers-tokenizer.encode", "076319d"),
     ("tokenizers-tokenizer.encode_batch_fast", "bfd9cde"),
-    ("tokenizers-tokenizers.trainers.unigramtrainer.train", "fc76ad4"),
+    ("tokenizers-tokenizers.trainers.unigramtrainer.train", "fc76ad4"),  # long running!
     # --- buffer ---
     # ("tokenizers-tokenizers.models.unigram.encode", "0b0103a"), # single test; small diff
 ]
@@ -217,6 +217,8 @@ TEST_PROBLEMS = {
 
 # add problems here that have long runtimes to reduce number of tests
 LONG_RUNNING_PROBLEMS = [
-    ("pandas-dataframe.__setitem__", "e7e3676"),
-    ("datasets-load_dataset_builder", "ef3b5dd"),
+    ("pandas-dataframe.__setitem__", "e7e3676", 5),
+    ("datasets-load_dataset_builder", "ef3b5dd", 5),
+    ("tokenizers-tokenizers.trainers.unigramtrainer.train", "fc76ad4", 5),
+    ("onnxruntime-onnxruntime.quantization.quant_utils.quantize_data", "df28c7d", 3),
 ]

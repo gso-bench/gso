@@ -69,28 +69,30 @@ run_tests_for_commit() {{
     local result_file=$2
     local flag=$3
     local prefix=$4
-    local iterations=5
+    local iterations={max_iterations}
     
     echo "Running test $test_file $iterations times..."
     for i in $(seq 1 $iterations); do
         echo "  Iteration $i/$iterations"
-        if ! timeout 300s python "$test_file" "$result_file" "$flag" --file_prefix "$prefix"; then
-            if [ $? -eq 124 ]; then
-                # Exit code 124 indicates timeout
-                echo "{timeout}"
-                return 1
-            else 
+        status=0
+        timeout {max_time}s python "$test_file" "$result_file" "$flag" --file_prefix "$prefix" || status=$?
 
-                # If main fails, warn and return
-                if [[ "$result_file" == "main"* ]]; then
-                    echo "{warning}"
-                    return 0
-                fi
+        if [ $status -eq 124 ]; then
+            # Exit code 124 indicates timeout
+            echo "{timeout}"
+            return 1
 
-                # Any other non-zero exit indicates test error
-                echo "{error}"
-                return 1
+        elif [ $status -ne 0 ]; then
+            # If main fails, warn and return
+            if [[ "$result_file" == "main"* ]]; then
+                echo "{warning}"
+                echo "N/A" > "$result_file"
+                return 0
             fi
+
+            # Any other non-zero exit indicates test error
+            echo "{error}"
+            return 1
         fi
     done
     
@@ -120,6 +122,10 @@ RUN_PATCH = """run_tests_for_commit /pyperf_test_{i}.py "result_{i}.txt" "--eqch
 RUN_COMMIT = """run_tests_for_commit /pyperf_test_{i}.py "commit_{i}.txt" "--reference" "pyperf_{i}" """
 RUN_MAIN = """run_tests_for_commit /pyperf_test_{i}.py "main_{i}.txt" "--reference" "pyperf_{i}" """
 PRINT_PERF = lambda i, f: f"""echo "{TEST_DELIMITER.format(i=i)}" && cat {f}_{i}.txt"""
+MAX_TIME = lambda repo: 600 if repo in ["abetlen/llama-cpp-python"] else 300
+MAX_ITERS = lambda repo: (
+    1 if repo in ["abetlen/llama-cpp-python", "microsoft/onnxruntime"] else 5
+)
 
 
 def get_eval_script(instance) -> str:
@@ -127,6 +133,7 @@ def get_eval_script(instance) -> str:
     opt_commit = instance.opt_commit
     reset_repo_commands = instance.reset_repo_commands
     test_count = instance.test_count
+    repo = instance.repo
 
     # Avoid deleting result files
     if "git clean -xfd" in install_commands:
@@ -193,6 +200,8 @@ def get_eval_script(instance) -> str:
                     warning=MAIN_REGRESS_WARNING,
                     error=TESTS_ERROR,
                     passed=TESTS_PASSED,
+                    max_iterations=MAX_ITERS(repo),
+                    max_time=MAX_TIME(repo),
                 ),
                 INSTALL_HELPER.format(
                     install_commands="\n\t\t".join(install_commands),
