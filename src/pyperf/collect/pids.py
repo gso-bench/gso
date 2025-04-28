@@ -220,5 +220,6 @@ LONG_RUNNING_PROBLEMS = [
     ("pandas-dataframe.__setitem__", "e7e3676", 5),
     ("datasets-load_dataset_builder", "ef3b5dd", 5),
     ("tokenizers-tokenizers.trainers.unigramtrainer.train", "fc76ad4", 5),
+    ("pillow-simd-image.gaussian_blur", "9e60023", 5),
     ("onnxruntime-onnxruntime.quantization.quant_utils.quantize_data", "df28c7d", 3),
 ]
