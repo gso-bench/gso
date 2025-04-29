@@ -21,9 +21,8 @@ def create_instance(prob: Problem, commit_hash: str, test_ids: list[int]):
         c for c in prob.commits if c.quick_hash() == commit_hash
     ][0]
 
-    base_commit = (
-        prob.base_commit if prob.base_commit != "" else commit.commit_hash + "^"
-    )
+    opt_commit = commit.commit_hash
+    base_commit = prob.base_commit if prob.base_commit != "" else opt_commit + "^"
 
     test_samples = prob.get_tests(commit_hash, test_ids)
     install_commands = prepare_install_commands(prob.install_commands)
@@ -33,6 +32,7 @@ def create_instance(prob: Problem, commit_hash: str, test_ids: list[int]):
         "instance_id": (prob.repo.full_name + "-" + commit_hash).replace("/", "__"),
         "repo": prob.repo.full_name,
         "base_commit": base_commit,
+        "opt_commit": opt_commit,
         "api": prob.api,
         "prob_script": prob_script,
         "tests": test_samples,
