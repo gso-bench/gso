@@ -257,3 +257,16 @@ def list_images(client: docker.DockerClient):
     """
     # don't use this in multi-threaded context
     return {tag for i in client.images.list(all=True) for tag in i.tags}
+
+
+def cleanup_docker(client: docker.DockerClient):
+    """
+    Remove all running containers from the Docker client.
+    """
+    # don't use this in multi-threaded context
+    for container in client.containers.list(all=True):
+        try:
+            container.stop()
+            container.remove(force=True)
+        except Exception as e:
+            print(f"Failed to remove container {container.name}: {e}")

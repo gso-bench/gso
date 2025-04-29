@@ -30,13 +30,12 @@ EVALUATION_REPORTS_DIR = Path("reports")
 PLOTS_DIR = Path("plots")
 
 # --------- Build Constants ---------
-
 MIN_PROB_SPEEDUP = 1.2  # min speedup to consider a problem as a benchmark instance
 MAX_TEST_COUNT = 15  # max number of tests to run per problem
-# --- special cases ---
 LOW_TEST_IDEAL_TEST_COUNT = 5  # target test count with low test count
 LOW_TEST_FALLBACK_SPEEDUP = 1.1  # min speedup for problems with low test count
 
 # --------- Grading Constants ---------
 BEAT_GM_THRESH = 0.95  # min speedup to consider as `beating` commit/main
 BEAT_GSD_THRESH = 1.3  # max speedup variation to consider as `beating` commit/main
+HIGH_RESOURCE_REPOS = ["abetlen/llama-cpp-python"]

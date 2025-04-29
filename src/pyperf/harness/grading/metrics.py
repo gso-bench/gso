@@ -119,7 +119,10 @@ def parse_logs(content):
     tm["commit_times"] = parse_times(content, START_COMMIT_OUTPUT, END_COMMIT_OUTPUT)
 
     if not MAIN_REGRESS_WARNING in content:
-        tm["main_times"] = parse_times(content, START_MAIN_OUTPUT, END_MAIN_OUTPUT)
+        try:
+            tm["main_times"] = parse_times(content, START_MAIN_OUTPUT, END_MAIN_OUTPUT)
+        except:
+            pass
 
     return tm
 

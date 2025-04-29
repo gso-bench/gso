@@ -7,13 +7,13 @@ import time
 import re
 
 from pyperf.utils.io import load_pyperf_dataset, load_pyperf_predictions
-from pyperf.harness.environment.docker_utils import list_images
+from pyperf.harness.environment.docker_utils import cleanup_docker
 from pyperf.harness.grading.utils import get_dataset_from_preds
 from pyperf.harness.grading.grade import grade_instance
 from pyperf.harness.grading.report import make_run_report
 from pyperf.harness.utils import retag_remote_to_local_image
 from pyperf.utils.multiprocess import run_tasks_in_parallel_iter
-from pyperf.constants import RUN_EVALUATION_LOG_DIR
+from pyperf.constants import HIGH_RESOURCE_REPOS
 from pyperf.data.dataset import PyPerfInstance
 
 
@@ -24,6 +24,7 @@ class GradeInstanceTask:
     rm_image: bool
     run_id: str
     timeout: int | None = None
+    resource_level: str = "low"
     reformat_reports: bool = False
 
 
@@ -118,45 +119,82 @@ def run_instances(
         print(f"{"="*10} End {"="*10}\n")
         return
 
-    grading_tasks = [
-        GradeInstanceTask(
+    grading_tasks = []
+    for instance in instances:
+        is_high_resource = instance.repo in HIGH_RESOURCE_REPOS
+        timeout = timeout * 2 if is_high_resource else timeout
+        git = GradeInstanceTask(
             instance=instance,
             pred=predictions[instance.instance_id],
-            rm_image=False,  # TODO: use rm_image to make space once we have dynamic pulling
+            rm_image=False,
             run_id=run_id,
             timeout=timeout,
             reformat_reports=reformat_reports,
+            resource_level="high" if is_high_resource else "low",
         )
-        for instance in instances
-    ]
+        grading_tasks.append(git)
 
-    results = run_tasks_in_parallel_iter(
-        grad_instance_mp,
-        tasks=grading_tasks,
-        num_workers=max_workers,
-        timeout_per_task=3600,
-        use_progress_bar=True,
-        progress_bar_desc="Grading instances",
-    )
-
+    # split tasks into two groups based on resource level
+    lr_tasks = [t for t in grading_tasks if t.resource_level == "low"]
+    hr_tasks = [t for t in grading_tasks if t.resource_level == "high"]
     successful, failed = [], []
-    for task, config in zip(results, grading_tasks):
-        if task.is_success():
-            successful.append(config.instance.instance_id)
-        else:
-            failed.append(config.instance.instance_id)
-            if task.is_timeout():
-                print(f"Timeout: {config.instance.instance_id}")
-            elif task.is_process_expired():
-                print(f"Process expired: {config.instance.instance_id}")
-            elif task.is_exception():
-                print(f"Error: {config.instance.instance_id}")
-                print(task.exception_tb)
+
+    if lr_tasks:
+        results = run_tasks_in_parallel_iter(
+            grad_instance_mp,
+            tasks=lr_tasks,
+            num_workers=max_workers,
+            timeout_per_task=3600,
+            use_progress_bar=True,
+            progress_bar_desc="Grading instances [type: lr]",
+        )
+
+        for task, config in zip(results, lr_tasks):
+            if task.is_success():
+                successful.append(config.instance.instance_id)
+            else:
+                failed.append(config.instance.instance_id)
+                if task.is_timeout():
+                    print(f"Timeout: {config.instance.instance_id}")
+                elif task.is_process_expired():
+                    print(f"Process expired: {config.instance.instance_id}")
+                elif task.is_exception():
+                    print(f"Error: {config.instance.instance_id}")
+                    print(task.exception_tb)
+
+    # clean up all containers
+    cleanup_docker(client)
+
+    if hr_tasks:
+        results = run_tasks_in_parallel_iter(
+            grad_instance_mp,
+            tasks=hr_tasks,
+            num_workers=1,  # force sequential execution
+            timeout_per_task=5400,  # increase timeout
+            use_progress_bar=True,
+            progress_bar_desc="Grading instances [type: hr]",
+        )
+
+        for task, config in zip(results, hr_tasks):
+            if task.is_success():
+                successful.append(config.instance.instance_id)
+            else:
+                failed.append(config.instance.instance_id)
+                if task.is_timeout():
+                    print(f"Timeout: {config.instance.instance_id}")
+                elif task.is_process_expired():
+                    print(f"Process expired: {config.instance.instance_id}")
+                elif task.is_exception():
+                    print(f"Error: {config.instance.instance_id}")
+                    print(task.exception_tb)
 
     if len(failed) == 0:
         print("All instances ran successfully.")
     else:
         print(f"{len(failed)} instance images failed to build.")
+
+    # clean up all containers
+    cleanup_docker(client)
 
 
 def main(
@@ -274,7 +312,7 @@ if __name__ == "__main__":
         "--timeout",
         type=int,
         default=1_800,
-        help="Timeout (in seconds) for running tests for each instance",
+        help="Timeout (in seconds) for running an eval for each instance",
     )
 
     args = parser.parse_args()

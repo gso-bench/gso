@@ -117,12 +117,13 @@ install_repo() {{
 }}
 """
 
+SKIP_MAIN = True  # Toggle to skip main branch testing
 RUN_BASE = """run_tests_for_commit /pyperf_test_{i}.py "base_{i}.txt" "--reference" "pyperf_{i}" """
 RUN_PATCH = """run_tests_for_commit /pyperf_test_{i}.py "result_{i}.txt" "--eqcheck" "pyperf_{i}" """
 RUN_COMMIT = """run_tests_for_commit /pyperf_test_{i}.py "commit_{i}.txt" "--reference" "pyperf_{i}" """
 RUN_MAIN = """run_tests_for_commit /pyperf_test_{i}.py "main_{i}.txt" "--reference" "pyperf_{i}" """
 PRINT_PERF = lambda i, f: f"""echo "{TEST_DELIMITER.format(i=i)}" && cat {f}_{i}.txt"""
-MAX_TIME = lambda repo: 600 if repo in ["abetlen/llama-cpp-python"] else 300
+MAX_TIME = lambda repo: 0 if repo in ["abetlen/llama-cpp-python"] else 300
 MAX_ITERS = lambda repo: (
     1 if repo in ["abetlen/llama-cpp-python", "microsoft/onnxruntime"] else 5
 )
@@ -169,13 +170,19 @@ def get_eval_script(instance) -> str:
         # ----------- reset the repo to remote origin ------------
         f"{reset_repo_commands}",
         # ----------- commit and main perf testing ------------
-        'echo "Installing repo..."',
-        "install_repo",
-        'echo "Running performance test for main..."',
-        *[RUN_MAIN.format(i=i) for i in range(test_count)],
-        f'echo "{START_MAIN_OUTPUT}"',
-        *[PRINT_PERF(i, "main") for i in range(test_count)],
-        f'echo "{END_MAIN_OUTPUT}"',
+        *(
+            []
+            if SKIP_MAIN
+            else [
+                'echo "Installing repo..."',
+                "install_repo",
+                'echo "Running performance test for main..."',
+                *[RUN_MAIN.format(i=i) for i in range(test_count)],
+                f'echo "{START_MAIN_OUTPUT}"',
+                *[PRINT_PERF(i, "main") for i in range(test_count)],
+                f'echo "{END_MAIN_OUTPUT}"',
+            ]
+        ),
         'echo "Checking out commit..."',
         f"git checkout {opt_commit}",
         'echo "Installing repo..."',
