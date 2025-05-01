@@ -9,7 +9,6 @@ PANDAS_PROBLEMS = [
     ("pandas-groupby.quantile", "e8961f1"),
     ("pandas-seriesgroupby.ffill", "84aca21"),
     ("pandas-merge_asof", "2f4c93e"),
-    ("pandas-rangeindex.dtype", "1e03419"),
     ("pandas-pandas.isna", "9097263"),
     ("pandas-ensure_string_array", "2a08b05"),
     ("pandas-maybe_sequence_to_range", "bfaf917"),
@@ -32,7 +31,6 @@ PANDAS_PROBLEMS = [
     # --- v0.0.3 ---
     ("pandas-merge_asof", "ad3f3f7"),
     ("pandas-to_datetime", "2421931"),
-    ("pandas-pandas.testing.assert_frame_equal", "00d88e9"),
     ("pandas-indexengine.get_indexer_non_unique", "5d82d8b"),  # internal test
     ("pandas-dataframe.last_valid_index", "65bca65"),  # sc, hl
     ("pandas-merge", "81b5f1d"),  # sc, hl
@@ -42,8 +40,10 @@ PANDAS_PROBLEMS = [
     ("pandas-concat", "1c2ad16"),
     ("pandas-series.__init__", "191557d"),  # single test!
     ("pandas-datetimelikearraymixin.astype", "45f0705"),  # single test!
-    ("pandas-concat", "4583a04"),
     # --- buffer ---
+    ("pandas-concat", "4583a04"),  # simple
+    ("pandas-rangeindex.dtype", "1e03419"),
+    ("pandas-pandas.testing.assert_frame_equal", "00d88e9"),
     # ("pandas-index.infer_dtype", "12faa2e"),
     # ("pandas-block.make_block", "15fd7d7"), # few tests
     # ("pandas-datetimeindex.tz_localize", "b731518"),  # few weak test?
@@ -75,7 +75,6 @@ NUMPY_PROBLEMS = [
     ("numpy-np.divide.at", "28706af"),
     ("numpy-numpy.repeat", "905d37e"),
     ("numpy-numpy.lib.recfunctions.structured_to_unstructured", "2540554"),
-    ("numpy-numpy.can_cast", "8535df6"),
     ("numpy-numpy.ndarray.flat", "ec52363"),
     ("numpy-numpy.where", "780799b"),
     ("numpy-numpy.choose", "68eead8"),
@@ -93,11 +92,12 @@ NUMPY_PROBLEMS = [
     ("numpy-numpy.ufunc.at", "eb21b25"),
     ("numpy-numpy.char.isdecimal", "248c60e"),
     ("numpy-numpy.char.count", "e801e7a"),
-    ("numpy-numpy.finfo", "4aca866"),  # sc, hl
-    ("numpy-np.isin", "cedba62"),  # related to np.in1d
-    ("numpy-numpy.vecdot", "1fcda82"),  # enable BLAS?
-    ("numpy-np.sort", "794f474"),  # enable AVX2/SIMD?
+    ("numpy-np.isin", "cedba62"),
+    ("numpy-numpy.vecdot", "1fcda82"),
+    ("numpy-np.sort", "794f474"),
     # --- buffer ---
+    ("numpy-numpy.finfo", "4aca866"),  # simple
+    ("numpy-numpy.can_cast", "8535df6"),
     # ("numpy-numpy.log", "4973914"),  # enable SVML?
     # ("numpy-flatiter.__getitem__", "f69f273"),
     # ("numpy-numpy.greater", "ec8d5db"),  # low speedup; weak tests!
@@ -114,11 +114,11 @@ PILLOW_PROBLEMS = [
     ("pillow-image.split", "d8af3fc"),
     ("pillow-putchunk", "4bc33d3"),
     ("pillow-imaginggetbbox", "63f398b"),
-    ("pillow-imagecolor.getcolor", "99760f4"),
     ("pillow-gifimagefile.n_frames", "f854676"),
     ("pillow-tiffimagefile.is_animated", "fd8ee84"),
     ("pillow-image.new", "c82f9fe"),
     # --- buffer ---
+    ("pillow-imagecolor.getcolor", "99760f4"),  # simple; bloated commit
     # ("pillow-imagefilter.color3dlut", "2b09e7f"),  # simple? low speedup?
     # ("pillow-imagefilter.kernel", "3b5c2c3"),  # few tests
     # ("pillow-image.rotate", "929c561"),  # single test!
@@ -136,14 +136,14 @@ DATASETS_PROBLEMS = [
 ]
 
 TORNADO_PROBLEMS = [
-    ("tornado-parse_cookie", "0a39ba8"),  # long running!
     ("tornado-tcpserver.__init__", "bf1b21a"),
     ("tornado-tornado.websocket.websocketclientconnection.write_message", "9a18f6c"),
     ("tornado-baseiostream.write", "1b464c4"),
-    ("tornado-http1serverconnection.close", "715ef05"),
     ("tornado-future.set_exception", "4d4c1e0"),
-    ("tornado-future.done", "ac13ee5"),  # common PR w/ set_exception
+    ("tornado-future.done", "ac13ee5"),
     # --- buffer ---
+    ("tornado-parse_cookie", "0a39ba8"),  # simple
+    ("tornado-http1serverconnection.close", "715ef05"),  # simple
     # ("tornado-addthreadselectoreventloop.remove_reader", "5cfe2fc"),  # few tests
     # ("tornado-oauth2mixin.oauth2_request", "0ab8263"),  # simple? single test!
     # ("tornado-resolver.resolve", "bc74d7b"), # flaky speedup
