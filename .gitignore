@@ -170,3 +170,4 @@ tmp/
 eval_outputs
 *.report.json
 *.csv
+run_pyperf.sh
