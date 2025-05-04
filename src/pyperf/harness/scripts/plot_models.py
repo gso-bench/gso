@@ -65,12 +65,13 @@ def create_comparison_plot(df_results):
         error_kw={"elinewidth": 1.5, "capthick": 1.5, "alpha": 0.8},
     )
 
-    # Add value labels on top of bars
-    for bar in bars:
+    # Add value labels on top of bars (above the error bar)
+    for i, bar in enumerate(bars):
         height = bar.get_height()
+        std = df_results["Std"].iloc[i]
         ax.text(
             bar.get_x() + bar.get_width() / 2.0,
-            height + 1.0,  # Space above bar
+            height + std + 0.5,
             f"{height:.1f}%",
             ha="center",
             va="bottom",
