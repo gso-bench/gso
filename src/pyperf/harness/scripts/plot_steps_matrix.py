@@ -12,19 +12,41 @@ import matplotlib.colors as mcolors
 from pyperf.harness.utils import natural_sort_key
 from pyperf.harness.scripts.helpers import *
 
+# Define the L-K combinations we want to plot
+LK_PAIRS = [
+    (400, 1),
+    (200, 1),
+    (200, 2),
+    (100, 1),
+    (100, 2),
+    (100, 4),
+    (50, 1),
+    (50, 2),
+    (50, 4),
+    (50, 8)
+]
+
+# Get unique L and K values while preserving order
+L_VALUES, K_VALUES = [], []
+for l, k in LK_PAIRS:
+    if l not in L_VALUES:
+        L_VALUES.append(l)
+    if k not in K_VALUES:
+        K_VALUES.append(k)
+
+# Sort L values in descending order
+L_VALUES.sort(reverse=True)
+
 # Add argument parsing
 parser = argparse.ArgumentParser(description="Create a matrix plot for beat@K evaluations")
 parser.add_argument("--model_name", type=str, help="Model name", required=True)
 parser.add_argument("--eval_reports", type=str, nargs="+", help="evaluated reports", required=True)
 parser.add_argument("--output_dir", type=str, default="plots", help="Directory to save plots")
-parser.add_argument("--k_values", type=int, nargs="+", default=[1, 2, 4, 8], help="K values to plot")
-parser.add_argument("--l_values", type=int, nargs="+", default=[50, 100, 200, 400], help="Max iterations values to plot")
 parser.add_argument("--num_trials", type=int, default=500, help="Number of bootstrap trials")
 args = parser.parse_args()
 
 # Create plots directory if it doesn't exist
 os.makedirs(args.output_dir, exist_ok=True)
-args.l_values.sort(reverse=True)
 
 # Function to extract maxiter (L) from filename
 def extract_maxiter(filename):
@@ -34,28 +56,28 @@ def extract_maxiter(filename):
     return None
 
 # Create a matrix to store the beat@k values
-matrix_data = np.zeros((len(args.l_values), len(args.k_values)))
+matrix_data = np.zeros((len(L_VALUES), len(K_VALUES)))
 matrix_data.fill(np.nan)  # Fill with NaN initially
 
 # Get all report files
 reports = sorted(args.eval_reports, key=natural_sort_key)
 
 # Process each L value and K value combination
-for l_idx, l_value in enumerate(args.l_values):
+for l_idx, l_value in enumerate(L_VALUES):
     l_reports = [r for r in reports if extract_maxiter(r) == l_value]
     
-    for k_idx, k_value in enumerate(args.k_values):
-        if len(l_reports) >= k_value:
+    for k_idx, k_value in enumerate(K_VALUES):
+        if (l_value, k_value) in LK_PAIRS and len(l_reports) >= k_value:
             _, _, commit_at_k_rates, _ = calculate_beat_at_k_smooth(
-                l_reports[:k_value], k_value, fixed_first_run=False, num_trials=args.num_trials
+                l_reports, k_value, fixed_first_run=False, num_trials=args.num_trials
             )
             matrix_data[l_idx, k_idx] = commit_at_k_rates[k_value-1][0]
 
 # Create a DataFrame for the matrix plot
 df_matrix = pd.DataFrame(
     matrix_data, 
-    index=[f"{l}" for l in args.l_values],
-    columns=[f"{k}" for k in args.k_values]
+    index=[f"{l}" for l in L_VALUES],
+    columns=[f"{k}" for k in K_VALUES]
 )
 print(df_matrix)
 
