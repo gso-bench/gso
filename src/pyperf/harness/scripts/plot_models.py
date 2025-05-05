@@ -17,7 +17,7 @@ MODEL_CONFIGS = {
     "gpt-4o": "~/pyperf/reports/gpt-4o_maxiter_100_N_v0.35.0-no-hint-run_*",
     "o3-mini": "~/pyperf/reports/o3-mini_maxiter_100_N_v0.35.0-no-hint-run_*",
     "o4-mini": "~/pyperf/reports/o4-mini_maxiter_100_N_v0.35.0-no-hint-run_*",
-    "claude-3.6": "~/pyperf/reports/claude-3.6_maxiter_100_N_v0.35.0-no-hint-run_*",
+    "claude-3.6": "~/pyperf/reports/claude-3-5-sonnet-v2-20241022_maxiter_100_N_v0.35.0-no-hint-run_*",
     "claude-3.7": "~/pyperf/reports/claude-3.7_maxiter_100_N_v0.35.0-no-hint-run_*",
     "gemini-2.5": "~/pyperf/reports/gemini-2.5_maxiter_100_N_v0.35.0-no-hint-run_*",
 }
