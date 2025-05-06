@@ -32,6 +32,10 @@ def get_available_logs():
                 # ignore gpt-4o submissions
                 if "gpt-4o" in root:
                     continue
+                
+                # ignore if v0.25.0 is in the file path
+                if "v0.25.0" in root:
+                    continue
 
                 # Get relative path from SUBMISSIONS_DIR
                 rel_path = os.path.relpath(os.path.join(root, file), SUBMISSIONS_DIR)
