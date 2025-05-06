@@ -166,4 +166,6 @@ METRICS_COLOR_MAP = {
     "Passed": "#b3b3b3",  # gray
     "Valid": "#396ab1",  # blue
     "Beat@K": "#da7c2f",  # orange
+    "Beat@K w/ gt plan": "#3d9651",  # green
+    "Beat@K w/o gt plan": "#da7c2f",  # orange
 }
