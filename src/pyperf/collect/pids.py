@@ -1,7 +1,6 @@
 """The set of problems (identified by api + commit hash) to be included in the collected benchmark"""
 
 PANDAS_PROBLEMS = [
-    # --- v0.0.1 ---
     ("pandas-merge_ordered", "061c2e9"),
     ("pandas-dataframegroupby.skew", "233bd83"),
     ("pandas-dataframegroupby.idxmin", "ccca5df"),
@@ -23,12 +22,9 @@ PANDAS_PROBLEMS = [
     ("pandas-arrays.integerarray.dtype", "37e9e06"),
     ("pandas-dataframegroupby.nunique", "d377cc9"),
     ("pandas-basemaskedarray._validate_setitem_value", "71c94af"),
-    ("pandas-basemaskedarray.reshape", "fa29f09"),
     ("pandas-dataframe", "9a6c8f0"),  # weak test?
     ("pandas-index.union", "c34da50"),
-    ("pandas-pandas.testing.assert_frame_equal", "32ebcfc"),
     ("pandas-multiindex.symmetric_difference", "c6cf37a"),
-    # --- v0.0.3 ---
     ("pandas-merge_asof", "ad3f3f7"),
     ("pandas-to_datetime", "2421931"),
     ("pandas-indexengine.get_indexer_non_unique", "5d82d8b"),  # internal test
@@ -41,22 +37,9 @@ PANDAS_PROBLEMS = [
     ("pandas-series.__init__", "191557d"),  # single test!
     ("pandas-datetimelikearraymixin.astype", "45f0705"),  # single test!
     # --- buffer ---
-    ("pandas-concat", "4583a04"),  # simple
-    ("pandas-rangeindex.dtype", "1e03419"),
-    ("pandas-pandas.testing.assert_frame_equal", "00d88e9"),
-    # ("pandas-index.infer_dtype", "12faa2e"),
-    # ("pandas-block.make_block", "15fd7d7"), # few tests
-    # ("pandas-datetimeindex.tz_localize", "b731518"),  # few weak test?
-    # ("pandas-dataframe.all", "28f4942"),
-    # ("pandas-dataframe.apply", "5555c51"),
-    # ("pandas-index._getitem_slice", "9b4cffc"),
-    # ("pandas-multiindex.equals", "7281475"),
-    # ("pandas-datetimelikearraymixin._add_datetimelike_scalar", "a6c0ae4"),
-    # ("pandas-ensure_index_from_sequences", "38086f1"),  # single test!
 ]
 
 NUMPY_PROBLEMS = [
-    # --- v0.0.1 ---
     ("numpy-np.char.rfind", "22ab9aa"),
     ("numpy-numpy.char.rstrip", "728fedc"),
     ("numpy-numpy.strings.ljust", "cb0d7cd"),
@@ -68,7 +51,6 @@ NUMPY_PROBLEMS = [
     ("numpy-numpy.arctan2", "5f94eb8"),
     ("numpy-numpy.exp", "8dd6761"),
     ("numpy-numpy.subtract", "be52f19"),
-    ("numpy-numpy.power", "e0194de"),
     ("numpy-numpy.sum", "330057f"),
     ("numpy-np.minimum.at", "11a7e2d"),
     ("numpy-np.partition", "ac5c664"),
@@ -79,7 +61,6 @@ NUMPY_PROBLEMS = [
     ("numpy-numpy.where", "780799b"),
     ("numpy-numpy.choose", "68eead8"),
     ("numpy-array_equal", "7ff7ec7"),
-    # --- v0.0.2 ---
     ("numpy-np.add", "b862e4f"),
     ("numpy-np.zeros", "382b3ff"),
     ("numpy-np.char.find", "83c780d"),
@@ -96,18 +77,6 @@ NUMPY_PROBLEMS = [
     ("numpy-numpy.vecdot", "1fcda82"),
     ("numpy-np.sort", "794f474"),
     # --- buffer ---
-    ("numpy-numpy.finfo", "4aca866"),  # simple
-    ("numpy-numpy.can_cast", "8535df6"),
-    # ("numpy-numpy.log", "4973914"),  # enable SVML?
-    # ("numpy-flatiter.__getitem__", "f69f273"),
-    # ("numpy-numpy.greater", "ec8d5db"),  # low speedup; weak tests!
-    # ("numpy-maskedarray.clip", "6d77c59"),  # simple? single test!
-    # ("numpy-numpy.add.reduce", "3ea71da"), # flaky speedup
-    # ("numpy-numpy.conjugate", "d352270"),  # flaky speedup
-    # ("numpy-numpy.equal", "1134be2"),
-    # ("numpy-np.ma.cov", "9b1a9c5"),
-    # ("numpy-numpy.kron", "54605f3"),
-    # ("numpy-np.in1d", "91e753c"),
 ]
 
 PILLOW_PROBLEMS = [
@@ -116,12 +85,7 @@ PILLOW_PROBLEMS = [
     ("pillow-imaginggetbbox", "63f398b"),
     ("pillow-gifimagefile.n_frames", "f854676"),
     ("pillow-tiffimagefile.is_animated", "fd8ee84"),
-    ("pillow-image.new", "c82f9fe"),
     # --- buffer ---
-    ("pillow-imagecolor.getcolor", "99760f4"),  # simple; bloated commit
-    # ("pillow-imagefilter.color3dlut", "2b09e7f"),  # simple? low speedup?
-    # ("pillow-imagefilter.kernel", "3b5c2c3"),  # few tests
-    # ("pillow-image.rotate", "929c561"),  # single test!
 ]
 
 DATASETS_PROBLEMS = [
@@ -129,24 +93,14 @@ DATASETS_PROBLEMS = [
     ("datasets-iterabledataset.skip", "c5464b3"),  # simple?
     ("datasets-dataset._select_contiguous", "5994036"),
     # --- buffer ---
-    # ("datasets-datasetbuilder.download_and_prepare", "2878019"),  # single test
-    # ("datasets-image.cast_storage", "d9a8d8a"),  # single test
-    # ("datasets-dataset.select_columns", "32b206d"),  # hackable
-    # ("datasets-iterabledataset.filter", "ef2fb35"),
 ]
 
 TORNADO_PROBLEMS = [
-    ("tornado-tcpserver.__init__", "bf1b21a"),
     ("tornado-tornado.websocket.websocketclientconnection.write_message", "9a18f6c"),
     ("tornado-baseiostream.write", "1b464c4"),
     ("tornado-future.set_exception", "4d4c1e0"),
     ("tornado-future.done", "ac13ee5"),
     # --- buffer ---
-    ("tornado-parse_cookie", "0a39ba8"),  # simple
-    ("tornado-http1serverconnection.close", "715ef05"),  # simple
-    # ("tornado-addthreadselectoreventloop.remove_reader", "5cfe2fc"),  # few tests
-    # ("tornado-oauth2mixin.oauth2_request", "0ab8263"),  # simple? single test!
-    # ("tornado-resolver.resolve", "bc74d7b"), # flaky speedup
 ]
 
 PYDANTIC_PROBLEMS = [
@@ -156,7 +110,6 @@ PYDANTIC_PROBLEMS = [
     ("pydantic-typeadapter.validate_python", "ac9e6ee"),
     ("pydantic-typeadapter.__init__", "c5dce37"),
     # --- buffer ---
-    # ("pydantic-basemodel._iter", "7d9614e"),  # long running!
 ]
 
 PILLOW_SIMD_PROBLEMS = [
@@ -168,7 +121,6 @@ PILLOW_SIMD_PROBLEMS = [
     ("pillow-simd-image.reduce", "7511039"),
     ("pillow-simd-image.reduce", "d970a39"),
     # -- buffer ---
-    # ("pillow-simd-image.rotate", "929c561"), # better than pillow version
 ]
 
 TOKENIZERS_PROBLEMS = [
@@ -177,7 +129,6 @@ TOKENIZERS_PROBLEMS = [
     ("tokenizers-tokenizer.encode_batch_fast", "bfd9cde"),
     ("tokenizers-tokenizers.trainers.unigramtrainer.train", "fc76ad4"),  # long running!
     # --- buffer ---
-    # ("tokenizers-tokenizers.models.unigram.encode", "0b0103a"), # single test; small diff
 ]
 
 TRANSFORMERS_PROBLEMS = [
@@ -186,17 +137,11 @@ TRANSFORMERS_PROBLEMS = [
     ("transformers-whispertokenizer._preprocess_token_ids", "211f93a"),
     # --- buffer ---
     ("transformers-xlnetlmheadmodel.forward", "d51b589"),  # simple, but exploratory
-    # ("transformers-no_init_weights", "0676d99"), # simple?
-    # ("transformers-byt5tokenizer._tokenize", "6626d8a"), # single test
 ]
 
 LLAMA_CPP_PROBLEMS = [
     ("llama-cpp-python-llama_cpp.gen_a", "218d361"),
     ("llama-cpp-python-llama_cpp.gen_b", "2bc1d97"),
-]
-
-ONNX_PROBLEMS = [
-    ("onnxruntime-onnxruntime.quantization.quant_utils.quantize_data", "df28c7d"),
 ]
 
 
@@ -211,7 +156,6 @@ TEST_PROBLEMS = {
     "tokenizers": TOKENIZERS_PROBLEMS,
     "transformers": TRANSFORMERS_PROBLEMS,
     "llama-cpp-python": LLAMA_CPP_PROBLEMS,
-    "onnx": ONNX_PROBLEMS,
 }
 
 
@@ -221,5 +165,4 @@ LONG_RUNNING_PROBLEMS = [
     ("datasets-load_dataset_builder", "ef3b5dd", 5),
     ("tokenizers-tokenizers.trainers.unigramtrainer.train", "fc76ad4", 5),
     ("pillow-simd-image.gaussian_blur", "9e60023", 5),
-    ("onnxruntime-onnxruntime.quantization.quant_utils.quantize_data", "df28c7d", 3),
 ]
