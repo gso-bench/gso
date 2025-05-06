@@ -82,7 +82,7 @@ df_matrix = pd.DataFrame(
 print(df_matrix)
 
 # Create the plot
-plt.figure(figsize=(6, 6))
+plt.figure(figsize=(5, 5))
 setup_plot_style()
 
 # Create a custom colormap that maps NaN to black
@@ -96,6 +96,7 @@ ax = sns.heatmap(
     fmt=".2f", 
     cmap=cmap,
     cbar=False,  # Remove colorbar
+    annot_kws={"size": 16},
     # linewidths=0.5,  # No gaps between cells
     # linecolor='#303030',  # Color of the lines between cells
 )
