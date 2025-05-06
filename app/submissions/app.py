@@ -21,20 +21,17 @@ def get_available_logs():
         for file in files:
             # jsonl file with name output.jsonl
             if file.endswith(".jsonl") and file == "output.jsonl":
-                # ignore if archive is in the file path
-                if "archives" in root:
-                    continue
-
-                # ignore if plans is in the file path
-                if "plans" in root:
-                    continue
-
-                # ignore gpt-4o submissions
-                if "gpt-4o" in root:
-                    continue
-                
-                # ignore if v0.25.0 is in the file path
-                if "v0.25.0" in root:
+                if any(
+                    exp_type in root
+                    for exp_type in [
+                        "archives",
+                        "plans",
+                        "gpt-4o",
+                        "v0.25.0",
+                        "steps",
+                        "pass1",
+                    ]
+                ):
                     continue
 
                 # Get relative path from SUBMISSIONS_DIR
@@ -48,6 +45,7 @@ conversations = {}
 current_indices = {}
 instance_id_maps = {}  # Maps log_path -> {instance_id: index}
 current_log = None
+exp_type = "scale"  # default experiment type
 
 
 def load_jsonl(file_path):
@@ -82,7 +80,7 @@ def load_jsonl(file_path):
                         conv["analysis"] = analysis.iloc[0].get("analysis", "")
 
                     test_output_path = os.path.join(
-                        RUN_EVALUATION_LOG_DIR, "test", run_id, instance_id
+                        RUN_EVALUATION_LOG_DIR, exp_type, run_id, instance_id
                     )
                     test_output_file = os.path.join(test_output_path, "test_output.txt")
                     if os.path.exists(test_output_file):
@@ -93,7 +91,9 @@ def load_jsonl(file_path):
                     try:
                         # Look for report in the reports directory
                         possible_reports = list(
-                            EVALUATION_REPORTS_DIR.glob(f"*{run_id}.test.report.json")
+                            EVALUATION_REPORTS_DIR.glob(
+                                f"*{run_id}.{exp_type}.report.json"
+                            )
                         )
 
                         if possible_reports:
