@@ -222,7 +222,7 @@ def main(
     predictions = {p["instance_id"]: p for p in predictions}
 
     # filter dataset to predictions
-    dataset = get_dataset_from_preds(
+    predictions, dataset = get_dataset_from_preds(
         dataset_name,
         split,
         instance_ids,

@@ -145,9 +145,9 @@ plt.tick_params(axis="both", direction="out", length=3, width=1)
 plt.xlabel("# Agent Rollouts (K)")
 plt.ylabel("% Problems")
 plt.xticks(k_values)
-plt.ylim(-3, 75)
+plt.ylim(-3, 85)
 plt.grid(False)  #  linestyle="-", alpha=0.005)
-plt.legend(title=None)
+plt.legend(title=None, loc="upper left")
 
 # Save the plot
 output_path = os.path.join(args.output_dir, f"beat_at_k.{args.model_name}.png")

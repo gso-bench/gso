@@ -32,12 +32,12 @@ def get_dataset_from_preds(
     # check that all prediction IDs are in the dataset
     prediction_ids = set(predictions.keys())
     if prediction_ids - dataset_ids:
-        raise ValueError(
-            (
-                "Some prediction IDs not found in dataset!"
-                f"\nMissing IDs:\n{' '.join(prediction_ids - dataset_ids)}"
-            )
+        print(
+            f"Warning: Filtering {len(prediction_ids - dataset_ids)} predictions not in dataset."
         )
+        prediction_ids = prediction_ids.intersection(dataset_ids)
+        predictions = {k: v for k, v in predictions.items() if k in prediction_ids}
+
     if instance_ids:
         dataset = [i for i in dataset if i.instance_id in instance_ids]
 
@@ -62,7 +62,7 @@ def get_dataset_from_preds(
             for i in dataset
             if i.instance_id in prediction_ids and i.instance_id in test_output_ids
         ]
-        return dataset
+        return predictions, dataset
 
     # check which instance IDs have already been run
     completed_ids = set()
@@ -99,4 +99,4 @@ def get_dataset_from_preds(
         for i in dataset
         if i.instance_id in prediction_ids and i.instance_id not in empty_patch_ids
     ]
-    return dataset
+    return predictions, dataset
