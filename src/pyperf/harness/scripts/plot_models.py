@@ -14,12 +14,12 @@ from pyperf.constants import EVALUATION_REPORTS_DIR
 from pyperf.harness.scripts.helpers import *
 
 MODEL_CONFIGS = {
-    "gpt-4o": "~/pyperf/reports/gpt-4o_maxiter_100_N_v0.35.0-no-hint-run_*",
-    "o3-mini": "~/pyperf/reports/o3-mini_maxiter_100_N_v0.35.0-no-hint-run_*",
-    "o4-mini": "~/pyperf/reports/o4-mini_maxiter_100_N_v0.35.0-no-hint-run_*",
-    "claude-3.6": "~/pyperf/reports/claude-3-5-sonnet-v2-20241022_maxiter_100_N_v0.35.0-no-hint-run_*",
-    "claude-3.7": "~/pyperf/reports/claude-3.7_maxiter_100_N_v0.35.0-no-hint-run_*",
-    "gemini-2.5": "~/pyperf/reports/gemini-2.5_maxiter_100_N_v0.35.0-no-hint-run_*",
+    "gpt-4o": "~/pyperf/reports/gpt-4o_maxiter_100_N_v0.35.0-no-hint-run_*pass*",
+    "o3-mini": "~/pyperf/reports/o3-mini_maxiter_100_N_v0.35.0-no-hint-run_*pass*",
+    "o4-mini": "~/pyperf/reports/o4-mini_maxiter_100_N_v0.35.0-no-hint-run_*pass*",
+    "claude-3.6": "~/pyperf/reports/claude-3-5-sonnet-v2-20241022_maxiter_100_N_v0.35.0-no-hint-run_*pass*",
+    "claude-3.7": "~/pyperf/reports/claude-3-7-sonnet-20250219_maxiter_100_N_v0.35.0-no-hint-run_*pass*",
+    "gemini-2.5": "~/pyperf/reports/gemini-2.5_maxiter_100_N_v0.35.0-no-hint-run_*pass*",
 }
 
 # Add argument parsing
@@ -109,6 +109,9 @@ for model_name, report_pattern in MODEL_CONFIGS.items():
     reports = sorted(
         glob.glob(os.path.expanduser(report_pattern)), key=natural_sort_key
     )
+
+    if len(reports) > 0:
+        assert len(reports) == 3, f"Expected 3 for {model_name}, found {len(reports)}"
 
     # Skip if no reports found
     if not reports:
