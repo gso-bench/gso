@@ -75,7 +75,7 @@ for k, rates in enumerate(base_at_k_rates, 1):
             "k": k,
             "Rate": rates[0],
             "Error": error,
-            "Metric": "Valid",
+            "Metric": "HasOpt",
             "Lower": rates[0] - error,
             "Upper": rates[0] + error,
         }
@@ -107,7 +107,7 @@ sns.lineplot(
     y="Rate",
     hue="Metric",
     style="Metric",
-    markers={"Beat@K": "o", "Valid": "o", "Passed": "o"},
+    markers={"Beat@K": "o", "HasOpt": "o", "Passed": "o"},
     markeredgewidth=0,
     markersize=5,
     dashes=False,
