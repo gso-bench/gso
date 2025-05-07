@@ -47,7 +47,7 @@ def create_comparison_plot(df_results):
     Create a professional-looking bar chart for model comparison with
     provider-specific colors.
     """
-    fig = plt.figure(figsize=(10, 6))
+    fig = plt.figure(figsize=(10, 3))
     ax = plt.gca()
 
     # Map colors to models
@@ -75,15 +75,13 @@ def create_comparison_plot(df_results):
             f"{height:.1f}%",
             ha="center",
             va="bottom",
-            fontsize=11,
-            fontweight="normal",
         )
 
     # Customize axes
-    ax.set_ylabel("% Problems Solved (Beat@1)", fontweight="normal")
-    ax.set_xlabel("Model", fontweight="normal")
-    ax.set_ylim(0, 40)  # Adjust as needed
-    ax.set_yticks(range(0, 41, 10))
+    ax.set_ylabel("% Problems")
+    # ax.set_xlabel("Model")
+    ax.set_ylim(0, 30)  # Adjust as needed
+    ax.set_yticks(range(0, 31, 10))
 
     # Add subtle grid only on y-axis
     ax.grid(axis="y", linestyle="-", alpha=0.2, color="gray")

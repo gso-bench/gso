@@ -129,23 +129,24 @@ for metric, color in colors.items():
 # Add value labels
 for metric, color in colors.items():
     metric_data = df_plot[df_plot["Metric"] == metric]
-    for _, row in metric_data.iterrows():
-        plt.annotate(
-            f'{row["Rate"]:.1f}%',
-            (row["k"], row["Rate"]),
-            textcoords="offset points",
-            xytext=(0, 8),
-            ha="center",
-            color="#3b3b3b",
-            fontsize=8,
-        )
+    for idx, (_, row) in enumerate(metric_data.iterrows()):
+        if idx in [0, 2, 4, 7, 9]:
+            plt.annotate(
+                f'{row["Rate"]:.1f}',
+                (row["k"], row["Rate"]),
+                textcoords="offset points",
+                xytext=(0, 8),
+                ha="center",
+                color="#3b3b3b",
+                fontsize=12,
+            )
 
 # Customize plot
 plt.tick_params(axis="both", direction="out", length=3, width=1)
-plt.xlabel("# Agent Rollouts (K)")
+plt.xlabel("# Rollouts (K)")
 plt.ylabel("% Problems")
 plt.xticks(k_values)
-plt.ylim(-3, 85)
+plt.ylim(-3, 89)
 plt.grid(False)  #  linestyle="-", alpha=0.005)
 plt.legend(title=None, loc="upper left")
 

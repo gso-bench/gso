@@ -127,7 +127,7 @@ def setup_plot_style():
     plt.rcParams.update(
         {
             "font.family": "Inter",
-            "font.size": 14,
+            "font.size": 15,
             # "axes.titlesize": 14,
             # "axes.labelsize": 13,
             # "xtick.labelsize": 11,
