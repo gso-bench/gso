@@ -168,4 +168,6 @@ METRICS_COLOR_MAP = {
     "Beat@K": "#da7c2f",  # orange
     "Beat@K w/ gt plan": "#3d9651",  # green
     "Beat@K w/o gt plan": "#da7c2f",  # orange
+    "Negative": "#a52a2a",  # red
+    "Positive": "#3d9651",  # green
 }

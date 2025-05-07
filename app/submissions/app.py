@@ -29,7 +29,8 @@ def get_available_logs():
                         "gpt-4o",
                         "v0.25.0",
                         "steps",
-                        "pass1",
+                        # "pass",
+                        "scale",
                     ]
                 ):
                     continue
@@ -45,7 +46,7 @@ conversations = {}
 current_indices = {}
 instance_id_maps = {}  # Maps log_path -> {instance_id: index}
 current_log = None
-exp_type = "scale"  # default experiment type
+exp_type = "pass"  # default experiment type
 
 
 def load_jsonl(file_path):
