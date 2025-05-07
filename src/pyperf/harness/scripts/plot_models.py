@@ -82,7 +82,8 @@ def create_comparison_plot(df_results):
     # Customize axes
     ax.set_ylabel("% Problems Solved (Beat@1)", fontweight="normal")
     ax.set_xlabel("Model", fontweight="normal")
-    ax.set_ylim(0, 50)  # Adjust as needed
+    ax.set_ylim(0, 40)  # Adjust as needed
+    ax.set_yticks(range(0, 41, 10))
 
     # Add subtle grid only on y-axis
     ax.grid(axis="y", linestyle="-", alpha=0.2, color="gray")
