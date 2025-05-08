@@ -82,11 +82,18 @@ df_matrix = pd.DataFrame(
 print(df_matrix)
 
 # Create the plot
-plt.figure(figsize=(5, 5))
+plt.figure(figsize=(5, 3), dpi=300)
 setup_plot_style()
 
+
+# if claude in model_name, use Oranges_r colormap
+# else use Blues_r colormap
+if "claude" in args.model_name:
+    cmap = sns.color_palette("Oranges_r", as_cmap=True)
+else:
+    cmap = sns.color_palette("Blues_r", as_cmap=True)
+
 # Create a custom colormap that maps NaN to black
-cmap = sns.color_palette("Blues_r", as_cmap=True)
 cmap.set_bad('#303030')
 
 # Create heatmap
@@ -96,7 +103,7 @@ ax = sns.heatmap(
     fmt=".2f", 
     cmap=cmap,
     cbar=False,  # Remove colorbar
-    annot_kws={"size": 16},
+    annot_kws={"size": 14, "weight": "bold"},  # Annotation text properties
     # linewidths=0.5,  # No gaps between cells
     # linecolor='#303030',  # Color of the lines between cells
 )
@@ -111,7 +118,10 @@ plt.xlabel("# Rollouts (K)")
 plt.ylabel("# Steps (L)")
 plt.tight_layout()
 
+# rotate y-tick labels to be horizontal
+plt.yticks(rotation=0)
+
 # Save the plot
-output_path = os.path.join(args.output_dir, f"beat_matrix.{args.model_name}.png")
+output_path = os.path.join(args.output_dir, f"compute_matrix.{args.model_name}.png")
 plt.savefig(output_path, dpi=300, bbox_inches="tight")
 print(f"Matrix plot saved as {output_path}")
