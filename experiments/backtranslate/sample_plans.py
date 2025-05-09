@@ -56,11 +56,18 @@ Guidelines:
 - ALSO ignore non-optimization changes like bug fixes, completely irrelevant feature additions, etc.
 - AGAIN DO NOT ask for changes to TESTS, CI, DOCUMENTATION, ETC. ONLY focus on core optimization ideas
 
-Respond in the following format:
-[[PLAN]]
+Respond in the following format enclosed in a code block:
+```txt
 To improve performance, we can <Your plan here>
-[[PLAN]]
+```
 """
+
+def extract_codeblock(output) -> str:
+    outputlines = output.split("\n")
+    indexlines = [i for i, line in enumerate(outputlines) if "```" in line]
+    if len(indexlines) < 2:
+        return ""
+    return "\n".join(outputlines[indexlines[0] + 1 : indexlines[1]])
 
 
 def get_generated_plans(outputs):
@@ -68,13 +75,13 @@ def get_generated_plans(outputs):
     for output in outputs:
         plans = []
         for sample in output:
-            plan = re.search(r"\[\[PLAN\]\](.*)\[\[PLAN\]\]", sample, re.DOTALL)
-            plans.append(plan.group(1).strip())
+            plan = extract_codeblock(sample)
+            plans.append(plan)
         results.append(plans)
     return results
 
 
-def prompt_o3_mini(instance, mode="short"):
+def prompt_o4_mini(instance, mode="short"):
     commit_diff = instance["gt_diff"]
     commit_message = instance["gt_commit_message"]
     repo = instance["repo"]
@@ -94,28 +101,27 @@ def prompt_o3_mini(instance, mode="short"):
 if __name__ == "__main__":
     args = fire.Fire(LLMArgs)
     dataset = load_dataset("manishs/pyperf-extended", split="test")
-    # dataset = dataset.filter(lambda x: "numpy/numpy" == x["repo"])
     print(f"Dataset size: {len(dataset)}")
 
-    # SHORT PLANS
-    short_payloads = []
-    for row in dataset:
-        prompt = prompt_o3_mini(row, mode="short")
-        short_payloads.append([{"role": "user", "content": prompt}])
+    # # SHORT PLANS
+    # short_payloads = []
+    # for row in dataset:
+    #     prompt = prompt_o4_mini(row, mode="short")
+    #     short_payloads.append([{"role": "user", "content": prompt}])
 
-    short_payloads = [p for p in short_payloads for _ in range(args.n)]
-    outputs = LLMCompletions.get_llm_completions(args, short_payloads)
-    outputs = [item for sublist in outputs for item in sublist]
-    grouped_outputs = []
-    for i in range(0, len(outputs), args.n):
-        grouped_outputs.append(outputs[i : i + args.n])
-    short_plans = get_generated_plans(grouped_outputs)
-    # print(short_plans)
+    # short_payloads = [p for p in short_payloads for _ in range(args.n)]
+    # outputs = LLMCompletions.get_llm_completions(args, short_payloads)
+    # outputs = [item for sublist in outputs for item in sublist]
+    # grouped_outputs = []
+    # for i in range(0, len(outputs), args.n):
+    #     grouped_outputs.append(outputs[i : i + args.n])
+    # short_plans = get_generated_plans(grouped_outputs)
+    # # print(short_plans)
 
     # DETAILED PLANS
     detailed_payloads = []
     for row in dataset:
-        prompt = prompt_o3_mini(row, mode="detailed")
+        prompt = prompt_o4_mini(row, mode="detailed")
         detailed_payloads.append([{"role": "user", "content": prompt}])
 
     detailed_payloads = [p for p in detailed_payloads for _ in range(args.n)]
@@ -125,11 +131,10 @@ if __name__ == "__main__":
     for i in range(0, len(detailed_outputs), args.n):
         grouped_outputs.append(detailed_outputs[i : i + args.n])
     detailed_plans = get_generated_plans(grouped_outputs)
-    # print(detailed_plans)
 
     # Convert the dataset to a dictionary
     dataset_dict = dataset.to_dict()
-    dataset_dict["short_plans"] = short_plans
+    # dataset_dict["short_plans"] = short_plans
     dataset_dict["detailed_plans"] = detailed_plans
     new_dataset = Dataset.from_dict(dataset_dict)
     new_dataset.push_to_hub("manishs/pyperf-planned", split="test", private=True)
