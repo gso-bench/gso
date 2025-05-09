@@ -26,8 +26,10 @@ def main():
 
     # Define the report patterns
     report_patterns = [
-        "~/pyperf/reports/v0.25.0/claude-3-5-sonnet-v2-20241022_maxiter_50_N_v0.25.0-no-hint-detailed_plans-*",
-        "~/pyperf/reports/v0.25.0/claude-3-5-sonnet-v2-20241022_maxiter_50_N_v0.25.0-no-hint-run_*",
+        # "~/pyperf/reports/v0.25.0/claude-3-5-sonnet-v2-20241022_maxiter_50_N_v0.25.0-no-hint-detailed_plans-*",
+        # "~/pyperf/reports/v0.25.0/claude-3-5-sonnet-v2-20241022_maxiter_50_N_v0.25.0-no-hint-run_*",
+        "~/pyperf/reports/o4-mini_maxiter_100_N_v0.35.0-no-hint-detailed_plans-*planned*",
+        "~/pyperf/reports/o4-mini_maxiter_100_N_v0.35.0-no-hint-run_*",
     ]
 
     # Create labels for the plots (extracting meaningful parts from the pattern)
@@ -69,7 +71,7 @@ def main():
     df_plot = pd.DataFrame(plot_data)
     print(df_plot)
     colors = METRICS_COLOR_MAP
-    plt.figure(figsize=(8, 6))
+    plt.figure(figsize=(6, 4))
     setup_plot_style()
 
     # Plot lines
@@ -109,18 +111,19 @@ def main():
                 f'{row["Rate"]:.1f}%',
                 (row["k"], row["Rate"]),
                 textcoords="offset points",
-                xytext=(0, 8),
+                xytext=(0, 15) if label == "Beat@K w/ gt plan" else (0, -15),
                 ha="center",
+                va="top" if label == "Beat@K w/ gt plan" else "bottom",
                 color="#3b3b3b",
-                fontsize=8,
+                fontsize=12,
             )
 
     # Customize plot
     plt.tick_params(axis="both", direction="out", length=3, width=1)
-    plt.xlabel("# Agent Rollouts (K)")
-    plt.ylabel("% Problems")
+    plt.xlabel("# Rollouts (K)")
+    plt.ylabel("Beat@K (%)")
     plt.xticks(k_values)
-    plt.ylim(-1, 42)
+    plt.ylim(0, 25)
     plt.grid(False)  #  linestyle="-", alpha=0.005)
     plt.legend(title=None)
 
