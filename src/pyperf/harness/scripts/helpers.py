@@ -163,8 +163,8 @@ MODEL_COLOR_MAP = {
 }
 
 METRICS_COLOR_MAP = {
-    "Passed": "#b3b3b3",  # gray
-    "HasOpt": "#396ab1",  # blue
+    "Passed Tests": "#b3b3b3",  # gray
+    "Has Speedup over Base": "#396ab1",  # blue
     "Opt@K": "#da7c2f",  # orange
     "Opt@K w/ gt plan": "#3d9651",  # green
     "Opt@K w/o gt plan": "#396ab1",  # blue
