@@ -13,7 +13,7 @@ import glob
 
 # Import the helper function from the original script
 from pyperf.harness.utils import natural_sort_key
-from pyperf.harness.beat_at_k import merge_reports
+from pyperf.harness.opt_at_k import merge_reports
 from pyperf.harness.scripts.helpers import *
 
 
@@ -33,7 +33,7 @@ def main():
     ]
 
     # Create labels for the plots (extracting meaningful parts from the pattern)
-    labels = ["Beat@K w/ gt plan", "Beat@K w/o gt plan"]
+    labels = ["Opt@K w/ gt plan", "Opt@K w/o gt plan"]
 
     # Expand the glob patterns and sort the files
     all_reports = []
@@ -41,10 +41,10 @@ def main():
         reports = sorted(glob.glob(os.path.expanduser(pattern)), key=natural_sort_key)
         all_reports.append(reports)
 
-    # Calculate beat@k for both report sets
+    # Calculate Opt@K for both report sets
     results = []
     for reports in all_reports:
-        _, _, commit_at_k_rates, _ = calculate_beat_at_k_smooth(
+        _, _, commit_at_k_rates, _ = calculate_opt_at_k_smooth(
             reports, MAX_K, FIXED_FIRST_RUN, NUM_TRIALS
         )
         results.append(commit_at_k_rates)
@@ -71,7 +71,7 @@ def main():
     df_plot = pd.DataFrame(plot_data)
     print(df_plot)
     colors = METRICS_COLOR_MAP
-    plt.figure(figsize=(6, 4))
+    plt.figure(figsize=(5, 3))
     setup_plot_style()
 
     # Plot lines
@@ -82,8 +82,8 @@ def main():
         hue="Report Set",
         style="Report Set",
         markers={
-            "Beat@K w/ gt plan": "o",
-            "Beat@K w/o gt plan": "o",
+            "Opt@K w/ gt plan": "o",
+            "Opt@K w/o gt plan": "o",
         },
         markeredgewidth=0,
         markersize=5,
@@ -111,9 +111,9 @@ def main():
                 f'{row["Rate"]:.1f}%',
                 (row["k"], row["Rate"]),
                 textcoords="offset points",
-                xytext=(0, 15) if label == "Beat@K w/ gt plan" else (0, -15),
+                xytext=(0, 15) if label == "Opt@K w/ gt plan" else (0, -15),
                 ha="center",
-                va="top" if label == "Beat@K w/ gt plan" else "bottom",
+                va="top" if label == "Opt@K w/ gt plan" else "bottom",
                 color="#3b3b3b",
                 fontsize=12,
             )
@@ -121,14 +121,14 @@ def main():
     # Customize plot
     plt.tick_params(axis="both", direction="out", length=3, width=1)
     plt.xlabel("# Rollouts (K)")
-    plt.ylabel("Beat@K (%)")
+    plt.ylabel("Opt@K (%)")
     plt.xticks(k_values)
     plt.ylim(0, 25)
     plt.grid(False)  #  linestyle="-", alpha=0.005)
     plt.legend(title=None)
 
     # Save the plot
-    output_path = os.path.join(OUTPUT_DIR, "beat_at_k.backtranslate.png")
+    output_path = os.path.join(OUTPUT_DIR, "opt_at_k.backtranslate.png")
     plt.savefig(output_path, dpi=300, bbox_inches="tight")
     print(f"Plot saved as {output_path}")
 

@@ -9,7 +9,7 @@ import argparse
 import glob
 
 from pyperf.harness.utils import natural_sort_key
-from pyperf.harness.beat_at_k import merge_reports
+from pyperf.harness.opt_at_k import merge_reports
 from pyperf.constants import EVALUATION_REPORTS_DIR
 from pyperf.harness.scripts.helpers import *
 
@@ -24,7 +24,7 @@ MODEL_CONFIGS = {
 
 # Add argument parsing
 parser = argparse.ArgumentParser(
-    description="Run and plot beat@1 comparisons across models"
+    description="Run and plot Opt@1 comparisons across models"
 )
 parser.add_argument(
     "--output_dir", type=str, default="plots", help="Directory to save plots"
@@ -58,7 +58,7 @@ def create_comparison_plot(df_results):
     # Create the bars with model-specific colors
     bars = ax.bar(
         df_results["Model"],
-        df_results["Beat@1"],
+        df_results["Opt@1"],
         color=bar_colors,
         yerr=df_results["Std"],
         capsize=4,
@@ -81,7 +81,7 @@ def create_comparison_plot(df_results):
         )
 
     # Customize axes
-    ax.set_ylabel("Beat@1 (%)")
+    ax.set_ylabel("Opt@1 (%)")
     # ax.set_xlabel("Model")
     ax.set_ylim(0, 25)  # Adjust as needed
     ax.set_yticks(range(0, 26, 10))
@@ -129,18 +129,18 @@ for model_name, report_pattern in MODEL_CONFIGS.items():
 
     print(f"Processing {model_name} with {len(reports)} reports...")
 
-    # Calculate beat@k
+    # Calculate Opt@K
     passed_at_k_rates, base_at_k_rates, commit_at_k_rates, main_at_k_rates = (
-        calculate_beat_at_k_smooth(
+        calculate_opt_at_k_smooth(
             reports, args.k, args.fixed_first_run, args.num_trials
         )
     )
 
-    # We only need beat@1 (index 0)
+    # We only need Opt@1 (index 0)
     results_data.append(
         {
             "Model": model_name,
-            "Beat@1": commit_at_k_rates[0][0],  # Mean
+            "Opt@1": commit_at_k_rates[0][0],  # Mean
             "Std": commit_at_k_rates[0][1],  # Standard deviation
         }
     )

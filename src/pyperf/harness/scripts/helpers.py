@@ -4,9 +4,9 @@ import random
 import matplotlib.pyplot as plt
 
 
-def calculate_beat_at_k_smooth(report_paths, N, fixed_first_run=False, num_trials=500):
+def calculate_opt_at_k_smooth(report_paths, N, fixed_first_run=False, num_trials=500):
     """
-    Calculate beat@k rates with bootstrapping, closely following the reference implementation.
+    Calculate Opt@K rates with bootstrapping, closely following the reference implementation.
     """
     # Load all reports into a more usable format
     all_report_data = []
@@ -165,9 +165,9 @@ MODEL_COLOR_MAP = {
 METRICS_COLOR_MAP = {
     "Passed": "#b3b3b3",  # gray
     "HasOpt": "#396ab1",  # blue
-    "Beat@K": "#da7c2f",  # orange
-    "Beat@K w/ gt plan": "#3d9651",  # green
-    "Beat@K w/o gt plan": "#396ab1",  # blue
+    "Opt@K": "#da7c2f",  # orange
+    "Opt@K w/ gt plan": "#3d9651",  # green
+    "Opt@K w/o gt plan": "#396ab1",  # blue
     "Negative": "#a52a2a",  # red
     "Positive": "#3d9651",  # green
 }

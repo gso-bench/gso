@@ -7,7 +7,7 @@ from tqdm import tqdm
 import argparse
 
 from pyperf.harness.utils import natural_sort_key
-from pyperf.harness.beat_at_k import merge_reports
+from pyperf.harness.opt_at_k import merge_reports
 from pyperf.constants import EVALUATION_REPORTS_DIR
 from pyperf.harness.scripts.helpers import *
 
@@ -15,7 +15,7 @@ from pyperf.harness.scripts.helpers import *
 PLOT_MAIN = False
 
 # Add argument parsing
-parser = argparse.ArgumentParser(description="Run and plot beat@K evaluations")
+parser = argparse.ArgumentParser(description="Run and plot Opt@K evaluations")
 parser.add_argument(
     "--eval_reports", type=str, nargs="+", help="evaluated reports", required=True
 )
@@ -43,9 +43,9 @@ if len(reports) < args.k:
     raise ValueError(f"Found {len(reports)} reports, expected {args.k}")
 
 
-# Calculate beat@k with the reference approach
+# Calculate Opt@K with the reference approach
 passed_at_k_rates, base_at_k_rates, commit_at_k_rates, main_at_k_rates = (
-    calculate_beat_at_k_smooth(reports, args.k, args.fixed_first_run, args.num_trials)
+    calculate_opt_at_k_smooth(reports, args.k, args.fixed_first_run, args.num_trials)
 )
 
 # Create a DataFrame in long format for seaborn (directly from reference)
@@ -89,7 +89,7 @@ for k, rates in enumerate(commit_at_k_rates, 1):
             "k": k,
             "Rate": rates[0],
             "Error": error,
-            "Metric": "Beat@K",
+            "Metric": "Opt@K",
             "Lower": rates[0] - error,
             "Upper": rates[0] + error,
         }
@@ -107,7 +107,7 @@ sns.lineplot(
     y="Rate",
     hue="Metric",
     style="Metric",
-    markers={"Beat@K": "o", "HasOpt": "o", "Passed": "o"},
+    markers={"Opt@K": "o", "HasOpt": "o", "Passed": "o"},
     markeredgewidth=0,
     markersize=5,
     dashes=False,
@@ -151,6 +151,6 @@ plt.grid(False)  #  linestyle="-", alpha=0.005)
 plt.legend(title=None, loc="upper left")
 
 # Save the plot
-output_path = os.path.join(args.output_dir, f"beat_at_k.{args.model_name}.png")
+output_path = os.path.join(args.output_dir, f"opt_at_k.{args.model_name}.png")
 plt.savefig(output_path, dpi=300, bbox_inches="tight")
 print(f"Plot saved as {output_path}")

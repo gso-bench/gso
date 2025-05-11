@@ -39,7 +39,7 @@ L_VALUES.sort(reverse=True)
 
 # Add argument parsing
 parser = argparse.ArgumentParser(
-    description="Create a matrix plot for beat@K evaluations"
+    description="Create a matrix plot for Opt@K evaluations"
 )
 parser.add_argument("--model_name", type=str, help="Model name", required=True)
 parser.add_argument(
@@ -65,7 +65,7 @@ def extract_maxiter(filename):
     return None
 
 
-# Create a matrix to store the beat@k values
+# Create a matrix to store the Opt@K values
 matrix_data = np.zeros((len(L_VALUES), len(K_VALUES)))
 matrix_data.fill(np.nan)  # Fill with NaN initially
 
@@ -78,7 +78,7 @@ for l_idx, l_value in enumerate(L_VALUES):
 
     for k_idx, k_value in enumerate(K_VALUES):
         if (l_value, k_value) in LK_PAIRS and len(l_reports) >= k_value:
-            _, _, commit_at_k_rates, _ = calculate_beat_at_k_smooth(
+            _, _, commit_at_k_rates, _ = calculate_opt_at_k_smooth(
                 l_reports, k_value, fixed_first_run=False, num_trials=args.num_trials
             )
             matrix_data[l_idx, k_idx] = commit_at_k_rates[k_value - 1][0]

@@ -7,7 +7,7 @@ import glob
 import argparse
 
 from pyperf.harness.utils import natural_sort_key
-from pyperf.harness.beat_at_k import merge_reports
+from pyperf.harness.opt_at_k import merge_reports
 from pyperf.constants import EVALUATION_REPORTS_DIR
 from pyperf.harness.scripts.helpers import *
 
@@ -19,7 +19,7 @@ MODEL_CONFIGS = {
 
 # Add argument parsing
 parser = argparse.ArgumentParser(
-    description="Plot beat@K for multiple models on a single graph"
+    description="Plot Opt@K for multiple models on a single graph"
 )
 parser.add_argument("--k", type=int, default=10, help="Maximum K value")
 parser.add_argument(
@@ -63,8 +63,8 @@ for model_name, report_pattern in MODEL_CONFIGS.items():
 
     print(f"Processing {model_name} with {len(reports)} reports...")
 
-    # Calculate beat@k with the reference approach
-    _, _, commit_at_k_rates, _ = calculate_beat_at_k_smooth(
+    # Calculate Opt@K with the reference approach
+    _, _, commit_at_k_rates, _ = calculate_opt_at_k_smooth(
         reports, args.k, args.fixed_first_run, args.num_trials
     )
 
@@ -148,13 +148,13 @@ if len(models) <= 2:
 # Customize plot
 plt.tick_params(axis="both", direction="out", length=3, width=1)
 plt.xlabel("# Rollouts (K)")
-plt.ylabel("Beat@K (%)")
+plt.ylabel("Opt@K (%)")
 plt.xticks(k_values)
 plt.ylim(0, 25)  # Adjust as needed
 plt.grid(False)
 plt.legend(title=None, loc="upper left")
 
 # Save the plot
-output_path = os.path.join(args.output_dir, f"beat_at_k_comparison.png")
+output_path = os.path.join(args.output_dir, f"opt_at_k_comparison.png")
 plt.savefig(output_path, dpi=300, bbox_inches="tight")
 print(f"Plot saved as {output_path}")
