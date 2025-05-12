@@ -7,6 +7,12 @@ from datetime import datetime
 from pyperf.data import *
 from pyperf.data.parsing import *
 
+_ignore_extensions = ["json", "txt", "lock"]
+_ignore_directories = [".venv", ".git", "__pycache__", ".pytest_cache"]
+should_ignore = lambda path, ext: ext not in _ignore_extensions and (
+    not any([d in path for d in _ignore_directories])
+)
+
 
 class SimplePatchParser:
     def parse_patch(
@@ -25,7 +31,10 @@ class SimplePatchParser:
         for line in diff_text.split("\n"):
             if line.startswith("diff --git"):
                 if current_file_diff:
-                    file_diffs.append(current_file_diff)
+                    path = current_file_diff.header.file.path
+                    ext = Path(path).suffix.lstrip(".")
+                    if should_ignore(path, ext):
+                        file_diffs.append(current_file_diff)
                 current_file_diff = self._parse_file_diff_header(line)
                 current_hunk = None
             elif current_file_diff:
@@ -61,7 +70,10 @@ class SimplePatchParser:
                     self._parse_hunk_line(current_hunk, line)
 
         if current_file_diff:
-            file_diffs.append(current_file_diff)
+            path = current_file_diff.header.file.path
+            ext = Path(path).suffix.lstrip(".")
+            if should_ignore(path, ext):
+                file_diffs.append(current_file_diff)
 
         # We don't have commit message, date or new hash, so use defaults
         return ParsedCommit(
