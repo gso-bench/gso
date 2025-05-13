@@ -1,6 +1,7 @@
 from enum import Enum
 from pydantic import BaseModel, Field
 from pyperf.data.entities import EntityType, Entity
+import re
 
 
 class Range(BaseModel):
@@ -149,10 +150,29 @@ class FileDiffHeader(BaseModel):
 
     @property
     def is_test_file(self) -> bool:
-        return (
-            self.path.endswith("_test.py")
-            or self.path.startswith("test_")
-            or "tests" in self.path.split("/")
+        # Common test patterns that can be combined
+        test_patterns = [
+            # File patterns
+            r'^(test_.*|.*_test|.*\.(test|spec)(\..*)?)$',  # test_*, *_test, *.test.*, *.spec.*
+            r'.*_(test|spec|fixture|mock|stub|fake|dummy|spy|double)(s)?\.',  # *_test.*, *_spec.*, etc.
+            r'.*_(junit|pytest|unittest|testcase|test_suite|test_runner|test_harness)\.',  # Testing frameworks
+            r'.*_(test_utils?|test_helpers?|test_data|test_dataset)\.',  # Test utilities and data
+        ]
+        
+        # Directory patterns
+        test_dirs = [
+            r'(tests?|__tests__|testing|test-utils?)/',  # Common test directories
+            r'test_(utils?|helpers?|data|dataset|fixture|mock|stub|fake|dummy|spy|double)(s)?/',  # Test infrastructure
+            r'test_(junit|pytest|unittest|testcase|test_suite|test_runner|test_harness)/',  # Test framework dirs
+        ]
+        
+        # Combine all patterns
+        all_patterns = test_patterns + test_dirs
+        
+        # Check if path matches any pattern (case insensitive)
+        return any(
+            re.search(pattern, self.path, re.IGNORECASE)
+            for pattern in all_patterns
         )
 
     def get_patch(self) -> str:
@@ -188,10 +208,29 @@ class FileDiff(BaseModel):
 
     @property
     def is_test_file(self) -> bool:
-        return (
-            self.path.endswith("_test.py")
-            or self.path.startswith("test_")
-            or "tests" in self.path.split("/")
+        # Common test patterns that can be combined
+        test_patterns = [
+            # File patterns
+            r'^(test_.*|.*_test|.*\.(test|spec)(\..*)?)$',  # test_*, *_test, *.test.*, *.spec.*
+            r'.*_(test|spec|fixture|mock|stub|fake|dummy|spy|double)(s)?\.',  # *_test.*, *_spec.*, etc.
+            r'.*_(junit|pytest|unittest|testcase|test_suite|test_runner|test_harness)\.',  # Testing frameworks
+            r'.*_(test_utils?|test_helpers?|test_data|test_dataset)\.',  # Test utilities and data
+        ]
+        
+        # Directory patterns
+        test_dirs = [
+            r'(tests?|__tests__|testing|test-utils?)/',  # Common test directories
+            r'test_(utils?|helpers?|data|dataset|fixture|mock|stub|fake|dummy|spy|double)(s)?/',  # Test infrastructure
+            r'test_(junit|pytest|unittest|testcase|test_suite|test_runner|test_harness)/',  # Test framework dirs
+        ]
+        
+        # Combine all patterns
+        all_patterns = test_patterns + test_dirs
+        
+        # Check if path matches any pattern (case insensitive)
+        return any(
+            re.search(pattern, self.path, re.IGNORECASE)
+            for pattern in all_patterns
         )
 
     def get_patch(self) -> str:

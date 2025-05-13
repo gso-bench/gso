@@ -96,6 +96,14 @@ class CommitParser:
         #     old_path == new_path
         # ), f"Invalid paths: {old_path}, {new_path} ; usually means file was renamed which is not supported"
 
+        if repo_path is None:
+            return FileDiff(
+                old_file_content="",
+                new_file_content="",
+                header=FileDiffHeader(file=FileInfo(path=old_path)),
+            )
+
+
         old_file_content = subprocess.run(
             ["git", "--no-pager", "show", f"{old_commit_hash}:{old_path}"],
             cwd=repo_path,
