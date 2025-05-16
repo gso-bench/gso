@@ -1,10 +1,10 @@
 <!-- <p align="center">
   <a href="https://huggingface.co/datasets/gso-bench/gso">
-    <img src="https://raw.githubusercontent.com/r2e-project/pyperf/main/app/static/gso_logo.svg" style="height: 10em" alt="GSO Benchmark" />
+    <img src="https://raw.githubusercontent.com/gso-bench/gso/main/app/static/gso_logo.svg" style="height: 10em" alt="GSO Benchmark" />
   </a>
 </p> -->
 
-<!-- <p align="center"><strong>[&nbsp;<a href="https://github.com/r2e-project/pyperf">Read the Docs</a>&nbsp;]</strong></p> -->
+<!-- <p align="center"><strong>[&nbsp;<a href="https://github.com/gso-bench/gso">Read the Docs</a>&nbsp;]</strong></p> -->
 
 <!-- <p align="center">
     <a href="https://www.python.org/">
@@ -13,7 +13,7 @@
     <a href="LICENSE">
         <img alt="License" src="https://img.shields.io/badge/License-MIT-blue">
     </a>
-    <a href="https://pypi.org/project/pyperf/">
+    <a href="https://pypi.org/project/gso/">
         <img src="https://img.shields.io/badge/pypi-v0.1.0-blue">
     </a>
 </p> -->
@@ -48,8 +48,8 @@ gso = load_dataset('gso-bench/gso', split='test')
 curl -LsSf https://astral.sh/uv/install.sh | sh
 source $HOME/.local/bin/env
 
-git clone --recursive https://github.com/r2e-project/pyperf.git
-cd pyperf && uv venv && source .venv/bin/activate
+git clone --recursive https://github.com/gso-bench/gso.git
+cd gso && uv venv && source .venv/bin/activate
 uv sync
 ```
 
@@ -67,7 +67,7 @@ export HF_TOKEN="huggingface_token"
 ```bash
 docker login
 
-uv run src/pyperf/harness/prepare_images.py \
+uv run src/gso/harness/prepare_images.py \
     --dataset_name <dataset_name> \
     --push_to_registry True \
     --dockerhub_username <dockerhub_username> \
@@ -76,7 +76,7 @@ uv run src/pyperf/harness/prepare_images.py \
 
 2. **Running Evaluations**:
 ```bash
-uv run src/pyperf/harness/opt_at_k.py \
+uv run src/gso/harness/opt_at_k.py \
     --dataset_name <dataset_name> \
     --prediction_paths <prediction_paths> \
     --timeout 3600 \
@@ -89,10 +89,10 @@ uv run src/pyperf/harness/opt_at_k.py \
 
 The collection framework enables you to create your own GSO tasks through a four-step pipeline:
 
-1. **[Commit Extraction & Filtering](src/pyperf/collect/README.md#overview)**: Extract performance-related commits using LLMs
-2. **[API Identification](src/pyperf/collect/README.md#2-commit-analysis-pipeline)**: Identify affected high-level APIs for each commit
-3. **[Performance Test Generation](src/pyperf/collect/README.md#3-generate-performance-tests)**: Generate tests for API-Commit pairs
-4. **[Test Execution](src/pyperf/collect/README.md#4-execute-performance-tests)**: Execute tests to identify performance improvements
+1. **[Commit Extraction & Filtering](src/gso/collect/README.md#overview)**: Extract performance-related commits using LLMs
+2. **[API Identification](src/gso/collect/README.md#2-commit-analysis-pipeline)**: Identify affected high-level APIs for each commit
+3. **[Performance Test Generation](src/gso/collect/README.md#3-generate-performance-tests)**: Generate tests for API-Commit pairs
+4. **[Test Execution](src/gso/collect/README.md#4-execute-performance-tests)**: Execute tests to identify performance improvements
 
 <!-- Required tokens:
 ```bash
@@ -101,14 +101,14 @@ export OPENAI_API_KEY="openai_key"
 export HF_TOKEN="huggingface_token"
 ``` -->
 
-For detailed instructions and usage, see the [Collection Framework documentation](src/pyperf/collect/README.md).
+For detailed instructions and usage, see the [Collection Framework documentation](src/gso/collect/README.md).
 
 
 ## ⬇️ Downloads
 | Datasets | Tools | Dockers |
 | - | - | - |
-| [💿 GSO](https://huggingface.co/datasets/gso-bench/gso) | [🔧 Evaluation Harness](src/pyperf/harness/) | [🐳 Docker Hub](https://hub.docker.com/repository/docker/slimshetty/pyperf/general) |
-| | [🔧 Collection Framework](src/pyperf/collect/README.md) | |
+| [💿 GSO](https://huggingface.co/datasets/gso-bench/gso) | [🔧 Evaluation Harness](src/gso/harness/) | [🐳 Docker Hub](https://hub.docker.com/repository/docker/slimshetty/gso/general) |
+| | [🔧 Collection Framework](src/gso/collect/README.md) | |
 
 ## 💫 Contributions
 We welcome contributions from the broader NLP, Machine Learning, and Software Engineering research communities! Please file a new pull request or issue and fill in the corresponding templates accordingly.
@@ -125,6 +125,6 @@ MIT license. Check `LICENSE` file.
     author={GSO Team},
     booktitle={Conference Name},
     year={2025},
-    url={https://github.com/r2e-project/pyperf}
+    url={https://github.com/gso-bench/gso}
 }
 ``` -->

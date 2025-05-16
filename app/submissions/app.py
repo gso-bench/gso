@@ -5,10 +5,10 @@ from pathlib import Path
 
 from flask import Flask, jsonify, render_template, url_for
 
-from pyperf.constants import (
+from gso.constants import (
     SUBMISSIONS_DIR,
     EVALUATION_REPORTS_DIR,
-    RUN_EVALUATION_LOG_DIR,
+    RUN_EVALUATION_LOG_DIR
 )
 
 app = Flask(__name__)
@@ -57,7 +57,7 @@ def load_jsonl(file_path):
 
     # open the analsis csv file into a df
     analysis_df = pd.read_csv(
-        "~/pyperf/experiments/qualitative/trajectory_analysis.csv"
+        "~/gso/experiments/qualitative/trajectory_analysis.csv"
     )
 
     full_path = os.path.join(SUBMISSIONS_DIR, file_path)

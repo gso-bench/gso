@@ -4,9 +4,9 @@ import json
 from math import ceil
 from collections import defaultdict
 
-from pyperf.constants import EXPS_DIR
-from pyperf.utils.io import load_problems
-from pyperf.collect.execute.evaluate import speedup_summary
+from gso.constants import EXPS_DIR
+from gso.utils.io import load_problems
+from gso.collect.execute.evaluate import speedup_summary
 
 app = Flask(__name__)
 

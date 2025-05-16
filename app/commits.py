@@ -3,8 +3,8 @@ from flask import Flask, render_template, request, redirect, url_for, jsonify
 import json
 from datetime import datetime
 
-from pyperf.constants import ANALYSIS_COMMITS_DIR
-from pyperf.analysis.apis import APIAnalyzer
+from gso.constants import ANALYSIS_COMMITS_DIR
+from gso.analysis.apis import APIAnalyzer
 
 app = Flask(__name__)
 

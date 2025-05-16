@@ -289,7 +289,7 @@ name = "click"
 version = "8.1.8"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colorama", marker = "platform_system == 'Windows'" },
+    { name = "colorama", marker = "sys_platform == 'win32'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/b9/2e/0090cbf739cee7d23781ad4b89a9894a41538e4fcf4c31dcdd705b78eb8b/click-8.1.8.tar.gz", hash = "sha256:ed53c9d8990d83c2a27deae68e4ee337473f6330c040a31d4225c9574d16096a", size = 226593 }
 wheels = [
@@ -900,6 +900,55 @@ wheels = [
 ]
 
 [[package]]
+name = "gso"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "datasets" },
+    { name = "docker" },
+    { name = "fire" },
+    { name = "flask" },
+    { name = "fuzzywuzzy" },
+    { name = "ghapi" },
+    { name = "google" },
+    { name = "huggingface-hub" },
+    { name = "line-profiler" },
+    { name = "memory-profiler" },
+    { name = "pip" },
+    { name = "pygithub" },
+    { name = "python-levenshtein" },
+    { name = "r2e" },
+    { name = "r2e-test-server" },
+    { name = "rich" },
+    { name = "scipy" },
+    { name = "seaborn" },
+    { name = "skypilot" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "datasets", specifier = ">=3.2.0" },
+    { name = "docker", specifier = ">=7.1.0" },
+    { name = "fire", specifier = ">=0.6.0" },
+    { name = "flask", specifier = ">=3.0.3" },
+    { name = "fuzzywuzzy", specifier = ">=0.18.0" },
+    { name = "ghapi", specifier = ">=1.0.6" },
+    { name = "google", specifier = ">=3.0.0" },
+    { name = "huggingface-hub", specifier = ">=0.27.0" },
+    { name = "line-profiler", specifier = ">=4.1.3" },
+    { name = "memory-profiler", specifier = ">=0.61.0" },
+    { name = "pip", specifier = ">=24.2" },
+    { name = "pygithub", specifier = ">=2.4.0" },
+    { name = "python-levenshtein", specifier = ">=0.25.1" },
+    { name = "r2e", git = "https://github.com/r2e-project/r2e" },
+    { name = "r2e-test-server", specifier = ">=0.1.4" },
+    { name = "rich", specifier = ">=13.8.0" },
+    { name = "scipy", specifier = ">=1.14.1" },
+    { name = "seaborn", specifier = ">=0.13.2" },
+    { name = "skypilot", specifier = ">=0.5.0" },
+]
+
+[[package]]
 name = "h11"
 version = "0.14.0"
 source = { registry = "https://pypi.org/simple" }
@@ -989,7 +1038,7 @@ name = "ipykernel"
 version = "6.29.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "appnope", marker = "platform_system == 'Darwin'" },
+    { name = "appnope", marker = "sys_platform == 'darwin'" },
     { name = "comm" },
     { name = "debugpy" },
     { name = "ipython" },
@@ -1865,7 +1914,7 @@ name = "plumbum"
 version = "1.9.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "pywin32", marker = "platform_python_implementation != 'PyPy' and platform_system == 'Windows'" },
+    { name = "pywin32", marker = "platform_python_implementation != 'PyPy' and sys_platform == 'win32'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/f0/5d/49ba324ad4ae5b1a4caefafbce7a1648540129344481f2ed4ef6bb68d451/plumbum-1.9.0.tar.gz", hash = "sha256:e640062b72642c3873bd5bdc3effed75ba4d3c70ef6b6a7b907357a84d909219", size = 319083 }
 wheels = [
@@ -2212,55 +2261,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/bb/22/f1129e69d94ffff626bdb5c835506b3a5b4f3d070f17ea295e12c2c6f60f/pyparsing-3.2.3.tar.gz", hash = "sha256:b9c13f1ab8b3b542f72e28f634bad4de758ab3ce4546e4301970ad6fa77c38be", size = 1088608 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/05/e7/df2285f3d08fee213f2d041540fa4fc9ca6c2d44cf36d3a035bf2a8d2bcc/pyparsing-3.2.3-py3-none-any.whl", hash = "sha256:a749938e02d6fd0b59b356ca504a24982314bb090c383e3cf201c95ef7e2bfcf", size = 111120 },
-]
-
-[[package]]
-name = "pyperf"
-version = "0.1.0"
-source = { editable = "." }
-dependencies = [
-    { name = "datasets" },
-    { name = "docker" },
-    { name = "fire" },
-    { name = "flask" },
-    { name = "fuzzywuzzy" },
-    { name = "ghapi" },
-    { name = "google" },
-    { name = "huggingface-hub" },
-    { name = "line-profiler" },
-    { name = "memory-profiler" },
-    { name = "pip" },
-    { name = "pygithub" },
-    { name = "python-levenshtein" },
-    { name = "r2e" },
-    { name = "r2e-test-server" },
-    { name = "rich" },
-    { name = "scipy" },
-    { name = "seaborn" },
-    { name = "skypilot" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "datasets", specifier = ">=3.2.0" },
-    { name = "docker", specifier = ">=7.1.0" },
-    { name = "fire", specifier = ">=0.6.0" },
-    { name = "flask", specifier = ">=3.0.3" },
-    { name = "fuzzywuzzy", specifier = ">=0.18.0" },
-    { name = "ghapi", specifier = ">=1.0.6" },
-    { name = "google", specifier = ">=3.0.0" },
-    { name = "huggingface-hub", specifier = ">=0.27.0" },
-    { name = "line-profiler", specifier = ">=4.1.3" },
-    { name = "memory-profiler", specifier = ">=0.61.0" },
-    { name = "pip", specifier = ">=24.2" },
-    { name = "pygithub", specifier = ">=2.4.0" },
-    { name = "python-levenshtein", specifier = ">=0.25.1" },
-    { name = "r2e", git = "https://github.com/r2e-project/r2e" },
-    { name = "r2e-test-server", specifier = ">=0.1.4" },
-    { name = "rich", specifier = ">=13.8.0" },
-    { name = "scipy", specifier = ">=1.14.1" },
-    { name = "seaborn", specifier = ">=0.13.2" },
-    { name = "skypilot", specifier = ">=0.5.0" },
 ]
 
 [[package]]
@@ -2891,7 +2891,7 @@ name = "tqdm"
 version = "4.67.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colorama", marker = "platform_system == 'Windows'" },
+    { name = "colorama", marker = "sys_platform == 'win32'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/a8/4b/29b4ef32e036bb34e4ab51796dd745cdba7ed47ad142a9f4a1eb8e0c744d/tqdm-4.67.1.tar.gz", hash = "sha256:f8aef9c52c08c13a65f30ea34f4e5aac3fd1a34959879d7e59e63027286627f2", size = 169737 }
 wheels = [
