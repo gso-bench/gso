@@ -1,4 +1,4 @@
-# pyperf
+# gso
 
 ## Setup
 
