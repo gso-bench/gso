@@ -1,0 +1,79 @@
+def apply_patch_requests(test: str) -> str:
+    patch_code = """
+import requests
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
+requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+original_get = requests.get
+def patched_get(*args, **kwargs):
+    if 'verify' not in kwargs:
+        kwargs["verify"] = False
+
+    if 'headers' not in kwargs:
+        kwargs['headers'] = {}
+    if 'User-Agent' not in kwargs['headers']:
+        kwargs['headers']['User-Agent'] = "CoolBot/1.0 (https://example.org/coolbot/; coolbot@example.org)"
+
+    return original_get(*args, **kwargs)
+
+# replace w/ patched version
+requests.get = patched_get
+"""
+    return patch_code + "\n\n" + test
+
+
+PATCH_REGISTRY = {
+    "requests": {
+        "description": "Disable SSL verification and add User-agent in requests",
+        "apply": apply_patch_requests,
+        "instances": [
+            "numpy__numpy-09db9c7",
+            "numpy__numpy-e801e7a",
+            "numpy__numpy-ee75c87",
+            "numpy__numpy-ef5e545",
+            "numpy__numpy-728fedc",
+            "numpy__numpy-83c780d",
+            "numpy__numpy-cb461ba",
+            "numpy__numpy-567b57d",
+            "numpy__numpy-19bfa3f",
+            "numpy__numpy-b862e4f",
+            "numpy__numpy-1b861a2",
+            "numpy__numpy-68eead8",
+            "pydantic__pydantic-addf1f9",
+            "python-pillow__Pillow-4bc33d3",
+            "tornadoweb__tornado-1b464c4",
+            "tornadoweb__tornado-9a18f6c",
+            "abetlen__llama-cpp-python-218d361",
+            "abetlen__llama-cpp-python-2bc1d97",
+            "uploadcare__pillow-simd-0514e20",
+            "uploadcare__pillow-simd-2818b90",
+            "uploadcare__pillow-simd-6eacce9",
+            "uploadcare__pillow-simd-7511039",
+            "uploadcare__pillow-simd-9e60023",
+            "uploadcare__pillow-simd-b4045cf",
+            "uploadcare__pillow-simd-d970a39",
+        ],
+    },
+}
+
+
+def apply_patches(instance_id: str, tests: list[str]) -> list[str]:
+    patched_tests = tests.copy()
+    for patch_name, patch_info in PATCH_REGISTRY.items():
+        if instance_id in patch_info.get("instances", []):
+            patch_func = patch_info.get("apply")
+            if patch_func:
+                patched_tests = [patch_func(test) for test in patched_tests]
+
+    return patched_tests
+
+
+def apply_patches_to_tests(patch_name: str, tests: list[str]) -> list[str]:
+    """Apply a patch to a given list of tests"""
+    patch_fn = PATCH_REGISTRY.get(patch_name, {}).get("apply")
+
+    if not patch_fn:
+        raise ValueError(f"Patch '{patch_name}' not found in registry.")
+    patched_tests = []
+    for test in tests:
+        patched_tests.append(patch_fn(test))
+    return patched_tests

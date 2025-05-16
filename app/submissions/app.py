@@ -1,10 +1,15 @@
 import json
 import os
+import pandas as pd
 from pathlib import Path
 
 from flask import Flask, jsonify, render_template, url_for
 
-from pyperf.constants import SUBMISSIONS_DIR, EVALUATION_REPORTS_DIR
+from pyperf.constants import (
+    SUBMISSIONS_DIR,
+    EVALUATION_REPORTS_DIR,
+    RUN_EVALUATION_LOG_DIR,
+)
 
 app = Flask(__name__)
 
@@ -16,8 +21,18 @@ def get_available_logs():
         for file in files:
             # jsonl file with name output.jsonl
             if file.endswith(".jsonl") and file == "output.jsonl":
-                # ignore if archive is in the file path
-                if "archives" in root:
+                if any(
+                    exp_type in root
+                    for exp_type in [
+                        "archives",
+                        "plans",
+                        "gpt-4o",
+                        "v0.25.0",
+                        "steps",
+                        # "pass",
+                        "scale",
+                    ]
+                ):
                     continue
 
                 # Get relative path from SUBMISSIONS_DIR
@@ -31,6 +46,7 @@ conversations = {}
 current_indices = {}
 instance_id_maps = {}  # Maps log_path -> {instance_id: index}
 current_log = None
+exp_type = "pass"  # default experiment type
 
 
 def load_jsonl(file_path):
@@ -38,6 +54,11 @@ def load_jsonl(file_path):
     # Make sure we're loading the actual jsonl file
     if not file_path.endswith("output.jsonl"):
         file_path = os.path.join(file_path, "output.jsonl")
+
+    # open the analsis csv file into a df
+    analysis_df = pd.read_csv(
+        "~/pyperf/experiments/qualitative/trajectory_analysis.csv"
+    )
 
     full_path = os.path.join(SUBMISSIONS_DIR, file_path)
     with open(full_path, "r") as f:
@@ -49,12 +70,31 @@ def load_jsonl(file_path):
                 conv = json.loads(line)
                 run_id = Path(file_path).parent.name
                 conv["run_id"] = run_id
+                conv["analysis"] = ""
                 instance_id = conv.get("instance_id")
                 if instance_id:
+                    analysis = analysis_df[
+                        (analysis_df["run_id"] == run_id)
+                        & (analysis_df["instance_id"] == conv["instance_id"])
+                    ]
+                    if not analysis.empty:
+                        conv["analysis"] = analysis.iloc[0].get("analysis", "")
+
+                    test_output_path = os.path.join(
+                        RUN_EVALUATION_LOG_DIR, exp_type, run_id, instance_id
+                    )
+                    test_output_file = os.path.join(test_output_path, "test_output.txt")
+                    if os.path.exists(test_output_file):
+                        with open(test_output_file, "r") as test_output:
+                            test_output_data = test_output.read()
+                            conv["test_output"] = test_output_data
+
                     try:
                         # Look for report in the reports directory
                         possible_reports = list(
-                            EVALUATION_REPORTS_DIR.glob(f"*{run_id}.test.report.json")
+                            EVALUATION_REPORTS_DIR.glob(
+                                f"*{run_id}.{exp_type}.report.json"
+                            )
                         )
 
                         if possible_reports:
@@ -62,13 +102,13 @@ def load_jsonl(file_path):
                             with open(report_path, "r") as report_file:
                                 report_data = json.load(report_file)
 
-                                # Check if instance is in improved_commit_ids
-                                improved_commit = instance_id in report_data.get(
+                                # Check if instance is in beat_commit_ids
+                                beat_commit = instance_id in report_data.get(
                                     "instance_sets", {}
-                                ).get("improved_commit_ids", [])
-                                improved_main = instance_id in report_data.get(
+                                ).get("beat_commit_ids", [])
+                                beat_main = instance_id in report_data.get(
                                     "instance_sets", {}
-                                ).get("improved_main_ids", [])
+                                ).get("beat_main_ids", [])
 
                                 # Get optimization stats if available
                                 opt_stats = report_data.get("opt_stats", {}).get(
@@ -79,8 +119,8 @@ def load_jsonl(file_path):
                                 if "test_result" not in conv:
                                     conv["test_result"] = {}
 
-                                conv["test_result"]["improved_commit"] = improved_commit
-                                conv["test_result"]["improved_main"] = improved_main
+                                conv["test_result"]["beat_commit"] = beat_commit
+                                conv["test_result"]["beat_main"] = beat_main
                                 conv["test_result"]["opt_stats"] = opt_stats
                     except Exception as e:
                         print(f"Error loading report for {instance_id}: {e}")
@@ -139,7 +179,7 @@ def instance_matrix():
 
             # Check if there's test result data
             test_result = conv.get("test_result", {})
-            success = test_result.get("improved_commit", False)
+            success = test_result.get("beat_commit", False)
 
             # Create URL for this specific conversation
             log_url = url_for(
@@ -239,4 +279,4 @@ def previous_conversation(log_path):
 
 
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=5760)
+    app.run(debug=False, host="0.0.0.0", port=5760)

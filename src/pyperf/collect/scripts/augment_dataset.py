@@ -1,6 +1,4 @@
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
 from dataclasses import asdict
 from argparse import ArgumentParser
 from datasets import Dataset
@@ -28,6 +26,7 @@ def create_instance(prob: Problem, commit_hash: str, test_ids: list[int]):
     install_commands = prepare_install_commands(prob.install_commands)
     prob_script = prepare_prob_script(test_samples)
 
+
     return {
         "instance_id": (prob.repo.full_name + "-" + commit_hash).replace("/", "__"),
         "repo": prob.repo.full_name,
@@ -40,6 +39,11 @@ def create_instance(prob: Problem, commit_hash: str, test_ids: list[int]):
         "setup_commands": prob.setup_commands,
         "install_commands": install_commands,
         "created_at": commit.date.strftime("%Y-%m-%d %H:%M:%S"),
+        "gt_diff": commit.diff_text,
+        "gt_files_changed": commit.files_changed,
+        "gt_functions_changed": commit.functions_changed,
+        "gt_commit_stats": commit.stats,
+        "gt_commit_message": commit.message,
     }
 
 
@@ -121,21 +125,14 @@ def build_dataset(problems, exp_id):
 
     loc_dist = opt_problems_df["loc_changed"].describe()
     speedup_dist = opt_problems_df["speedup_factor"].describe()
-    test_dist = (
-        opt_problems_df.groupby(["pid", "commit"])
-        .size()
-        .describe(percentiles=[0.05, 0.1, 0.2, 0.25, 0.3, 0.4, 0.5, 0.75, 0.9])
-    )
+    test_dist = opt_problems_df.groupby(["pid", "commit"]).size().describe()
 
     # Create dataset instances for selected (problem, commit, test)
     dataset = []
     for (pid, commit), grp in opt_problems_df.groupby(["pid", "commit"]):
         prob = [p for p in valid_problems if p.pid == pid][0]
         inst_dict = create_instance(prob, commit, grp["test_id"].tolist())
-        inst = PyPerfInstance(**inst_dict)
-        dataset.append(inst)
-
-    dataset_df = pd.DataFrame([asdict(inst) for inst in dataset])
+        dataset.append(inst_dict)
 
     pd.set_option("display.float_format", "{:.2f}".format)
     print("Created dataset!\n\n------ Dataset Summary ------")
@@ -144,29 +141,8 @@ def build_dataset(problems, exp_id):
     print(f"Avg Speedup: {speedup_dist['mean']:.2f}X\n")
 
     print(f"LoC dist:\n{loc_dist}\n")
-    print(f"Test dist:\n{test_dist}\n")
-    print(f"Repo dist:\n{dataset_df['repo'].value_counts()}\n")
-
-    # plot the test count distribution in /plots using sns.histplot
-    plt.figure(figsize=(10, 6))
-    plt.title("Test count distribution")
-    plot_data = pd.DataFrame(
-        opt_problems_df.groupby(["pid", "commit"]).size(), columns=["Test Count"]
-    )
-    sns.histplot(plot_data, x="Test Count", bins=range(1, 11), discrete=True)
-    PLOTS_DIR.mkdir(parents=True, exist_ok=True)
-    plt.savefig(PLOTS_DIR / "test_count_dist.png")
-
-    # show the groups with less than 6 tests
-    low_tests = opt_problems_df.groupby(["pid", "commit"]).filter(lambda x: len(x) < 4)
-    if not low_tests.empty:
-        print(
-            f"Low test groups (Count: {len(low_tests.drop_duplicates(subset=["pid", "commit"]))})"
-        )
-        low_tests_df = pd.DataFrame(
-            low_tests.groupby(["pid", "commit"]).size(), columns=["Test Count"]
-        ).reset_index()
-        print(low_tests_df)
+    print(f"Speedup dist:\n{speedup_dist}\n")
+    print(f"Test dist:\n{test_dist}")
 
     return dataset
 
@@ -183,13 +159,11 @@ def main(exp_id, push_to_hf, hf_username, dataset_name=None):
         exp_id = None  # unset
 
     # Build dataset
-    dataset = build_dataset(problems, exp_id)
+    dataset = build_dataset(problems, exp_id=None)
 
     # Save dataset to jsonl file
     DATASET_DIR.mkdir(parents=True, exist_ok=True)
-    dataset_df = pd.DataFrame([asdict(inst) for inst in dataset])
-    if not dataset_name:
-        dataset_name = f"pyperf_{exp_id}" if exp_id else "pyperf"
+    dataset_df = pd.DataFrame([inst for inst in dataset])
     dataset_df.to_json(
         DATASET_DIR / f"{dataset_name}_dataset.jsonl", orient="records", lines=True
     )

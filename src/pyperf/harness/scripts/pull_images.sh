@@ -1,87 +1,72 @@
 #!/bin/bash
+set -e
 
-# Function to display usage information
-usage() {
-    echo "Usage: $0 -r REPOSITORY [-i IMAGE_NAMES] [-h]"
-    echo
-    echo "Pull Docker images from Docker Hub repository"
-    echo
-    echo "Options:"
-    echo "  -r REPOSITORY    Docker Hub repository (e.g., slimshetty/pyperf) (required)"
-    echo "  -i IMAGE_NAMES   Comma-separated list of image tags (optional)"
-    echo "  -s              Create short aliases without repository prefix (optional)"
-    echo "  -h              Display this help message"
-    echo
-    echo "Examples:"
-    echo "  $0 -r slimshetty/pyperf -s"
-    echo "  $0 -r slimshetty/pyperf -i \"latest,1.0.0,dev\" -s"
-    exit 1
+# Parameters:
+# $1 - Namespace (defaults to 'slimshetty') or number of workers if it's a number
+# $2 - Number of parallel workers (defaults to 4) if namespace was provided
+NAMESPACE="slimshetty"
+WORKERS=4
+
+# Check if first argument is a number (indicating workers)
+if [[ $1 =~ ^[0-9]+$ ]]; then
+    WORKERS=$1
+else
+    # If not a number, use it as namespace if provided
+    if [ ! -z "$1" ]; then
+        NAMESPACE=$1
+    fi
+
+    # Check if second argument exists and use it as workers
+    if [ ! -z "$2" ]; then
+        WORKERS=$2
+    fi
+fi
+
+echo "Using namespace: $NAMESPACE"
+echo "Using parallel workers: $WORKERS"
+
+IMAGE_FILE="$(dirname "$0")/all-pyperf-instance-images.txt"
+PATTERN="pyperf.eval"
+
+echo "Pulling docker images"
+echo "Pattern: $PATTERN"
+echo "Image file: $IMAGE_FILE"
+
+# Create a temporary file to store the filtered images
+TEMP_FILE=$(mktemp)
+grep "$PATTERN" "$IMAGE_FILE" > "$TEMP_FILE"
+
+# Count total images to pull
+TOTAL_IMAGES=$(wc -l < "$TEMP_FILE")
+echo "Found $TOTAL_IMAGES images to pull"
+
+# Function to pull images from a subset of lines
+pull_images() {
+    local start=$1
+    local step=$2
+    local worker_id=$3
+
+    echo "Worker $worker_id starting"
+
+    for (( i=start; i<TOTAL_IMAGES; i+=step )); do
+        # Get the image at line number i+1 (because sed is 1-indexed)
+        image=$(sed -n "$((i+1))p" "$TEMP_FILE")
+        echo "Worker $worker_id pulling $NAMESPACE/$image"
+        docker pull "$NAMESPACE/$image" && echo "Worker $worker_id completed: $image" || echo "Worker $worker_id failed: $image"
+    done
+
+    echo "Worker $worker_id finished"
 }
 
-# Parse command line arguments
-while getopts "r:i:sh" opt; do
-    case $opt in
-        r) REPO="$OPTARG";;
-        i) TAGS="$OPTARG";;
-        s) CREATE_SHORT_ALIASES=true;;
-        h) usage;;
-        ?) usage;;
-    esac
+# Launch workers in parallel
+for (( worker=0; worker<WORKERS; worker++ )); do
+    pull_images $worker $WORKERS $worker &
 done
 
-# Check if repository is provided
-if [ -z "$REPO" ]; then
-    echo "Error: Docker Hub repository is required"
-    usage
-fi
+# Wait for all background processes to finish
+wait
 
-# Validate repository format (should contain a slash)
-if [[ ! "$REPO" =~ "/" ]]; then
-    echo "Error: Invalid repository format. Expected format: username/repository"
-    usage
-fi
+echo "All docker pulls completed"
 
-# If no specific tags are provided, get all tags from Docker Hub
-if [ -z "$TAGS" ]; then
-    echo "Fetching all tags for $REPO"
-    TAGS=""
-    NEXT_URL="https://hub.docker.com/v2/repositories/$REPO/tags?page_size=100"
-    
-    while [ -n "$NEXT_URL" ]; do
-        RESPONSE=$(curl -s "$NEXT_URL")
-        PAGE_TAGS=$(echo "$RESPONSE" | grep -o '"name":"[^"]*' | grep -o '[^"]*$' | tr '\n' ',' | sed 's/,$//')
-        TAGS="$TAGS,$PAGE_TAGS"
-        NEXT_URL=$(echo "$RESPONSE" | grep -o '"next":"[^"]*' | grep -o 'http[^"]*' || echo "")
-    done
-    
-    TAGS=$(echo "$TAGS" | sed 's/^,//')
-    
-    if [ -z "$TAGS" ]; then
-        echo "Error: No tags found for repository $REPO"
-        exit 1
-    fi
-fi
-
-# Pull images and create aliases if requested
-echo "Pulling images from $REPO"
-IFS=',' read -ra TAG_ARRAY <<< "$TAGS"
-for tag in "${TAG_ARRAY[@]}"; do
-    # Trim whitespace
-    tag=$(echo "$tag" | xargs)
-    echo "Pulling $REPO:$tag"
-    docker pull "$REPO:$tag"
-    
-    # Create short alias if requested
-    if [ "$CREATE_SHORT_ALIASES" = true ]; then
-        echo "Creating short alias: $tag"
-        docker tag "$REPO:$tag" "$tag"
-        echo "You can now use '$tag' instead of '$REPO:$tag'"
-    fi
-done
-
-echo "Image pull complete!"
-if [ "$CREATE_SHORT_ALIASES" = true ]; then
-    echo "Short aliases have been created. You can use them directly in your Python code."
-    echo "Example Python usage:"
-    echo "    client.containers.run('$tag', ...)"
-fi
+# Clean up
+rm "$TEMP_FILE"

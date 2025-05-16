@@ -47,14 +47,28 @@
                 <div class="card-body">
                     <div id="metadata" class="metadata-grid"></div>
                     
-                    <div id="performanceStats" style="margin-top: 15px;">
-                        <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse"
-                                data-bs-target="#performanceStatsCollapse" aria-expanded="false">
-                            <i class="fas fa-chart-line"></i> Performance Stats
-                        </button>
-                        <div class="collapse" id="performanceStatsCollapse">
-                            <div class="card card-body mt-2" id="performanceStatsContent">
-                                <!-- Will be filled by JavaScript -->
+                    <div style="display: flex; margin-top: 15px; gap: 15px; flex-wrap: wrap;">
+                        <div id="performanceStats" style="flex: 1; min-width: 300px;">
+                            <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse"
+                                    data-bs-target="#performanceStatsCollapse" aria-expanded="false">
+                                <i class="fas fa-chart-line"></i> Performance Stats
+                            </button>
+                            <div class="collapse mt-2" id="performanceStatsCollapse">
+                                <div class="card card-body" id="performanceStatsContent" style="max-height: 400px; overflow-y: auto;">
+                                    <!-- Will be filled by JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+                    
+                        <div id="testLogs" style="flex: 1; min-width: 300px;">
+                            <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse"
+                                    data-bs-target="#testLogsCollapse" aria-expanded="false">
+                                <i class="fas fa-clipboard-list"></i> Test Logs
+                            </button>
+                            <div class="collapse mt-2" id="testLogsCollapse">
+                                <div class="card card-body" id="testLogsContent" style="max-height: 400px; overflow-y: auto;">
+                                    <!-- Will be filled by JavaScript -->
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -155,24 +169,30 @@
         
         // Get optimization stats if available
         const hasOptStats = conversation.test_result?.opt_stats || {};
-        const beatCommit = conversation.test_result?.improved_commit === true;
-        const beatMain = conversation.test_result?.improved_main === true;
+        const beatCommit = conversation.test_result?.beat_commit === true;
+        const beatMain = conversation.test_result?.beat_main === true;
+        const org = conversation.instance_id.split('__')[0];
+        const repo = conversation.instance_id.split('__')[1].split('-')[0];
+        const commitHash = conversation.instance_id.split('__')[1].split('-')[1];
+        const commitUrl = "https://github.com/" + org + "/" + repo + "/commit/" + commitHash;
         
         // Display metadata
         const metadataHtml = `
-            <div>
-                <p><strong>Instance ID:</strong> ${conversation.instance_id || 'N/A'}</p>
-                <p><strong>Run ID:</strong> ${conversation.id || 'N/A'}</p>
+            <div style="width: 50%;">
+                <p><strong>Instance ID:</strong> <a href="${commitUrl}" target="_blank"> ${conversation.instance_id || 'N/A'}</a></p>
                 <p><strong>Agent Class:</strong> ${conversation.metadata?.agent_class || 'N/A'}</p>
                 <p><strong>Model:</strong> ${conversation.metadata?.llm_config?.model || 'N/A'}</p>
                 <p><strong>Steps:</strong> ${stepsCount} (${executionTime})</p>
             </div>
-            <div>
+            <div style="width: 50%;">
                 <p><strong>Beat(commit):</strong> <span class="badge ${beatCommit ? 'bg-success' : 'bg-secondary'}">${beatCommit}</span></p>
                 <p><strong>Beat(main):</strong> <span class="badge ${beatMain ? 'bg-success' : 'bg-secondary'}">${beatMain}</span></p>
-                <p><strong>speedup_base:</strong> ${hasOptStats.geomean_speedup_base?.toFixed(2) || 'N/A'}</p>
-                <p><strong>speedup_commit:</strong> ${hasOptStats.geomean_speedup_commit?.toFixed(2) || 'N/A'}</p>
-                <p><strong>speedup_main:</strong> ${hasOptStats.geomean_speedup_main?.toFixed(2) || 'N/A'}</p>
+                <p><strong>Speedup(base):</strong> ${hasOptStats.gm_speedup_patch_base?.toFixed(2) || 'N/A'} (${hasOptStats.gsd_speedup_patch_base?.toFixed(2) || 'N/A'})</p>
+                <p><strong>Speedup(commit):</strong> ${hasOptStats.gm_speedup_patch_commit?.toFixed(2) || 'N/A'} (${hasOptStats.gsd_speedup_patch_commit?.toFixed(2) || 'N/A'})</p>
+                <p><strong>Speedup(main):</strong> ${hasOptStats.gm_speedup_patch_main?.toFixed(2) || 'N/A'} (${hasOptStats.gsd_speedup_patch_main?.toFixed(2) || 'N/A'})</p>
+            </div>
+            <div>
+                ${conversation.analysis ? `<pre style="font-size: 80%; max-height: 350px; overflow-y: auto;"><strong>Analysis:</strong>\n${conversation.analysis}</pre>` : ''}
             </div>
         `;
         document.getElementById('metadata').innerHTML = metadataHtml;
@@ -191,11 +211,23 @@
         const performanceStatsContent = document.getElementById('performanceStatsContent');
         if (hasOptStats) {
             performanceStatsContent.innerHTML = `
-                <pre>${JSON.stringify(hasOptStats, null, 2)}</pre>
+                <pre style="font-size:60%;">${JSON.stringify(hasOptStats, null, 2)}</pre>
             `;
         } else {
             performanceStatsContent.innerHTML = `
                 <div class="alert alert-info">No performance stats available.</div>
+            `;
+        }
+
+        // Fill test logs with the json content from conversation.test_output if available
+        const testLogsContent = document.getElementById('testLogsContent');
+        if (conversation.test_output) {
+            testLogsContent.innerHTML = `
+                <pre style="font-size:60%;">${conversation.test_output}</pre>
+            `;
+        } else {
+            testLogsContent.innerHTML = `
+                <div class="alert alert-info">No test logs available.</div>
             `;
         }
 

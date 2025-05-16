@@ -68,7 +68,8 @@
                                 <pre class="message-preview">${messagePreview}</pre>
                                 <pre class="message-preview"><b>LLM Analysis:</b> ${commit.llm_reason}</pre>
                                 <pre class="message-preview"><b>Files Affected:</b> ${commit.affected_paths}</pre>
-                                <pre class="message-preview"><b>APIs Affected:</b> ${commit.apis}</pre>
+                                <pre class="message-preview"><b>APIs Affected:</b> ${commit.apis}\n\nReason: ${commit.llm_api_reason}</pre>
+                                </pre>
                             </div>
                             <h4 class="toggle-section" onclick="toggleSection(this)">Files changed</h4>
                             <div class="collapsible files-changed">

@@ -1,3 +1,5 @@
+import os
+
 # Constants for the evaluation script
 APPLY_PATCH_FAIL = ">>>>> Patch Apply Failed"
 APPLY_PATCH_PASS = ">>>>> Applied Patch"
@@ -7,6 +9,7 @@ TESTS_ERROR = ">>>>> Tests Errored"
 TESTS_PASSED = ">>>>> Tests Passed"
 TESTS_TIMEOUT = ">>>>> Tests Timed Out"
 MAIN_REGRESS_WARNING = ">>>>> WARNING: Error in main branch! continuing..."
+START_EVAL_PATCH = "Applying patch..."
 START_BASE_OUTPUT = ">>>>> Start Base Output"
 END_BASE_OUTPUT = ">>>>> End Base Output"
 START_PATCH_OUTPUT = ">>>>> Start Patch Output"
@@ -29,17 +32,20 @@ apply_patch() {{
         echo "{failed}"
         exit 1
     fi
+    
+    # file patterns to exclude
+    local exclude_options="--exclude=.venv/* --exclude=.git/* --exclude=__pycache__/* --exclude=*.egg-info/* --exclude=*.json --exclude=*.txt --exclude=*.csv --exclude=*.log --exclude=*.pkl"
 
     # Try git apply with verbose output
-    if git apply --verbose "$patch_file" 2>&1; then
+    if git apply --verbose $exclude_options "$patch_file" 2>&1; then
         echo "Successfully applied patch using git apply --verbose"
         echo "{passed}"
         applied=true
-    elif git apply --verbose --ignore-space-change "$patch_file" 2>&1; then
+    elif git apply --verbose --ignore-space-change $exclude_options "$patch_file" 2>&1; then
         echo "Successfully applied patch using git apply --verbose --ignore-space-change"
         echo "{passed}"
         applied=true
-    elif git apply --verbose --ignore-space-change --reject "$patch_file" 2>&1; then
+    elif git apply --verbose --ignore-space-change --reject $exclude_options "$patch_file" 2>&1; then
         echo "Successfully applied patch using git apply --verbose --ignore-space-change --reject"
         echo "{passed}"
         applied=true
@@ -63,28 +69,30 @@ run_tests_for_commit() {{
     local result_file=$2
     local flag=$3
     local prefix=$4
-    local iterations=5
+    local iterations={max_iterations}
     
     echo "Running test $test_file $iterations times..."
     for i in $(seq 1 $iterations); do
         echo "  Iteration $i/$iterations"
-        if ! timeout 300s python "$test_file" "$result_file" "$flag" --file_prefix "$prefix"; then
-            if [ $? -eq 124 ]; then
-                # Exit code 124 indicates timeout
-                echo "{timeout}"
-                return 1
-            else 
+        status=0
+        timeout {max_time}s python "$test_file" "$result_file" "$flag" --file_prefix "$prefix" || status=$?
 
-                # If main fails, warn and return
-                if [[ "$result_file" == "main"* ]]; then
-                    echo "{warning}"
-                    return 0
-                fi
+        if [ $status -eq 124 ]; then
+            # Exit code 124 indicates timeout
+            echo "{timeout}"
+            return 1
 
-                # Any other non-zero exit indicates test error
-                echo "{error}"
-                return 1
+        elif [ $status -ne 0 ]; then
+            # If main fails, warn and return
+            if [[ "$result_file" == "main"* ]]; then
+                echo "{warning}"
+                echo "N/A" > "$result_file"
+                return 0
             fi
+
+            # Any other non-zero exit indicates test error
+            echo "{error}"
+            return 1
         fi
     done
     
@@ -109,11 +117,16 @@ install_repo() {{
 }}
 """
 
+SKIP_MAIN = True  # Toggle to skip main branch testing
 RUN_BASE = """run_tests_for_commit /pyperf_test_{i}.py "base_{i}.txt" "--reference" "pyperf_{i}" """
 RUN_PATCH = """run_tests_for_commit /pyperf_test_{i}.py "result_{i}.txt" "--eqcheck" "pyperf_{i}" """
 RUN_COMMIT = """run_tests_for_commit /pyperf_test_{i}.py "commit_{i}.txt" "--reference" "pyperf_{i}" """
 RUN_MAIN = """run_tests_for_commit /pyperf_test_{i}.py "main_{i}.txt" "--reference" "pyperf_{i}" """
 PRINT_PERF = lambda i, f: f"""echo "{TEST_DELIMITER.format(i=i)}" && cat {f}_{i}.txt"""
+MAX_TIME = lambda repo: 0 if repo in ["abetlen/llama-cpp-python"] else 300
+MAX_ITERS = lambda repo: (
+    1 if repo in ["abetlen/llama-cpp-python", "microsoft/onnxruntime"] else 5
+)
 
 
 def get_eval_script(instance) -> str:
@@ -121,6 +134,7 @@ def get_eval_script(instance) -> str:
     opt_commit = instance.opt_commit
     reset_repo_commands = instance.reset_repo_commands
     test_count = instance.test_count
+    repo = instance.repo
 
     # Avoid deleting result files
     if "git clean -xfd" in install_commands:
@@ -128,12 +142,20 @@ def get_eval_script(instance) -> str:
 
     run_base = "\n".join([RUN_BASE.format(i=i) for i in range(test_count)])
 
+    # Set tokens
+    setup_tokens = [
+        f"export HF_TOKEN={os.getenv('HF_TOKEN')}" if os.getenv("HF_TOKEN") else "",
+    ]
+
     eval_commands = [
         "source .venv/bin/activate",
+        # ----------- set up tokens ------------
+        'echo "Setting up tokens..."',
+        *setup_tokens,
         # ----------- base and patch perf testing ------------
         'echo "Running performance test before patch..."',
         *[RUN_BASE.format(i=i) for i in range(test_count)],
-        'echo "Applying patch..."',
+        f'echo "{START_EVAL_PATCH}"',
         'apply_patch "/tmp/patch.diff"',
         'echo "Installing repo..."',
         "install_repo",
@@ -148,13 +170,19 @@ def get_eval_script(instance) -> str:
         # ----------- reset the repo to remote origin ------------
         f"{reset_repo_commands}",
         # ----------- commit and main perf testing ------------
-        'echo "Installing repo..."',
-        "install_repo",
-        'echo "Running performance test for main..."',
-        *[RUN_MAIN.format(i=i) for i in range(test_count)],
-        f'echo "{START_MAIN_OUTPUT}"',
-        *[PRINT_PERF(i, "main") for i in range(test_count)],
-        f'echo "{END_MAIN_OUTPUT}"',
+        *(
+            []
+            if SKIP_MAIN
+            else [
+                'echo "Installing repo..."',
+                "install_repo",
+                'echo "Running performance test for main..."',
+                *[RUN_MAIN.format(i=i) for i in range(test_count)],
+                f'echo "{START_MAIN_OUTPUT}"',
+                *[PRINT_PERF(i, "main") for i in range(test_count)],
+                f'echo "{END_MAIN_OUTPUT}"',
+            ]
+        ),
         'echo "Checking out commit..."',
         f"git checkout {opt_commit}",
         'echo "Installing repo..."',
@@ -179,6 +207,8 @@ def get_eval_script(instance) -> str:
                     warning=MAIN_REGRESS_WARNING,
                     error=TESTS_ERROR,
                     passed=TESTS_PASSED,
+                    max_iterations=MAX_ITERS(repo),
+                    max_time=MAX_TIME(repo),
                 ),
                 INSTALL_HELPER.format(
                     install_commands="\n\t\t".join(install_commands),

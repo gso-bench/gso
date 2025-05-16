@@ -51,7 +51,17 @@ def load_pyperf_dataset(
         dataset = [
             instance for instance in dataset if instance["instance_id"] in instance_ids
         ]
-    return [PyPerfInstance(**instance) for instance in dataset]
+
+    return [
+        PyPerfInstance(
+            **{
+                k: v
+                for k, v in instance.items()
+                if not (k.startswith("gt_") or k.endswith("plans"))
+            }
+        )
+        for instance in dataset
+    ]
 
 
 def load_pyperf_predictions(predictions_path: str, dataset_name: str, split: str):
