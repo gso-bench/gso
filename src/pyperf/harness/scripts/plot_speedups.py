@@ -4,6 +4,7 @@ import json
 import numpy as np
 import argparse
 from pyperf.harness.grading.metrics import speedup
+from pyperf.harness.scripts.helpers import *
 
 # Add argument parsing
 parser = argparse.ArgumentParser(
@@ -97,23 +98,23 @@ max_speedup = max(speedups_model + speedups_commit + speedups_main)
 instances = [p.split("__")[1] for p in instances]  # Remove org name
 
 # Create the plot
-fig, ax = plt.subplots(figsize=(10, 6))
+fig, ax = plt.subplots(figsize=(4, 3))
 x = np.arange(len(instances))
 width = 0.2
 
 # Create bars
-bars1 = ax.bar(x - width, speedups_model, width, label="Model")
-bars2 = ax.bar(x, speedups_commit, width, label="Commit")
-bars3 = ax.bar(x + width, speedups_main, width, label="Main")
+bars1 = ax.bar(x - width, speedups_model, width, label="Model Patch")
+# bars2 = ax.bar(x, speedups_commit, width, label="Human Commit")
+# bars3 = ax.bar(x + width, speedups_main, width, label="Main")
 
 # Add labels
-add_top_labels(bars1)
-add_top_labels(bars2)
-add_top_labels(bars3)
+# add_top_labels(bars1)
+# add_top_labels(bars2)
+# add_top_labels(bars3)
 
 # Apply log scale to y-axis
 ax.set_yscale("log")
-ax.set_ylabel(f"Speedup Factor - Log Scale")
+ax.set_ylabel(f"Speedup (Log Scale)")
 ax.set_xlabel("Problem ID")
 ax.set_ylim(top=max_speedup * 4)
 ax.set_xticks(x)
@@ -123,7 +124,7 @@ ax.spines["right"].set_visible(False)
 ax.legend(loc="upper right")
 ax.yaxis.grid(True, linestyle="--", alpha=0.7)
 plt.tight_layout()
-
+setup_plot_style()
 # Save the plot
 output_path = os.path.join(args.output_dir, f"opt_per_prob.{args.model_name}.png")
 plt.savefig(output_path, dpi=300, bbox_inches="tight")
