@@ -73,5 +73,9 @@ uv run src/gso/harness/opt_at_k.py \
 - `--run_id` is a unique identifier for your run.
 - `--k` is the number of rollouts to evaluate.
 
+
 > [!Note]
-> Find scripts to plot results such as opt@K, model comparisons, and speedups in ([/scripts](./scripts/))
+> Several helper scripts are in the [scripts](./scripts/) directory for plotting various results:
+> - Opt@1 and Opt@K comparisons across models
+> - Opt@K vs Steps vs Rollouts (performance across compute budgets)
+> - Per-problem optimization stats
