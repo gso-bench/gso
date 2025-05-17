@@ -8,7 +8,7 @@ from flask import Flask, jsonify, render_template, url_for
 from gso.constants import (
     SUBMISSIONS_DIR,
     EVALUATION_REPORTS_DIR,
-    RUN_EVALUATION_LOG_DIR
+    RUN_EVALUATION_LOG_DIR,
 )
 
 app = Flask(__name__)
@@ -56,9 +56,7 @@ def load_jsonl(file_path):
         file_path = os.path.join(file_path, "output.jsonl")
 
     # open the analsis csv file into a df
-    analysis_df = pd.read_csv(
-        "~/gso/experiments/qualitative/trajectory_analysis.csv"
-    )
+    analysis_df = pd.read_csv("~/gso/experiments/qualitative/trajectory_analysis.csv")
 
     full_path = os.path.join(SUBMISSIONS_DIR, file_path)
     with open(full_path, "r") as f:
@@ -102,13 +100,13 @@ def load_jsonl(file_path):
                             with open(report_path, "r") as report_file:
                                 report_data = json.load(report_file)
 
-                                # Check if instance is in beat_commit_ids
-                                beat_commit = instance_id in report_data.get(
+                                # Check if instance is in opt_commit_ids
+                                opt_commit = instance_id in report_data.get(
                                     "instance_sets", {}
-                                ).get("beat_commit_ids", [])
-                                beat_main = instance_id in report_data.get(
+                                ).get("opt_commit_ids", [])
+                                opt_main = instance_id in report_data.get(
                                     "instance_sets", {}
-                                ).get("beat_main_ids", [])
+                                ).get("opt_main_ids", [])
 
                                 # Get optimization stats if available
                                 opt_stats = report_data.get("opt_stats", {}).get(
@@ -119,8 +117,8 @@ def load_jsonl(file_path):
                                 if "test_result" not in conv:
                                     conv["test_result"] = {}
 
-                                conv["test_result"]["beat_commit"] = beat_commit
-                                conv["test_result"]["beat_main"] = beat_main
+                                conv["test_result"]["opt_commit"] = opt_commit
+                                conv["test_result"]["opt_main"] = opt_main
                                 conv["test_result"]["opt_stats"] = opt_stats
                     except Exception as e:
                         print(f"Error loading report for {instance_id}: {e}")
@@ -179,7 +177,7 @@ def instance_matrix():
 
             # Check if there's test result data
             test_result = conv.get("test_result", {})
-            success = test_result.get("beat_commit", False)
+            success = test_result.get("opt_commit", False)
 
             # Create URL for this specific conversation
             log_url = url_for(

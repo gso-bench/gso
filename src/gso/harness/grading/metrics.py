@@ -2,7 +2,7 @@ import re
 import numpy as np
 from enum import Enum
 
-from gso.constants import MIN_PROB_SPEEDUP, BEAT_GM_THRESH, BEAT_GSD_THRESH
+from gso.constants import MIN_PROB_SPEEDUP, OPT_GM_THRESH, OPT_GSD_THRESH
 from gso.data.dataset import GSOInstance
 from gso.harness.grading.evalscript import (
     START_EVAL_PATCH,
@@ -30,22 +30,22 @@ class TestStatus(Enum):
     TESTS_PASSED = "TESTS_PASSED"
 
 
-def beat(gm_speedup, gsd_speedup, perc_slowdowns):
+def opt(gm_speedup, gsd_speedup, perc_slowdowns):
     """
-    Check if the patch beats the reference based on the speedup and generality.
+    Check if the patch matches or exceeds the reference based on the speedup and generality.
 
     Args:
         gm_speedup (float): geometric mean of the speedups
         gsd_speedup (float): geometric standard deviation of the speedups
         perc_slowdowns (float): percentage of tests that regressed
     Returns:
-        bool: True if the patch `beats` the reference, False otherwise
+        bool: True if the patch's optmization matches the reference's performance, False otherwise
     """
     has_slowdowns = perc_slowdowns > 0.0
     if has_slowdowns:
-        return gm_speedup > BEAT_GM_THRESH and gsd_speedup < BEAT_GSD_THRESH
+        return gm_speedup > OPT_GM_THRESH and gsd_speedup < OPT_GSD_THRESH
     else:
-        return gm_speedup > BEAT_GM_THRESH
+        return gm_speedup > OPT_GM_THRESH
 
 
 def geometric_stats(nums):
@@ -137,9 +137,9 @@ def get_opt_status(time_map) -> dict:
         opt_status (dict): a dictionary containing the optimization status of the patch
     """
     opt_status = {
-        "beat_base": False,
-        "beat_commit": False,
-        "beat_main": False,
+        "opt_base": False,
+        "opt_commit": False,
+        "opt_main": False,
         "time_stats": {},
         "opt_stats": {},
     }
@@ -189,7 +189,7 @@ def get_opt_status(time_map) -> dict:
     )
 
     if base_mean > patch_mean and pb_speedup_gm >= MIN_PROB_SPEEDUP:
-        opt_status["beat_base"] = True
+        opt_status["opt_base"] = True
         opt_stats.update(
             {
                 "opt_perc_patch_base": pb_opt,
@@ -200,8 +200,8 @@ def get_opt_status(time_map) -> dict:
             }
         )
 
-        if beat(pc_speedup_gm, pc_speedup_gsd, pc_slowdowns):
-            opt_status["beat_commit"] = True
+        if opt(pc_speedup_gm, pc_speedup_gsd, pc_slowdowns):
+            opt_status["opt_commit"] = True
             opt_stats.update(
                 {
                     "opt_perc_patch_commit": pc_opt,
@@ -215,8 +215,8 @@ def get_opt_status(time_map) -> dict:
         if main_mean is None:
             pass
 
-        elif beat(pm_speedup_gm, pm_speedup_gsd, pm_slowdowns):
-            opt_status["beat_main"] = True
+        elif opt(pm_speedup_gm, pm_speedup_gsd, pm_slowdowns):
+            opt_status["opt_main"] = True
             opt_stats.update(
                 {
                     "opt_perc_patch_main": pm_opt,
@@ -286,9 +286,9 @@ def get_eval_report(
         "patch_times": None,
         "commit_times": None,
         "main_times": None,
-        "beat_base": False,
-        "beat_commit": False,
-        "beat_main": False,
+        "opt_base": False,
+        "opt_commit": False,
+        "opt_main": False,
         "time_stats": {},
         "opt_stats": {},
     }

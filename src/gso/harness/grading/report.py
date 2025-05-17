@@ -33,9 +33,9 @@ def make_run_report(
     base_failed_ids = set()  # Instances where base failed to run
     patch_failed_ids = set()  # Instances where patch failed to apply
     test_failed_ids = set()  # Instances where tests failed to pass
-    beat_base = set()  # Instances that improved over base
-    beat_commit = set()  # Instances that improved over commit
-    beat_main = set()  # Instances that improved over main
+    opt_base = set()  # Instances that improved over base
+    opt_commit = set()  # Instances that improved over commit
+    opt_main = set()  # Instances that improved over main
     opt_stats = {}
 
     # Process each instance
@@ -95,15 +95,15 @@ def make_run_report(
                 test_failed_ids.add(instance_id)
 
             # Track performance improvements
-            if instance_report["beat_base"]:
-                beat_base.add(instance_id)
+            if instance_report["opt_base"]:
+                opt_base.add(instance_id)
                 opt_stats[instance_id] = (
                     instance_report["opt_stats"] | instance_report["time_stats"]
                 )
-            if instance_report["beat_commit"]:
-                beat_commit.add(instance_id)
-            if instance_report["beat_main"]:
-                beat_main.add(instance_id)
+            if instance_report["opt_commit"]:
+                opt_commit.add(instance_id)
+            if instance_report["opt_main"]:
+                opt_main.add(instance_id)
 
         except Exception as e:
             error_ids.add(instance_id)
@@ -122,9 +122,9 @@ def make_run_report(
             "test_failed_instances": len(test_failed_ids),
             "empty_patch_instances": len(empty_patch_ids),
             "error_instances": len(error_ids),
-            "beat_base": len(beat_base),
-            "beat_commit": len(beat_commit),
-            "beat_main": len(beat_main),
+            "opt_base": len(opt_base),
+            "opt_commit": len(opt_commit),
+            "opt_main": len(opt_main),
         },
         "instance_sets": {
             "completed_ids": sorted(completed_ids),
@@ -135,9 +135,9 @@ def make_run_report(
             "incomplete_ids": sorted(incomplete_ids),
             "empty_patch_ids": sorted(empty_patch_ids),
             "error_ids": sorted(error_ids),
-            "beat_base_ids": sorted(beat_base),
-            "beat_commit_ids": sorted(beat_commit),
-            "beat_main_ids": sorted(beat_main),
+            "opt_base_ids": sorted(opt_base),
+            "opt_commit_ids": sorted(opt_commit),
+            "opt_main_ids": sorted(opt_main),
         },
         "opt_stats": opt_stats,
         "schema_version": 1,
@@ -170,9 +170,9 @@ def make_run_report(
 
     # Print summary
     summary = report["summary"]
-    opt_base = summary["beat_base"] / summary["total_instances"]
-    opt_commit = summary["beat_commit"] / summary["total_instances"]
-    opt_main = summary["beat_main"] / summary["total_instances"]
+    opt_base = summary["opt_base"] / summary["total_instances"]
+    opt_commit = summary["opt_commit"] / summary["total_instances"]
+    opt_main = summary["opt_main"] / summary["total_instances"]
     print("\n=== Evaluation Summary ===")
     print(f"Total instances: {summary['total_instances']}")
     print(f"Instances submitted: {summary['total_predictions']}")
@@ -185,9 +185,9 @@ def make_run_report(
     print(f"Instances with empty patches: {summary['empty_patch_instances']}")
     print(f"Instances with errors: {summary['error_instances']}")
     print("-" * 10)
-    print(f"beat(base): {summary['beat_base']} ({opt_base*100:.2f}%) ")
-    print(f"beat(commit): {summary['beat_commit']} ({opt_commit*100:.2f}%)")
-    print(f"beat(main): {summary['beat_main']} ({opt_main*100:.2f}%) ")
+    print(f"opt(base): {summary['opt_base']} ({opt_base*100:.2f}%) ")
+    print(f"opt(commit): {summary['opt_commit']} ({opt_commit*100:.2f}%)")
+    print(f"opt(main): {summary['opt_main']} ({opt_main*100:.2f}%) ")
 
     print(f"\nReport written to: {report_file}")
     return report_file

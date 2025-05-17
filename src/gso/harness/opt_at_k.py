@@ -76,15 +76,15 @@ def merge_reports(full_dataset, report_files, k):
         "test_failed_ids",
         "empty_patch_ids",
         "error_ids",
-        "beat_base_ids",
-        "beat_commit_ids",
-        "beat_main_ids",
+        "opt_base_ids",
+        "opt_commit_ids",
+        "opt_main_ids",
     ]
 
     IMPROVEMENT_METRICS = [
-        "beat_base_ids",
-        "beat_commit_ids",
-        "beat_main_ids",
+        "opt_base_ids",
+        "opt_commit_ids",
+        "opt_main_ids",
     ]
 
     report = {
@@ -101,9 +101,9 @@ def merge_reports(full_dataset, report_files, k):
                 "test_failed_instances",
                 "empty_patch_instances",
                 "error_instances",
-                "beat_base",
-                "beat_commit",
-                "beat_main",
+                "opt_base",
+                "opt_commit",
+                "opt_main",
             ]
         },
         "instance_sets": {key: set() for key in STATUS_SETS},
@@ -154,11 +154,11 @@ def merge_reports(full_dataset, report_files, k):
             report["instance_sets"][f"{status}_ids"].add(instance_id)
 
     # Populate opt stats
-    beat_commit_ids = set(report["instance_sets"]["beat_commit_ids"])
+    opt_commit_ids = set(report["instance_sets"]["opt_commit_ids"])
     for report_file in report_files:
         with open(report_file) as f:
             current_report = json.load(f)
-            for instance_id in beat_commit_ids:
+            for instance_id in opt_commit_ids:
                 if instance_id in current_report["opt_stats"]:
                     new_opt_stats = current_report["opt_stats"][instance_id]
                     current_opt_stats = instance_opt_stats.get(instance_id, {})
@@ -190,9 +190,9 @@ def merge_reports(full_dataset, report_files, k):
         "empty_patch_instances": "empty_patch_ids",
         "base_failed_instances": "base_failed_ids",
         "error_instances": "error_ids",
-        "beat_base": "beat_base_ids",
-        "beat_commit": "beat_commit_ids",
-        "beat_main": "beat_main_ids",
+        "opt_base": "opt_base_ids",
+        "opt_commit": "opt_commit_ids",
+        "opt_main": "opt_main_ids",
     }
 
     for summary_key, instance_set_key in summary_mapping.items():
@@ -205,9 +205,9 @@ def merge_reports(full_dataset, report_files, k):
 
     # Print summary
     summary = report["summary"]
-    opt_base = summary["beat_base"] / summary["total_instances"]
-    opt_commit = summary["beat_commit"] / summary["total_instances"]
-    opt_main = summary["beat_main"] / summary["total_instances"]
+    opt_base = summary["opt_base"] / summary["total_instances"]
+    opt_commit = summary["opt_commit"] / summary["total_instances"]
+    opt_main = summary["opt_main"] / summary["total_instances"]
     print("\n=== Evaluation Summary ===")
     print(f"Total instances: {summary['total_instances']}")
     print(f"Instances submitted: {summary['total_predictions']}")
@@ -221,9 +221,9 @@ def merge_reports(full_dataset, report_files, k):
     print(f"Instances with base errors: {summary['base_failed_instances']}")
     print(f"Instances with errors: {summary['error_instances']}")
     print("-" * 10)
-    print(f"beat(base)@{k}: {summary['beat_base']} ({opt_base*100:.2f}%) ")
-    print(f"beat(commit)@{k}: {summary['beat_commit']} ({opt_commit*100:.2f}%)")
-    print(f"beat(main)@{k}: {summary['beat_main']} ({opt_main*100:.2f}%) ")
+    print(f"opt(base)@{k}: {summary['opt_base']} ({opt_base*100:.2f}%) ")
+    print(f"opt(commit)@{k}: {summary['opt_commit']} ({opt_commit*100:.2f}%)")
+    print(f"opt(main)@{k}: {summary['opt_main']} ({opt_main*100:.2f}%) ")
 
     return report
 
@@ -318,10 +318,10 @@ def main():
 
     # Save report results
     EVALUATION_REPORTS_DIR.mkdir(parents=True, exist_ok=True)
-    opt_reports_dir = EVALUATION_REPORTS_DIR / Path("beat_k_reports")
+    opt_reports_dir = EVALUATION_REPORTS_DIR / Path("opt_k_reports")
     opt_reports_dir.mkdir(parents=True, exist_ok=True)
     output_file = opt_reports_dir / Path(
-        f"{args.model_name}.beat@{args.k}.{args.run_id}.report.json"
+        f"{args.model_name}.opt@{args.k}.{args.run_id}.report.json"
     )
     with open(output_file, "w") as f:
         json.dump(merged_results, f, indent=2)

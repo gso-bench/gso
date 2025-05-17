@@ -20,9 +20,9 @@ def calculate_opt_at_k_smooth(report_paths, N, fixed_first_run=False, num_trials
     for run_id, report in enumerate(all_report_data):
         # Extract all instance IDs that have improvement metrics
         passed_ids = set(report["instance_sets"].get("passed_ids", []))
-        beat_base_ids = set(report["instance_sets"].get("beat_base_ids", []))
-        beat_commit_ids = set(report["instance_sets"].get("beat_commit_ids", []))
-        beat_main_ids = set(report["instance_sets"].get("beat_main_ids", []))
+        opt_base_ids = set(report["instance_sets"].get("opt_base_ids", []))
+        opt_commit_ids = set(report["instance_sets"].get("opt_commit_ids", []))
+        opt_main_ids = set(report["instance_sets"].get("opt_main_ids", []))
 
         # All instance IDs: (just take any that appear in any of the classes)
         all_instance_ids = set()
@@ -34,12 +34,12 @@ def calculate_opt_at_k_smooth(report_paths, N, fixed_first_run=False, num_trials
             if instance_id not in id_rankings_dict:
                 id_rankings_dict[instance_id] = {}
 
-            # Store (beat_base, beat_commit, beat_main)
+            # Store (opt_base, opt_commit, opt_main)
             id_rankings_dict[instance_id][run_id] = (
                 instance_id in passed_ids,
-                instance_id in beat_base_ids,
-                instance_id in beat_commit_ids,
-                instance_id in beat_main_ids,
+                instance_id in opt_base_ids,
+                instance_id in opt_commit_ids,
+                instance_id in opt_main_ids,
             )
 
         # assert len(id_rankings_dict) == 122, f"Expected 122 instances"
@@ -76,15 +76,15 @@ def calculate_opt_at_k_smooth(report_paths, N, fixed_first_run=False, num_trials
                 if any(r[1][0] for r in n_rankings):
                     pass_at_n[idx] += 1
 
-                # Check if beat base in any
+                # Check if opt base in any
                 if any(r[1][1] for r in n_rankings):
                     base_at_n[idx] += 1
 
-                # Check if beat commit in any
+                # Check if opt commit in any
                 if any(r[1][2] for r in n_rankings):
                     commit_at_n[idx] += 1
 
-                # Check if beat main in any
+                # Check if opt main in any
                 if any(r[1][3] for r in n_rankings):
                     main_at_n[idx] += 1
 

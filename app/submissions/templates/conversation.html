@@ -169,8 +169,8 @@
         
         // Get optimization stats if available
         const hasOptStats = conversation.test_result?.opt_stats || {};
-        const beatCommit = conversation.test_result?.beat_commit === true;
-        const beatMain = conversation.test_result?.beat_main === true;
+        const optCommit = conversation.test_result?.opt_commit === true;
+        const optMain = conversation.test_result?.opt_main === true;
         const org = conversation.instance_id.split('__')[0];
         const repo = conversation.instance_id.split('__')[1].split('-')[0];
         const commitHash = conversation.instance_id.split('__')[1].split('-')[1];
@@ -185,8 +185,8 @@
                 <p><strong>Steps:</strong> ${stepsCount} (${executionTime})</p>
             </div>
             <div style="width: 50%;">
-                <p><strong>Beat(commit):</strong> <span class="badge ${beatCommit ? 'bg-success' : 'bg-secondary'}">${beatCommit}</span></p>
-                <p><strong>Beat(main):</strong> <span class="badge ${beatMain ? 'bg-success' : 'bg-secondary'}">${beatMain}</span></p>
+                <p><strong>opt(commit):</strong> <span class="badge ${optCommit ? 'bg-success' : 'bg-secondary'}">${optCommit}</span></p>
+                <p><strong>opt(main):</strong> <span class="badge ${optMain ? 'bg-success' : 'bg-secondary'}">${optMain}</span></p>
                 <p><strong>Speedup(base):</strong> ${hasOptStats.gm_speedup_patch_base?.toFixed(2) || 'N/A'} (${hasOptStats.gsd_speedup_patch_base?.toFixed(2) || 'N/A'})</p>
                 <p><strong>Speedup(commit):</strong> ${hasOptStats.gm_speedup_patch_commit?.toFixed(2) || 'N/A'} (${hasOptStats.gsd_speedup_patch_commit?.toFixed(2) || 'N/A'})</p>
                 <p><strong>Speedup(main):</strong> ${hasOptStats.gm_speedup_patch_main?.toFixed(2) || 'N/A'} (${hasOptStats.gsd_speedup_patch_main?.toFixed(2) || 'N/A'})</p>
@@ -197,8 +197,8 @@
         `;
         document.getElementById('metadata').innerHTML = metadataHtml;
 
-        // if beatCommit is true, make metadata div green else red
-        if (beatCommit) {
+        // if optCommit is true, make metadata div green else red
+        if (optCommit) {
             document.getElementById('metadatacard').style.backgroundColor = '#d4edda';
             document.querySelector('.card-header').style.borderColor = '#198754'; 
         }
