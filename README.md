@@ -63,12 +63,11 @@ export HF_TOKEN="huggingface_token"
 
 ### Evaluation Harness
 
-1. **Building Docker images**:
+1. **Building Dockers for GSO tasks**:
 ```bash
 docker login
 
 uv run src/gso/harness/prepare_images.py \
-    --dataset_name <dataset_name> \
     --push_to_registry True \
     --dockerhub_username <dockerhub_username> \
     --dockerhub_repo <dockerhub_repo>
@@ -77,13 +76,14 @@ uv run src/gso/harness/prepare_images.py \
 2. **Running Evaluations**:
 ```bash
 uv run src/gso/harness/opt_at_k.py \
-    --dataset_name <dataset_name> \
     --prediction_paths <prediction_paths> \
     --timeout 3600 \
     --run_id <run_id> \
     --k 10 \
     --model <modelname>
 ```
+
+For detailed instructions and options, see the [Harness documentation](src/gso/harness/README.md).
 
 ### GSO Collection Framework
 
