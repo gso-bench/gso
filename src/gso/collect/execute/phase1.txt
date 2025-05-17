@@ -1,0 +1,69 @@
+#!/bin/bash
+# set -e
+
+echo "Phase 1: Testing all commit-test combinations..."
+
+# Initialize JSON file
+echo "[]" > working_pairs.json
+
+# Helper function to add a working pair to JSON
+add_working_pair() {
+    local commit=$1
+    local test_file=$2
+    
+    # Create JSON entry and append to array
+    new_entry="{\"commit\": \"$commit\", \"test_file\": \"$test_file\"}"
+    
+    # current content
+    content=$(cat working_pairs.json)
+
+    # First entry
+    if [ "$content" == "[]" ]; then
+        echo "[$new_entry]" > working_pairs.json
+    else
+        # Remove the closing bracket, add the new entry, and close the array
+        content=${content%]} # remove the last bracket
+        echo "$content, $new_entry]" > working_pairs.json
+    fi
+}
+
+# List of commits to try
+candidate_commits=($COMMITS)
+
+for commit_hash in "${candidate_commits[@]}"; do
+    echo "Testing candidate commit: ${commit_hash}"
+    
+    cd $repo_name && git stash -u
+    # Try to checkout the commit's parent
+    if git checkout "${commit_hash}^"; then
+        $install_commands
+        cd ..
+        
+        # Try each test file for this commit
+        for test_file in "${commit_hash}"/test_*.py; do
+            echo "Trying test: ${test_file}"
+            
+            # Create temp file for results
+            tmp_file="phase1_results.txt"
+            
+            if timeout 300s python "${test_file}" "$tmp_file" --reference --file_prefix "phase1_ref"; then
+                echo "Test passed: ${test_file} for commit ${commit_hash}"
+                add_working_pair "${commit_hash}" "${test_file}"
+            else
+                echo "Test failed: ${test_file} for commit ${commit_hash}"
+            fi
+        done
+    else
+        echo "Failed to checkout commit: ${commit_hash}"
+    fi
+done
+
+# Check if we found any working pairs
+if [ "$(cat working_pairs.json)" == "[]" ]; then
+    echo "No working commit-test pairs found!"
+    exit 1
+fi
+
+rm -f phase1_results.txt
+rm phase1_*
+echo "Phase 1 complete. Working pairs saved to working_pairs.json"

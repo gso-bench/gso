@@ -1,0 +1,331 @@
+<!-- templates/conversation.html -->
+{% extends "base.html" %}
+
+{% block title %}Conversation Viewer{% endblock %}
+
+{% block header %}Conversation Viewer{% endblock %}
+
+{% block content %}
+    <!-- Back to Log List Button -->
+    <div class="mb-4">
+        <a href="{{ url_for('index') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Log List
+        </a>
+    </div>
+
+    <!-- Navigation Controls -->
+    <nav aria-label="Conversation Navigation" class="mb-4">
+        <ul class="pagination justify-content-center">
+            <li class="page-item" id="prevButton">
+                <button onclick="loadPrevious()" class="page-link">
+                    <i class="fas fa-arrow-left"></i> Previous
+                </button>
+            </li>
+            <li class="page-item disabled">
+                <span class="page-link" id="pagination"></span>
+            </li>
+            <li class="page-item" id="nextButton">
+                <button onclick="loadNext()" class="page-link">
+                    Next <i class="fas fa-arrow-right"></i>
+                </button>
+            </li>
+        </ul>
+    </nav>
+
+    <div id="content">
+        <!-- Metadata Section -->
+        <div class="card mb-4" id="metadatacard">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <button class="btn btn-link" type="button" data-bs-toggle="collapse" 
+                           data-bs-target="#metadataCollapse" aria-expanded="true">
+                        Metadata
+                    </button>
+                </h5>
+            </div>
+            <div id="metadataCollapse" class="collapse show">
+                <div class="card-body">
+                    <div id="metadata" class="metadata-grid"></div>
+                    
+                    <div style="display: flex; margin-top: 15px; gap: 15px; flex-wrap: wrap;">
+                        <div id="performanceStats" style="flex: 1; min-width: 300px;">
+                            <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse"
+                                    data-bs-target="#performanceStatsCollapse" aria-expanded="false">
+                                <i class="fas fa-chart-line"></i> Performance Stats
+                            </button>
+                            <div class="collapse mt-2" id="performanceStatsCollapse">
+                                <div class="card card-body" id="performanceStatsContent" style="max-height: 400px; overflow-y: auto;">
+                                    <!-- Will be filled by JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+                    
+                        <div id="testLogs" style="flex: 1; min-width: 300px;">
+                            <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse"
+                                    data-bs-target="#testLogsCollapse" aria-expanded="false">
+                                <i class="fas fa-clipboard-list"></i> Test Logs
+                            </button>
+                            <div class="collapse mt-2" id="testLogsCollapse">
+                                <div class="card card-body" id="testLogsContent" style="max-height: 400px; overflow-y: auto;">
+                                    <!-- Will be filled by JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Conversation History Section -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Conversation History</h5>
+            </div>
+            <div class="card-body">
+                <div id="history"></div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Define log path from the template
+    const logPath = "{{ log_path }}";
+
+    function formatToolCall(toolCall) {
+        if (!toolCall) return '';
+
+        let html = `
+            <div class="tool-call">
+                ${toolCall.model_response.choices[0].message.content ? `<strong>Content:</strong> <pre>${toolCall.model_response.choices[0].message.content}</pre>` : ''}
+                <strong>Tool:</strong> ${toolCall.function_name} <br>
+                <strong>Cmd:</strong> ${JSON.parse(toolCall.model_response.choices[0].message.tool_calls[0].function.arguments).command}<br>
+                <div class="collapsible" onclick="toggleContent(this)" style="margin-top: 10px;">
+                    <span>Details <i class="fas fa-chevron-down"></i></span>
+                    <div class="content">
+                        <pre>${JSON.stringify(toolCall.model_response.choices[0].message, null, 2)}</pre>
+                    </div>
+                </div>
+            </div>
+        `;
+        return html;
+    }
+
+    function formatResult(metrics, testResult) {
+        if (!metrics) return '';
+
+        return `
+            <div class="metrics">
+                <strong>Accumulated Cost:</strong> ${metrics.accumulated_cost}<br>
+                <strong>Costs:</strong>
+                <pre>${JSON.stringify(metrics.costs, null, 2)}</pre>
+                ${testResult && testResult.git_patch ? `<strong>Git Patch:</strong><pre>${testResult.git_patch}</pre>` : ''}
+            </div>
+        `;
+    }
+
+    function updateButtons(currentIndex, total) {
+        document.getElementById('prevButton').classList.toggle('disabled', currentIndex === 0);
+        document.getElementById('nextButton').classList.toggle('disabled', currentIndex === total - 1);
+        document.getElementById('pagination').textContent = `Conversation ${currentIndex + 1} of ${total}`;
+    }
+
+    function updateUrlWithInstanceId(instanceId) {
+        if (instanceId) {
+            // Get the base path (without instance_id if present)
+            let basePath = window.location.pathname;
+            if (basePath.includes('/output.jsonl')) {
+                basePath = basePath.replace('/output.jsonl', '');
+            } else {
+                // Remove any existing instance ID
+                const pathParts = basePath.split('/');
+                basePath = pathParts.slice(0, -1).join('/');
+            }
+
+            // Create new URL with instance ID
+            const newUrl = `${basePath}/${instanceId}`;
+            window.history.pushState({}, '', newUrl);
+        }
+    }
+
+    function displayConversation(data) {
+        const conversation = data.conversation;
+        updateButtons(data.current_index, data.total);
+
+        // Update URL with instance ID
+        if (data.instance_id) {
+            updateUrlWithInstanceId(data.instance_id);
+        }
+
+        // Calculate number of steps taken by agent
+        const stepsCount = conversation.history.filter(item => item.action).length;
+        
+        // Get total execution time if available
+        const startTime = new Date(conversation.history[0]?.timestamp);
+        const endTime = new Date(conversation.history[conversation.history.length - 1]?.timestamp);
+        const executionTime = isNaN(startTime) || isNaN(endTime) ? 'N/A' : 
+                     ((endTime - startTime) / 60000).toFixed(2) + ' min';
+        
+        // Get optimization stats if available
+        const hasOptStats = conversation.test_result?.opt_stats || {};
+        const optCommit = conversation.test_result?.opt_commit === true;
+        const optMain = conversation.test_result?.opt_main === true;
+        const org = conversation.instance_id.split('__')[0];
+        const repo = conversation.instance_id.split('__')[1].split('-')[0];
+        const commitHash = conversation.instance_id.split('__')[1].split('-')[1];
+        const commitUrl = "https://github.com/" + org + "/" + repo + "/commit/" + commitHash;
+        
+        // Display metadata
+        const metadataHtml = `
+            <div style="width: 50%;">
+                <p><strong>Instance ID:</strong> <a href="${commitUrl}" target="_blank"> ${conversation.instance_id || 'N/A'}</a></p>
+                <p><strong>Agent Class:</strong> ${conversation.metadata?.agent_class || 'N/A'}</p>
+                <p><strong>Model:</strong> ${conversation.metadata?.llm_config?.model || 'N/A'}</p>
+                <p><strong>Steps:</strong> ${stepsCount} (${executionTime})</p>
+            </div>
+            <div style="width: 50%;">
+                <p><strong>opt(commit):</strong> <span class="badge ${optCommit ? 'bg-success' : 'bg-secondary'}">${optCommit}</span></p>
+                <p><strong>opt(main):</strong> <span class="badge ${optMain ? 'bg-success' : 'bg-secondary'}">${optMain}</span></p>
+                <p><strong>Speedup(base):</strong> ${hasOptStats.gm_speedup_patch_base?.toFixed(2) || 'N/A'} (${hasOptStats.gsd_speedup_patch_base?.toFixed(2) || 'N/A'})</p>
+                <p><strong>Speedup(commit):</strong> ${hasOptStats.gm_speedup_patch_commit?.toFixed(2) || 'N/A'} (${hasOptStats.gsd_speedup_patch_commit?.toFixed(2) || 'N/A'})</p>
+                <p><strong>Speedup(main):</strong> ${hasOptStats.gm_speedup_patch_main?.toFixed(2) || 'N/A'} (${hasOptStats.gsd_speedup_patch_main?.toFixed(2) || 'N/A'})</p>
+            </div>
+            <div>
+                ${conversation.analysis ? `<pre style="font-size: 80%; max-height: 350px; overflow-y: auto;"><strong>Analysis:</strong>\n${conversation.analysis}</pre>` : ''}
+            </div>
+        `;
+        document.getElementById('metadata').innerHTML = metadataHtml;
+
+        // if optCommit is true, make metadata div green else red
+        if (optCommit) {
+            document.getElementById('metadatacard').style.backgroundColor = '#d4edda';
+            document.querySelector('.card-header').style.borderColor = '#198754'; 
+        }
+        else {
+            document.getElementById('metadatacard').style.backgroundColor = '#f8d7da';
+            document.querySelector('.card-header').style.borderColor = '#dc3545';
+        }
+
+        // Fill performance stats with the json content fron hasOptStats if available
+        const performanceStatsContent = document.getElementById('performanceStatsContent');
+        if (hasOptStats) {
+            performanceStatsContent.innerHTML = `
+                <pre style="font-size:60%;">${JSON.stringify(hasOptStats, null, 2)}</pre>
+            `;
+        } else {
+            performanceStatsContent.innerHTML = `
+                <div class="alert alert-info">No performance stats available.</div>
+            `;
+        }
+
+        // Fill test logs with the json content from conversation.test_output if available
+        const testLogsContent = document.getElementById('testLogsContent');
+        if (conversation.test_output) {
+            testLogsContent.innerHTML = `
+                <pre style="font-size:60%;">${conversation.test_output}</pre>
+            `;
+        } else {
+            testLogsContent.innerHTML = `
+                <div class="alert alert-info">No test logs available.</div>
+            `;
+        }
+
+        // Display conversation history
+        const historyHtml = conversation.history.reduce((acc, item, index) => {
+            // Skip items without action (they are responses to previous actions)
+            if (!item.action) {
+                // If this is a response item, add its content to the previous item
+                if (index > 0) {
+                    acc += `
+                        <div class="history-item observation">
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="badge bg-secondary">ID:${item.id || 'N/A'}</span>
+                                <span class="badge bg-secondary source">observation</span>
+                                <span class="timestamp ms-2">${item.timestamp || 'N/A'}</span>
+                            </div>
+
+                            ${item.message ? `<pre>${item.message}</pre>` : ''}
+                            ${item.error ? `<div class="error">${item.error}</div>` : ''}
+                            ${item.content ? `<pre style="font-size:70%;">${item.content}</pre>` : ''}
+                        </div>
+                    `;
+                }
+                return acc;
+            }
+
+            return acc + `
+                <div class="history-item ${item.source || ''}">
+                    <div class="d-flex align-items-center mb-2">
+                        <span class="badge bg-secondary">ID:${item.id}</span>
+                        <span class="badge bg-primary source">${item.source || 'N/A'}</span>
+                        <span class="badge bg-success action">${item.action || 'N/A'}</span>
+                        <span class="timestamp ms-2">${item.timestamp || 'N/A'}</span>
+                    </div>
+
+                    ${item.message ? `<pre>${item.message}</pre>` : ''}
+
+                    ${item.tool_call_metadata ? formatToolCall(item.tool_call_metadata) : ''}
+
+                    ${item.error ? `<div class="error">${item.error}</div>` : ''}
+                </div>
+            `;
+        }, '');
+        document.getElementById('history').innerHTML = historyHtml || '<div class="alert alert-info">No history data available.</div>';
+
+        // Add metrics if they exist
+        if (conversation.metrics || conversation.test_result) {
+            document.getElementById('history').innerHTML += formatResult(conversation.metrics, conversation.test_result);
+        }
+    }
+
+    function toggleContent(element) {
+        const content = element.querySelector('.content');
+        content.classList.toggle('active');
+        const icon = element.querySelector('i');
+        if (content.classList.contains('active')) {
+            icon.classList.replace('fa-chevron-down', 'fa-chevron-up');
+        } else {
+            icon.classList.replace('fa-chevron-up', 'fa-chevron-down');
+        }
+    }
+
+    async function loadConversation() {
+        try {
+            const response = await fetch(`/conversation/current/${logPath}`);
+            const data = await response.json();
+            displayConversation(data);
+        } catch (error) {
+            console.error("Error loading conversation:", error);
+            document.getElementById('history').innerHTML = `
+                <div class="alert alert-danger">
+                    Error loading conversation data. Please try again.
+                </div>
+            `;
+        }
+    }
+
+    async function loadNext() {
+        try {
+            const response = await fetch(`/conversation/next/${logPath}`);
+            const data = await response.json();
+            displayConversation(data);
+        } catch (error) {
+            console.error("Error loading next conversation:", error);
+        }
+    }
+
+    async function loadPrevious() {
+        try {
+            const response = await fetch(`/conversation/previous/${logPath}`);
+            const data = await response.json();
+            displayConversation(data);
+        } catch (error) {
+            console.error("Error loading previous conversation:", error);
+        }
+    }
+
+    // Load initial conversation
+    document.addEventListener('DOMContentLoaded', loadConversation);
+</script>
+{% endblock %}
