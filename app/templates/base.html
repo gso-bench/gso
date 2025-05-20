@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Performance Analysis</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+    <script
+        src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@2.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&display=swap');
+
+        body {
+            font-family: "Lexend", sans-serif;
+            line-height: 1.6;
+            padding: 20px;
+            margin: 0 auto;
+            background: #f5f5f5;
+            max-width: 1100px;
+        }
+
+        .header {
+            margin-bottom: 20px;
+        }
+
+        .my-select {
+            padding: 8px;
+            font-size: 13px;
+            margin-bottom: 20px;
+        }
+
+        .api-section {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .api-title {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        .chart-container {
+            margin-bottom: 30px;
+            height: 300px;
+        }
+
+        .commit-list {
+            margin-top: 20px;
+        }
+
+        .commit-item {
+            background: #f8f9fa;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+
+        .stat-item {
+            display: inline-block;
+            margin-right: 20px;
+            margin-bottom: 10px;
+        }
+
+        .toggle-section {
+            padding-top: 2%;
+            font-weight: bold;
+            cursor: pointer;
+            color: #3498db;
+        }
+
+        .collapsible {
+            display: none;
+            padding: 10px;
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .show {
+            display: block;
+        }
+
+        .share-button {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 2px;
+            margin-left: 8px;
+            vertical-align: middle;
+            opacity: 0.7;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #2ecc71;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 4px;
+            display: none;
+            z-index: 1000;
+        }
+
+        /* Add styles for hidden textarea used in copy fallback */
+        .hidden-textarea {
+            position: absolute;
+            left: -9999px;
+            top: 0;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 20px 0;
+            gap: 10px;
+        }
+
+        .pagination button {
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            background-color: white;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+
+        .pagination button:disabled {
+            background-color: #f5f5f5;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .pagination button:hover:not(:disabled) {
+            background-color: #f0f0f0;
+        }
+
+        .page-info {
+            margin: 0 15px;
+            color: #666;
+        }
+
+        .loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header" style="position:sticky; top: 0; background: #f5f5f5; z-index: 1000;">
+        <h1>API Performance Analysis</h1>
+        <select id="repo-select" class="my-select" onchange="loadRepoData(this.value)">
+            {% for repo in repos %}
+            <option value="{{ repo }}" {% if repo==default_repo %} selected{% endif %}>{{ repo }}</option>
+            {% endfor %}
+        </select>
+        <select id="speedup-mode-select" class="my-select" onchange="handleSpeedupModeChange()">
+            <!-- <option value="target" selected>Rank by Base→Main Δ</option> -->
+            <option value="commit">Rank by Base→Commit Δ</option>
+        </select>
+        <select id="file-type-filter" class="my-select">
+            <option value="false">All file types</option>
+            <option value="true">Non-Python Only</option>
+        </select>
+        <select id="file-count-filter" class="my-select">
+            <option value="">All file counts</option>
+            <option value="1-5">1-5 files</option>
+            <option value="6-10">6-10 files</option>
+            <option value="11-20">11-20 files</option>
+            <option value="21-999999">21+ files</option>
+        </select>
+        <select id="loc-filter" class="my-select">
+            <option value="">All LoC</option>
+            <option value="1-50">1-50 lines</option>
+            <option value="51-200">51-200 lines</option>
+            <option value="201-500">201-500 lines</option>
+            <option value="501-999999">501+ lines</option>
+        </select>
+        <select id="speedup-filter" class="my-select">
+            <option value="">Any speedup</option>
+            <option value="1-2">1-2 x</option>
+            <option value="2-5">2-5 x</option>
+            <option value="5-10">5-10 x</option>
+            <option value="10+">10+ x</option>
+        </select>
+        <div class="search-container" style="display: inline-block; margin-left: 10px; margin-right: 10px;">
+            <input type="text" id="api-search" placeholder="Search APIs..." class="my-select">
+        </div>
+        <button onclick="resetFilters()" class="p-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+            Reset Filters
+        </button>
+    </div>
+
+    </div>
+
+    <div id="loading" class="loading" style="display: none;">
+        Loading data...
+    </div>
+
+    <div id="api-container"></div>
+    <textarea id="copy-textarea" class="hidden-textarea"></textarea>
+
+    <script>
+        let currentPage = 1;
+        let currentCharts = {};
+
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        function handleApiSortChange(api) {
+            const sortSelect = document.getElementById(`sort-select-${api.replace(/\./g, '-')}`);
+            const sortBy = sortSelect.value;
+     
+            // Get the problems for this API from the stored data
+            const problems = currentApiData[api];
+     
+            // Re-create the chart
+            const chartId = `chart-${api.replace(/\./g, '-')}`;
+            if (currentCharts[chartId]) {
+                currentCharts[chartId].destroy();
+            }
+            currentCharts[chartId] = createChart(chartId, { problems }, sortBy);
+     
+            // Re-render the commit list in sorted order
+            renderCommitList(api, problems, sortBy);
+        }
+
+        function handleSpeedupModeChange() {
+            const repoName = document.getElementById('repo-select').value;
+            loadRepoData(repoName, 1); // Reload data with new speedup_mode, reset to page 1
+        }
+
+        function calculateStats(tests, metric) {
+            const values = tests.map(t => t[metric]);
+            const mean = values.reduce((a, b) => a + b, 0) / values.length;
+            const variance = values.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / values.length;
+            const std = Math.sqrt(variance);
+            return { mean, std };
+        }
+
+        function createChart(containerId, apiData, sortBy = 'date') {
+            const ctx = document.getElementById(containerId).getContext('2d');
+
+            // Group tests by commit and find the test with the highest speedup in each commit
+            const commitGroups = {};
+            apiData.problems.forEach(prob => {
+                const commitHash = prob.commit;
+                const date = new Date(prob.date);
+
+                if (!commitGroups[commitHash]) {
+                    // Initialize commit group with the current problem
+                    commitGroups[commitHash] = {
+                        hash: commitHash,
+                        date: date,
+                        maxSpeedupTest: prob,  // Store the test with the highest speedup
+                        speedup: prob.speedup_factor,
+                        tests: [prob]
+                    };
+                } else {
+                    // Add the problem to the tests array
+                    commitGroups[commitHash].tests.push(prob);
+
+                    // Update the maxSpeedupTest if this prob has higher speedup
+                    if (prob.speedup_factor > commitGroups[commitHash].maxSpeedupTest.speedup_factor) {
+                        commitGroups[commitHash].maxSpeedupTest = prob;
+                        commitGroups[commitHash].speedup = prob.speedup_factor;
+                    }
+                }
+            });
+
+            // Sort commits based on selected criterion
+            const sortedCommits = Object.values(commitGroups)
+                .sort((a, b) => {
+                    if (sortBy === 'speedup') {
+                        return b.speedup - a.speedup;
+                    }
+                    return a.date - b.date;
+                });
+
+            // Create x-axis labels for all commits
+            const xLabels = [];
+            sortedCommits.forEach(commit => {
+                xLabels.push(`${commit.hash}^`);
+                xLabels.push(commit.hash);
+            });
+            xLabels.push('main');
+
+            // Create a dataset for each commit using the test with the highest speedup
+            const datasets = sortedCommits.map((commit, idx) => {
+                const prob = commit.maxSpeedupTest;  // Use the test with the highest speedup
+
+                // Extract statistics
+                const baseStats = {
+                    mean: prob.base_mean,
+                    std: prob.base_std
+                };
+                const commitStats = {
+                    mean: prob.commit_mean,
+                    std: prob.commit_std
+                };
+                const targetStats = {
+                    mean: prob.target_mean,
+                    std: prob.target_std
+                };
+
+                // Create data points with 'x' properties matching xLabels
+                const data = [];
+                const baseLabel = `${commit.hash}^`;
+                const commitLabel = commit.hash;
+                const mainLabel = 'main';
+
+                data.push({
+                    x: baseLabel,
+                    y: baseStats.mean,
+                    std: baseStats.std
+                });
+                data.push({
+                    x: commitLabel,
+                    y: commitStats.mean,
+                    std: commitStats.std
+                });
+                data.push({
+                    x: mainLabel,
+                    y: targetStats.mean,
+                    std: targetStats.std
+                });
+
+                const colors = ['#e74c3c', '#3498db', '#2ecc71', '#f1c40f', '#9b59b6'];
+
+                return {
+                    label: `${commit.hash.substring(0, 7)} (${commit.speedup.toFixed(2)}x)`,
+                    data: data,
+                    borderColor: colors[idx % colors.length],
+                    backgroundColor: `${colors[idx % colors.length]}33`,
+                    fill: false,
+                    tension: 0.4,
+                    showLine: true, // Connect the data points
+                    parsing: {
+                        xAxisKey: 'x',
+                        yAxisKey: 'y'
+                    },
+                    spanGaps: true
+                };
+            });
+
+            return new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'nearest',
+                        intersect: false
+                    },
+                    scales: {
+                        x: {
+                            type: 'category',
+                            labels: xLabels,
+                            title: {
+                                display: true,
+                                text: 'Commits'
+                            }
+                        },
+                        y: {
+                            type: 'linear',
+                            title: {
+                                display: true,
+                                text: 'Execution Time (s)'
+                            },
+                            min: 0
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    const point = context.raw;
+                                    if (!point) return '';
+                                    return [
+                                        `Commit: ${point.x}`,
+                                        `Time: ${point.y.toFixed(6)}s (±${point.std.toFixed(6)})`
+                                    ];
+                                }
+                            }
+                        },
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                                boxWidth: 6
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function replotChart(containerId, apiData) {
+            if (currentCharts[containerId]) {
+                currentCharts[containerId].destroy();
+            }
+            createChart(containerId, apiData);
+        }
+
+        function generateTestId(api, commit, testId) {
+            return `test-${api}-${commit}-${testId}`.replace(/\./g, '-');
+        }
+
+        function CopyTextToClipboard(text) {
+            const textArea = document.getElementById('copy-textarea');
+            textArea.value = text;
+            textArea.focus();
+            textArea.select();
+
+            try {
+                document.execCommand('copy');
+                showToast();
+            } catch (err) {
+                console.error('Fallback: Oops, unable to copy', err);
+                alert('Click to copy link: ' + text);
+            }
+        }
+
+        function shareTest(event, element, api, commit, testId) {
+            event.preventDefault();
+            event.stopPropagation();
+            const testDivId = generateTestId(api, commit, testId);
+            const url = `${window.location.origin}${window.location.pathname}#${testDivId}`;
+            CopyTextToClipboard(url);
+        }
+
+        function toggleSection(event, element) {
+            // Check if the event originated from the share button
+            if (event.target && event.target.classList.contains('share-button')) {
+                // Do nothing if it's the share button
+                return;
+            }
+            element.classList.toggle('active');
+            const collapsible = element.nextElementSibling;
+            collapsible.classList.toggle('show');
+        }
+
+        let currentFilters = {
+            non_python_only: 'false',
+            file_count_range: '',
+            loc_range: '',
+            speedup_range: '',
+            commit_count_range: ''
+        };
+
+        function updateFilters(filterName, value) {
+            currentFilters[filterName] = value;
+            const repoName = document.getElementById('repo-select').value;
+            loadRepoData(repoName, 1);  // Reset to first page when filters change
+        }
+
+        function resetFilters() {
+            document.getElementById('file-type-filter').value = 'false';
+            document.getElementById('file-count-filter').value = '';
+            document.getElementById('loc-filter').value = '';
+            document.getElementById('api-search').value = '';
+            currentSearchQuery = '';
+            currentFilters = {
+                non_python_only: 'false',
+                file_count_range: '',
+                loc_range: '',
+                speedup_range: '',
+                commit_count_range: ''
+            };
+            const repoName = document.getElementById('repo-select').value;
+            loadRepoData(repoName, 1);
+        }
+
+        function renderCommitList(api, problems, sortBy) {
+            const commitListDiv = document.getElementById(`commit-list-${api.replace(/\./g, '-')}`);
+        
+            // Clear existing commit items
+            commitListDiv.innerHTML = '';
+        
+            // Group problems by commit
+            const commitGroups = {};
+            problems.forEach(prob => {
+                const commitKey = prob.commit;
+                if (!commitGroups[commitKey]) {
+                    commitGroups[commitKey] = {
+                        ...prob,
+                        problems: []
+                    };
+                }
+                commitGroups[commitKey].problems.push(prob);
+            });
+        
+            // Sort commits
+            const sortedCommits = Object.values(commitGroups)
+                .sort((a, b) => {
+                    if (sortBy === 'speedup') {
+                        return b.speedup_factor - a.speedup_factor;
+                    }
+                    return new Date(a.date) - new Date(b.date);
+                });
+        
+            // Render commits and their associated tests/problems
+            sortedCommits.forEach(commit => {
+                // Create a container for this commit
+                const commitDiv = document.createElement('div');
+                commitDiv.className = 'commit-item';
+        
+                // Header information for the commit
+                commitDiv.innerHTML = `
+                    <div>
+                        <span class="stat-item"><strong>Commit:</strong> <a href="${commit.repo_url}/commit/${commit.full_commit_hash}">${commit.commit}</a> (${new Date(commit.date).toLocaleDateString()})</span>
+                        <span class="stat-item"><strong>FTypes:</strong> ${commit.stats.ftypes}</span>
+                        <span class="stat-item"><strong>Files:</strong> ${commit.stats.num_non_test_files}</span>  
+                        <span class="stat-item"><strong>Hunks:</strong> ${commit.stats.num_hunks}</span>
+                        <span class="stat-item"><strong>LoC:</strong> ${commit.stats.num_edited_lines}</span>
+                    </div>
+                `;
+        
+                // Loop over each test/problem associated with this commit
+                commit.problems.forEach(prob => {
+                    const testDivId = generateTestId(api, prob.commit, prob.test_id);
+        
+                    // Create a container for each test/problem
+                    const testDiv = document.createElement('div');
+                    testDiv.id = testDivId;
+        
+                    testDiv.innerHTML = `
+                        <div>
+                            <br/>
+                            <span class="stat-item"><strong>Test:</strong> ${prob.test_id}</span>
+                            <span class="stat-item"><strong>Opt:</strong> ${prob.opt_perc.toFixed(2)}%</span>
+                            <span class="stat-item"><strong>Speedup:</strong> ${prob.speedup_factor.toFixed(2)}x</span>
+                            <br/>
+                            <span class="stat-item"><strong>Base:</strong> ${prob.base_mean.toFixed(6)} (± ${prob.base_std.toFixed(6)})</span>
+                            <span class="stat-item"><strong>Commit:</strong> ${prob.commit_mean.toFixed(6)} (± ${prob.commit_std.toFixed(6)})</span>
+                        </div>
+                        <span class="toggle-section" onclick="toggleSection(event, this)">
+                            Generated Test
+                            <button class="share-button" onclick="shareTest(event, this, '${api}', '${prob.commit}', '${prob.test_id}')">🔗</button>
+                        </span>
+                        <div class="message collapsible">
+                            <pre>${prob.test || 'Test not available'}</pre>
+                        </div>
+                    `;
+        
+                    // Append the test/problem to the commitDiv
+                    commitDiv.appendChild(testDiv);
+                });
+        
+                // Append the commitDiv to the commit list
+                commitListDiv.appendChild(commitDiv);
+            });
+        }
+        
+        let currentApiData = {}; // Global variable to store API data
+        let currentSearchQuery = ""; // Global variable to store search query
+
+        async function loadRepoData(repoName, page = 1) {
+            showLoading();
+            const speedupMode = document.getElementById('speedup-mode-select').value;
+
+            // Build query string with filters and search
+            const queryParams = new URLSearchParams({
+                page: page,
+                speedup_mode: speedupMode,
+                search: currentSearchQuery,
+                ...currentFilters
+            });
+
+            try {
+                const response = await fetch(`/get_repo_data/${repoName}?${queryParams}`);
+                const data = await response.json();
+
+                if (data.error) {
+                    console.error(data.error);
+                    return;
+                }
+
+                // Clean up existing charts
+                Object.values(currentCharts).forEach(chart => chart.destroy());
+                currentCharts = {};
+
+                const apiContainer = document.getElementById('api-container');
+                apiContainer.innerHTML = '';
+
+                // Store the API data globally
+                currentApiData = data.apis;
+
+                // Create sections for each API
+                Object.entries(data.apis).forEach(([api, problems]) => {
+                    const apiSection = document.createElement('div');
+                    apiSection.className = 'api-section';
+
+                    // Create a unique id for the sort-select for this API
+                    const sortSelectId = `sort-select-${api.replace(/\./g, '-')}`;
+
+                    // Add API title and chart
+                    apiSection.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <h2 class="api-title">API: ${api}</h2>
+                            <select id="${sortSelectId}" class="my-select" onchange="handleApiSortChange('${api}')">
+                                <option value="date">Commits by Date</option>
+                                <option value="speedup">Commits by Speedup</option>
+                            </select>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="chart-${api.replace(/\./g, '-')}"></canvas>
+                        </div>
+                        <div class="commit-list" id="commit-list-${api.replace(/\./g, '-')}"></div>
+                    `;
+
+                    apiContainer.appendChild(apiSection);
+                    
+                    // Create initial sortBy value
+                    let sortBy = 'date';
+
+                    // Render commit list
+                    renderCommitList(api, problems, sortBy);
+
+                    // Initialize chart
+                    const chartId = `chart-${api.replace(/\./g, '-')}`;
+                    currentCharts[chartId] = createChart(chartId, { problems }, sortBy);
+                });
+
+                // Add pagination controls
+                const paginationDiv = document.createElement('div');
+                paginationDiv.className = 'pagination';
+                paginationDiv.innerHTML = `
+                    <button onclick="loadRepoData('${repoName}', ${data.current_page - 1})" 
+                            ${data.current_page <= 1 ? 'disabled' : ''}>
+                        Previous
+                    </button>
+                    <span class="page-info">
+                        Page ${data.current_page} of ${data.total_pages}
+                        (${data.total_apis} APIs)
+                    </span>
+                    <button onclick="loadRepoData('${repoName}', ${data.current_page + 1})"
+                            ${!data.has_next ? 'disabled' : ''}>
+                        Next
+                    </button>
+                `;
+                apiContainer.appendChild(paginationDiv);
+
+                currentPage = data.current_page;
+
+                // Check for hash in URL and open corresponding test
+                if (window.location.hash) {
+                    const testDiv = document.querySelector(window.location.hash);
+                    if (testDiv) {
+                        testDiv.scrollIntoView();
+                        const toggleButton = testDiv.querySelector('.toggle-section');
+                        if (toggleButton) {
+                            toggleButton.click();
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading data:', error);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function handleSearch() {
+            const searchInput = document.getElementById('api-search');
+            currentSearchQuery = searchInput.value.trim();
+            const repoName = document.getElementById('repo-select').value;
+            loadRepoData(repoName, 1); // Reset to first page when search changes
+        }
+        
+        // Add event listeners for search
+        document.getElementById('api-search').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                handleSearch();
+            }
+        });
+
+        // Add event listeners for filters
+        document.getElementById('file-type-filter').addEventListener('change', (e) => {
+            updateFilters('non_python_only', e.target.value);
+        });
+
+        document.getElementById('file-count-filter').addEventListener('change', (e) => {
+            updateFilters('file_count_range', e.target.value);
+        });
+
+        document.getElementById('loc-filter').addEventListener('change', (e) => {
+            updateFilters('loc_range', e.target.value);
+        });
+
+        document.getElementById('speedup-filter').addEventListener('change', (e) => {
+            updateFilters('speedup_range', e.target.value);
+        });
+
+        // Load initial data
+        document.addEventListener('DOMContentLoaded', function () {
+            const defaultRepo = document.getElementById('repo-select').value;
+            if (defaultRepo) {
+                loadRepoData(defaultRepo);
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Repository Performance Commits</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        .summary {
+            background-color: #ecf0f1;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Repository Performance Commits</h1>
+
+    <label for="repo-select" style="font-size: 20px;">Repo:</label>
+    <select id="repo-select" onchange="loadRepoData(this.value)">
+        {% for repo in repos %}
+        <option value="{{ repo }}" {% if repo==default_repo %} selected{% endif %}>{{ repo }}</option>
+        {% endfor %}
+    </select>
+
+    <div class="summary">
+        <h2 id="repo-name"></h2>
+        <div class="summary-item">URL: <strong><a id="repo-url" target="_blank"></a></strong></div>
+        <div class="summary-item" id="commit-count">#Commits: </div>
+        <div class="summary-item" id="api-commit-map"></div>
+    </div>
+    </div>
+
+    <h3>Performance Commits</h3>
+    <div id="commits-container"></div>
+
+    <script>
+        function loadRepoData(repoName) {
+            fetch(`/get_repo_data/${repoName}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('repo-name').textContent = `${data.repo_owner}/${data.repo_name}`;
+                    document.getElementById('repo-url').textContent = data.repo_url;
+                    document.getElementById('repo-url').href = data.repo_url;
+                    document.getElementById('commit-count').textContent = `#Commits: ${data.performance_commits.length}`;
+
+                    <!-- update the link for api commit map using repo_name -->
+                    document.getElementById('api-commit-map').innerHTML = `<a href="/api_commit_map/${data.repo_name}">API Commit Map</a>`;
+
+
+                    const commitsContainer = document.getElementById('commits-container');
+                    commitsContainer.innerHTML = '';
+
+                    data.performance_commits.forEach(commit => {
+                        const commitElement = document.createElement('div');
+                        commitElement.className = 'commit';
+                        const commitUrl = `${data.repo_url}/commit/${commit.commit_hash}`;
+                        const messagePreview = truncateMessage(commit.message);
+                        commitElement.innerHTML = `
+                            <h3><a href="${commitUrl}" class="commit-link" target="_blank"> ${commit.subject} </a></h3>
+                            <div>
+                                <span class="stat-item"><strong>Date:&nbsp;</strong> ${new Date(commit.date).toLocaleString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' })}</span>
+                                <span class="stat-item"><strong># Files (non-test):&nbsp;</strong> ${commit.stats.num_files} (${commit.stats.num_non_test_files})</span>
+                                <span class="stat-item"><strong># Lines (non-test):&nbsp;</strong> ${commit.stats.num_edited_lines} (${commit.stats.num_non_test_edited_lines})</span>
+                                <span class="stat-item"><strong># Hunks:&nbsp;</strong> ${commit.stats.num_hunks}</span>
+                            </div>
+                            <div class="message">
+                                <pre class="message-preview">${messagePreview}</pre>
+                                <pre class="message-preview"><b>LLM Analysis:</b> ${commit.llm_reason}</pre>
+                                <pre class="message-preview"><b>Files Affected:</b> ${commit.affected_paths}</pre>
+                                <pre class="message-preview"><b>APIs Affected:</b> ${commit.apis}\n\nReason: ${commit.llm_api_reason}</pre>
+                                </pre>
+                            </div>
+                            <h4 class="toggle-section" onclick="toggleSection(this)">Files changed</h4>
+                            <div class="collapsible files-changed">
+                                <p>${commit.files_changed.map(file => `<a href="${commitUrl}/${encodeURIComponent(file)}" target="_blank">${file}</a>`).join(', ')}</p>
+                            </div>
+                            <div class="comments">
+                                <h4>Comments:</h4>
+                                ${commit.comments ? commit.comments.map(comment => `<pre>${comment.text} (${new Date(comment.timestamp).toLocaleString('en-US', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })})</pre>`).join('') : '<pre>No comments yet.</pre>'}
+                            </div>
+                            <form class="comment-form" onsubmit="return addComment(event, '${data.repo_name}', '${commit.commit_hash}')">
+                                <input type="text" name="comment" placeholder="Add a comment" required>
+                                <button type="submit">Add Comment</button>
+                            </form>
+                        `;
+                        commitsContainer.appendChild(commitElement);
+                    });
+                });
+        }
+
+        function truncateMessage(message, maxLength = 300) {
+            let lines = message.split('\n');
+            lines = lines.filter(line => line.trim() !== '');
+            let truncated = lines.slice(0, 5).join('\n');  // Take first 5 lines
+            truncated = truncated.substr(0, maxLength);    // Limit to maxLength characters
+            if (truncated.length < message.length) {
+                truncated += '...';
+            }
+            return truncated;
+        }
+
+        function addComment(event, repoName, commitHash) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+            formData.append('repo_name', repoName);
+            formData.append('commit_hash', commitHash);
+
+            fetch('/add_comment', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        loadRepoData(repoName);  // Reload the repo data to show the new comment
+                    } else {
+                        alert('Failed to add comment: ' + data.message);
+                    }
+                });
+
+            return false;
+        }
+
+        // Load the default repo data when the page loads
+        document.addEventListener('DOMContentLoaded', function () {
+            const defaultRepo = document.getElementById('repo-select').value;
+            if (defaultRepo) {
+                loadRepoData(defaultRepo);
+            }
+        });
+
+        // Toggle sections (files changed)
+        function toggleSection(element) {
+            element.classList.toggle('active');
+            const collapsibleDiv = element.nextElementSibling;
+            collapsibleDiv.classList.toggle('show');
+        }
+    </script>
+</body>
+
+</html>
