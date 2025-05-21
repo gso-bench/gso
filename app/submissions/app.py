@@ -3,7 +3,7 @@ import os
 import pandas as pd
 from pathlib import Path
 
-from flask import Flask, jsonify, render_template, url_for
+from flask import Flask, jsonify, render_template, url_for, redirect
 
 from gso.constants import (
     SUBMISSIONS_DIR,
@@ -12,6 +12,13 @@ from gso.constants import (
 )
 
 app = Flask(__name__)
+
+# Global variables to store the conversations and current log
+conversations = {}
+current_indices = {}
+instance_id_maps = {}  # Maps log_path -> {instance_id: index}
+current_log = None
+EXP_TYPE = "scale"  # default experiment type
 
 
 def get_available_logs():
@@ -27,10 +34,10 @@ def get_available_logs():
                         "archives",
                         "plans",
                         "gpt-4o",
+                        "o3-mini",
                         "v0.25.0",
                         "steps",
-                        # "pass",
-                        "scale",
+                        "pass",
                     ]
                 ):
                     continue
@@ -41,22 +48,18 @@ def get_available_logs():
     return sorted(log_files)
 
 
-# Global variables to store the conversations and current log
-conversations = {}
-current_indices = {}
-instance_id_maps = {}  # Maps log_path -> {instance_id: index}
-current_log = None
-exp_type = "pass"  # default experiment type
-
-
 def load_jsonl(file_path):
     """Load a JSONL file and store its conversations"""
+    model = "claude" if "claude" in file_path else "o4-mini"
+
     # Make sure we're loading the actual jsonl file
     if not file_path.endswith("output.jsonl"):
         file_path = os.path.join(file_path, "output.jsonl")
 
     # open the analsis csv file into a df
-    analysis_df = pd.read_csv("~/gso/experiments/qualitative/trajectory_analysis.csv")
+    analysis_df = pd.read_csv(
+        f"~/gso/experiments/qualitative/analyses/trajectory_analysis_{model}.csv"
+    )
 
     full_path = os.path.join(SUBMISSIONS_DIR, file_path)
     with open(full_path, "r") as f:
@@ -79,7 +82,7 @@ def load_jsonl(file_path):
                         conv["analysis"] = analysis.iloc[0].get("analysis", "")
 
                     test_output_path = os.path.join(
-                        RUN_EVALUATION_LOG_DIR, exp_type, run_id, instance_id
+                        RUN_EVALUATION_LOG_DIR, EXP_TYPE, run_id, instance_id
                     )
                     test_output_file = os.path.join(test_output_path, "test_output.txt")
                     if os.path.exists(test_output_file):
@@ -91,7 +94,7 @@ def load_jsonl(file_path):
                         # Look for report in the reports directory
                         possible_reports = list(
                             EVALUATION_REPORTS_DIR.glob(
-                                f"*{run_id}.{exp_type}.report.json"
+                                f"*{run_id}.{EXP_TYPE}.report.json"
                             )
                         )
 
@@ -259,6 +262,66 @@ def get_current_conversation(log_path):
             "total": len(conversations[log_path]),
             "instance_id": instance_id,
         }
+    )
+
+
+@app.route("/patches")
+def patches_index():
+    """Redirect to the first available instance"""
+    # Load the CSV file
+    patches_df = pd.read_csv(
+        "~/gso/experiments/qualitative/analyses/gt_vs_model_patches.csv"
+    )
+
+    # If there are no instances, return to the main page
+    if patches_df.empty:
+        return redirect(url_for("index"))
+
+    # Get the first instance (as a dict to avoid Series truth value errors)
+    first_instance = patches_df.iloc[0].to_dict()
+    run_id = first_instance["run_id"]
+    instance_id = first_instance["instance_id"]
+
+    # Redirect to the first instance
+    return redirect(url_for("view_patches", run_id=run_id, instance_id=instance_id))
+
+
+@app.route("/patches/<string:run_id>/<string:instance_id>")
+def view_patches(run_id, instance_id):
+    """View the patches for a specific instance"""
+    # Load the CSV file
+    patches_df = pd.read_csv(
+        "~/gso/experiments/qualitative/analyses/gt_vs_model_patches.csv"
+    )
+
+    # Find the current instance
+    current_idx = patches_df[
+        (patches_df["run_id"] == run_id) & (patches_df["instance_id"] == instance_id)
+    ].index
+
+    if len(current_idx) == 0:
+        return "Instance not found", 404
+
+    current_idx = current_idx[0]
+
+    # Get the current instance (convert to dict to avoid Series truth value errors)
+    instance = patches_df.iloc[current_idx].to_dict()
+
+    # Get previous and next instances for navigation
+    prev_instance = None
+    next_instance = None
+
+    if current_idx > 0:
+        prev_instance = patches_df.iloc[current_idx - 1].to_dict()
+
+    if current_idx < len(patches_df) - 1:
+        next_instance = patches_df.iloc[current_idx + 1].to_dict()
+
+    return render_template(
+        "patch_view.html",
+        instance=instance,
+        prev_instance=prev_instance,
+        next_instance=next_instance,
     )
 
 
