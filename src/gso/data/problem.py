@@ -97,6 +97,13 @@ class Problem(BaseModel):
         """Add execution results for the problem"""
         self.results[key] = results
 
+    def drop_results(self, key: int):
+        """Drop particular execution result for the problem"""
+        if key in self.results:
+            del self.results[key]
+        else:
+            print(f"Key {key} not found in results")
+
     def set_base_commit(self, commit_hash: str):
         """Set the final base commit for this problem"""
         self.base_commit = commit_hash

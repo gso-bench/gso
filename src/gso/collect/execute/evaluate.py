@@ -57,7 +57,8 @@ def speedup_summary(
     non_python_only=False,
     python_only=False,
 ):
-    lrun_res = list(prob.results.values())[-1]
+    # get the last run, both (key, results)
+    last_run_key, lrun_res = list(prob.results.items())[-1]
     stats = {}
     valid_commits, opt_commits = set(), set()
 

@@ -43,7 +43,7 @@ def create_instance(prob: Problem, commit_hash: str, test_ids: list[int]):
     }
 
 
-def build_dataset(problems, exp_id):
+def build_dataset(problems, exp_id, debug=False):
     print(f"Loaded problems: {len(problems)}")
 
     test_problems_list = (
@@ -119,6 +119,17 @@ def build_dataset(problems, exp_id):
     unique_pid_commits = set(zip(opt_problems_df["pid"], opt_problems_df["commit"]))
     print(f"Found {len(unique_pid_commits)} / {len(test_pid_commits_set)} probs")
 
+    if debug:
+        missing_problems = [
+            (pid, commit)
+            for pid, commit in test_pid_commits_set
+            if (pid, commit) not in unique_pid_commits
+        ]
+        if missing_problems:
+            print(f"Missing problems: {len(missing_problems)}")
+            for pid, commit in missing_problems:
+                print(f"  - {pid} - {commit}")
+
     loc_dist = opt_problems_df["loc_changed"].describe()
     speedup_dist = opt_problems_df["speedup_factor"].describe()
     test_dist = (
@@ -171,7 +182,7 @@ def build_dataset(problems, exp_id):
     return dataset
 
 
-def main(exp_id, push_to_hf, hf_username, dataset_name=None):
+def main(exp_id, push_to_hf, hf_username, dataset_name=None, debug=False):
     exp_ids = TEST_PROBLEMS.keys() if exp_id is None else [exp_id]
     problems = [
         problem
@@ -183,7 +194,7 @@ def main(exp_id, push_to_hf, hf_username, dataset_name=None):
         exp_id = None  # unset
 
     # Build dataset
-    dataset = build_dataset(problems, exp_id)
+    dataset = build_dataset(problems, exp_id, debug=debug)
 
     # Save dataset to jsonl file
     DATASET_DIR.mkdir(parents=True, exist_ok=True)
@@ -200,6 +211,16 @@ def main(exp_id, push_to_hf, hf_username, dataset_name=None):
             f"{hf_username}/{dataset_name}", split="test", private=True
         )
 
+    if debug:
+        log_dir = Path("logs/tasks")
+        log_dir.mkdir(parents=True, exist_ok=True)
+        for inst in dataset:
+            inst_dir = log_dir / inst.instance_id
+            inst_dir.mkdir(parents=True, exist_ok=True)
+            for i, test in enumerate(inst.tests):
+                with open(inst_dir / f"gso_test_{i}.py", "w") as f:
+                    f.write(test)
+
 
 if __name__ == "__main__":
     parser = ArgumentParser(description="Analyze performance results")
@@ -215,6 +236,11 @@ if __name__ == "__main__":
         type=str,
         help="HuggingFace username",
         default=None,
+    )
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="Enable debug mode",
     )
 
     args = parser.parse_args()
