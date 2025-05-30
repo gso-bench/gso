@@ -1,0 +1,290 @@
+@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&display=swap');
+
+body {
+    font-family: "Lexend", sans-serif;
+    line-height: 1.6;
+    padding: 20px;
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5 {
+    color: #333;
+}
+
+pre {
+    background-color: #f4f4f4;
+    padding: 10px;
+    border-radius: 5px;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.error {
+    color: #d00;
+}
+
+.success {
+    color: #0a0;
+}
+
+.warning {
+    color: #f90;
+}
+
+.timeout {
+    color: #6f42c1;
+}
+
+.status {
+    font-size: 1.2em;
+}
+
+.function-info {
+    background-color: #e9ecef;
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+
+.test-info {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+
+.scrollable-output {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.summary {
+    background-color: #d4edda;
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+
+.summary-item {
+    display: inline-block;
+    margin-right: 20px;
+}
+
+.filter-search-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.filter-buttons {
+    display: flex;
+}
+
+.filter-buttons a {
+    margin-right: 10px;
+    padding: 5px 10px;
+    text-decoration: none;
+    color: #fff;
+    border-radius: 3px;
+}
+
+.filter-buttons .all {
+    background-color: #007bff;
+}
+
+.filter-buttons .success {
+    background-color: #28a745;
+}
+
+.filter-buttons .failure {
+    background-color: #dc3545;
+}
+
+.filter-buttons .error {
+    background-color: #ffc107;
+    color: #000;
+}
+
+.filter-buttons .timeout {
+    background-color: #6f42c1;
+    color: #fff;
+}
+
+.filter-buttons .removetests {
+    background-color: #6c757d;
+}
+
+.filter-buttons .active {
+    outline: 2px solid #000;
+}
+
+.search-bar {
+    display: flex;
+}
+
+.search-bar input[type="text"] {
+    padding: 5px;
+    width: 200px;
+}
+
+.search-bar input[type="submit"] {
+    padding: 5px 10px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    margin-left: 5px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+th,
+td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+th {
+    background-color: #f2f2f2;
+}
+
+tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.tab {
+    overflow: hidden;
+    border: 1px solid #ccc;
+    background-color: #f1f1f1;
+}
+
+.tab button {
+    background-color: inherit;
+    float: left;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    padding: 14px 16px;
+    transition: 0.3s;
+}
+
+.tab button:hover {
+    background-color: #ddd;
+}
+
+.tab button.active {
+    background-color: #ccc;
+}
+
+.tabcontent {
+    font-size: 0.8em;
+    display: none;
+    padding: 6px 12px;
+    border: 1px solid #ccc;
+    border-top: none;
+}
+
+.execution-tabcontent {
+    font-size: 0.8em;
+}
+
+
+/* ############# COMMIT ANALYSIS ############# */
+
+select {
+    font-size: 20px;
+    padding: 5px;
+    margin-bottom: 20px;
+}
+
+.commit {
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.commit-link {
+    color: #1049d9;
+    text-decoration: none;
+}
+
+.commit-link:hover {
+    text-decoration: underline;
+}
+
+.toggle-section {
+    cursor: pointer;
+    user-select: none;
+    margin-bottom: -10px;
+}
+
+.toggle-section::before {
+    content: '▶';
+    display: inline-block;
+    margin-right: 5px;
+    transition: transform 0.1s ease;
+}
+
+.toggle-section.active::before {
+    transform: rotate(90deg);
+}
+
+.collapsible {
+    display: flex;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.1s ease-out;
+}
+
+.collapsible.show {
+    max-height: 500px;
+    transition: max-height 0.1s ease-in;
+}
+
+.files-changed a {
+    color: #2980b9;
+    text-decoration: none;
+}
+
+.files-changed a:hover {
+    text-decoration: underline;
+}
+
+.comment-form input[type="text"] {
+    width: 70%;
+    padding: 5px;
+}
+
+.comment-form button {
+    padding: 5px 10px;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+.comment-form button:hover {
+    background-color: #2980b9;
+}
+
+.stat-item {
+    display: flex;
+}
+
+.stat-item strong {
+    font-weight: 600;
+}

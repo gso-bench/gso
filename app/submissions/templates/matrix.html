@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Instance Performance Matrix{% endblock %}
+
+{% block header %}Instance Performance Matrix{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{{ url_for('index') }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Back to Log List
+    </a>
+    
+    <div class="form-check form-switch float-end mt-2">
+        <input class="form-check-input" type="checkbox" id="showSuccessOnly">
+        <label class="form-check-label" for="showSuccessOnly">Show Success Only</label>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Instance Performance Matrix</h5>
+        <p class="text-muted">Success/failure across different runs</p>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover" style="font-size: 70%;">
+                <thead class="table-light sticky-top" style="position: sticky; top: 0; z-index: 1;">
+                    <tr>
+                        <th style="position: sticky; left: 0; z-index: 2; background-color: #f8f9fa;">Instance ID</th>
+                        {% for run_id in runs %}
+                        <th>{{ run_id.split('_')[0]+'_'+run_id.split('-')[-1]}}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody> 
+                    {% for instance in instances %}
+                    <tr class="matrix-row">
+                        <td style="position: sticky; left: 0; z-index: 1; background-color: #f8f9fa;">{{ instance }}</td>
+                        {% for run_id in runs %}
+                        {% set result = matrix.get(instance, {}).get(run_id) %}
+                        {% if result %}
+                        <td class="{% if result.success %}bg-success success-cell{% else %}bg-danger failure-cell{% endif %} text-white text-center">
+                            {% if result.log_url %}
+                            <a href="{{ result.log_url }}" class="text-white">
+                                {% if result.success %}
+                                <i class="fas fa-check"></i>
+                                {% else %}
+                                <i class="fas fa-times"></i>
+                                {% endif %}
+                            </a>
+                            {% else %}
+                            {% if result.success %}
+                            <i class="fas fa-check"></i>
+                            {% else %}
+                            <i class="fas fa-times"></i>
+                            {% endif %}
+                            {% endif %}
+                        </td>
+                        {% else %}
+                        <td class="bg-secondary text-white text-center opacity-50 na-cell">
+                            <i class="fas fa-minus"></i>
+                        </td>
+                        {% endif %}
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const checkbox = document.getElementById('showSuccessOnly');
+        
+        checkbox.addEventListener('change', function() {
+            const rows = document.querySelectorAll('.matrix-row');
+            
+            if (this.checked) {
+                // Show only rows with at least one success cell
+                rows.forEach(row => {
+                    const hasSuccess = row.querySelector('.success-cell');
+                    row.style.display = hasSuccess ? '' : 'none';
+                });
+            } else {
+                // Show all rows
+                rows.forEach(row => {
+                    row.style.display = '';
+                });
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,24 @@
+name: $id
+
+resources:
+  cloud: $cloud
+  region: $region
+  instance_type: $instance_type
+
+workdir: .
+
+setup: |
+  sudo apt-get update
+  sudo apt-get install -y python3-pip git build-essential python3-dev python3-setuptools
+  curl -LsSf https://astral.sh/uv/0.5.4/install.sh | sh
+  source $HOME/.cargo/env
+  $setup_commands
+  git clone --recursive $repo_url $repo_name
+
+run: |
+  export COMMITS="$candidates"
+  chmod +x phase1.sh
+  chmod +x phase2.sh
+
+  ./phase1.sh
+  ./phase2.sh
