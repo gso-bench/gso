@@ -40,6 +40,8 @@ def create_instance(prob: Problem, commit_hash: str, test_ids: list[int]):
         "setup_commands": prob.setup_commands,
         "install_commands": install_commands,
         "created_at": commit.date.strftime("%Y-%m-%d %H:%M:%S"),
+        "gt_commit_message": commit.message,
+        "gt_diff": commit.diff_text,
     }
 
 

@@ -26,7 +26,6 @@ def create_instance(prob: Problem, commit_hash: str, test_ids: list[int]):
     install_commands = prepare_install_commands(prob.install_commands)
     prob_script = prepare_prob_script(test_samples)
 
-
     return {
         "instance_id": (prob.repo.full_name + "-" + commit_hash).replace("/", "__"),
         "repo": prob.repo.full_name,

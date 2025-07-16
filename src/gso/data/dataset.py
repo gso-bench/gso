@@ -14,6 +14,8 @@ class GSOInstance:
     setup_commands: list[str]
     install_commands: list[str]
     created_at: str
+    gt_commit_message: str
+    gt_diff: str
     arch: str = "x86_64"
     instance_image_tag: str = "latest"
 
