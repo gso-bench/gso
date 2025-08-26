@@ -1,6 +1,6 @@
 [project]
-name = "gso"
-version = "0.1.0"
+name = "gsobench"
+version = "0.1.1"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -8,7 +8,6 @@ dependencies = [
     "rich>=13.8.0",
     "pygithub>=2.4.0",
     "r2e-test-server>=0.1.4",
-    "r2e>=0.1.0",
     "memory-profiler>=0.61.0",
     "fire>=0.6.0",
     "flask>=3.0.3",
@@ -30,5 +29,5 @@ dependencies = [
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-[tool.uv.sources]
-r2e = { git = "https://github.com/r2e-project/r2e" }
+[tool.hatch.build.targets.wheel]
+packages = ["src/gso"]

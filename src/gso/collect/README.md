@@ -8,7 +8,14 @@
 3. **Performance Test Generation**: Generates performance tests for the identified API-Commit pairs using LLMs.
 4. **Test Execution**: Execute performane tests and identify problems (API-Commit pairs) that show performance improvements.
 
-**Prerequisite**: Setup [Github](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens), [OpenAI](https://platform.openai.com/api-keys), [HuggingFace](https://huggingface.co/docs/hub/en/security-tokens) tokens
+**Prerequisite**: 
+
+Install [r2e](https://github.com/r2e-project/r2e) for llm helpers and parallel sampling:
+```
+uv pip install git+https://github.com/r2e-project/r2e
+```
+
+Setup [Github](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens), [OpenAI](https://platform.openai.com/api-keys), [HuggingFace](https://huggingface.co/docs/hub/en/security-tokens) tokens
 ```
 export GHAPI_TOKEN="github_token"
 export OPENAI_API_KEY="openai_key"
