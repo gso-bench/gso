@@ -23,6 +23,7 @@ dependencies = [
     "datasets>=3.2.0",
     "huggingface-hub>=0.27.0",
     "docker>=7.1.0",
+    "pydantic>=2.11.7",
 ]
 
 [build-system]
