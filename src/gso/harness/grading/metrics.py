@@ -253,7 +253,7 @@ def get_opt_status(time_map) -> dict:
         }
     )
 
-    if base_mean > patch_mean and pb_speedup_gm >= MIN_PROB_SPEEDUP:
+    if base_mean > patch_mean and round(pb_speedup_gm, 1) >= MIN_PROB_SPEEDUP:
         opt_status["opt_base"] = True
 
         if opt(pc_speedup_hm):
