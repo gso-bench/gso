@@ -13,36 +13,36 @@ from gso.constants import (
 
 app = Flask(__name__)
 
-# Global variables to store the conversations and current log
+# Configuration
+EXP_TYPE = "pass"
+EXCLUDED_MODELS = [
+    "claude-3-5",
+    "o4-mini",
+    "o3-mini",
+    "gpt-4o",
+    "v0.25.0",
+    "archives",
+    "plans",
+    "steps",
+]
+
+# Global variables
 conversations = {}
 current_indices = {}
-instance_id_maps = {}  # Maps log_path -> {instance_id: index}
+instance_id_maps = {}
 current_log = None
-EXP_TYPE = "scale"  # default experiment type
 
 
 def get_available_logs():
-    """Recursively find all .jsonl files in the logs directory"""
+    """Find all .jsonl files in the logs directory"""
     log_files = []
     for root, dirs, files in os.walk(SUBMISSIONS_DIR):
         for file in files:
-            # jsonl file with name output.jsonl
             if file.endswith(".jsonl") and file == "output.jsonl":
-                if any(
-                    exp_type in root
-                    for exp_type in [
-                        "archives",
-                        "plans",
-                        "gpt-4o",
-                        "o3-mini",
-                        "v0.25.0",
-                        "steps",
-                        "pass",
-                    ]
-                ):
+                if EXP_TYPE not in root:
                     continue
-
-                # Get relative path from SUBMISSIONS_DIR
+                if any(excluded_model in root for excluded_model in EXCLUDED_MODELS):
+                    continue
                 rel_path = os.path.relpath(os.path.join(root, file), SUBMISSIONS_DIR)
                 log_files.append(rel_path)
     return sorted(log_files)
@@ -52,14 +52,17 @@ def load_jsonl(file_path):
     """Load a JSONL file and store its conversations"""
     model = "claude" if "claude" in file_path else "o4-mini"
 
-    # Make sure we're loading the actual jsonl file
     if not file_path.endswith("output.jsonl"):
         file_path = os.path.join(file_path, "output.jsonl")
 
-    # open the analsis csv file into a df
-    analysis_df = pd.read_csv(
-        f"~/gso/experiments/qualitative/analyses/trajectory_analysis_{model}.csv"
-    )
+    # Try to load analysis CSV file, but make it optional
+    analysis_df = None
+    try:
+        analysis_csv_path = f"/home/gcpuser/gso-internal/experiments/qualitative/analyses/trajectory_analysis_{model}.csv"
+        if os.path.exists(analysis_csv_path):
+            analysis_df = pd.read_csv(analysis_csv_path)
+    except Exception as e:
+        print(f"Warning: Could not load analysis CSV: {e}")
 
     full_path = os.path.join(SUBMISSIONS_DIR, file_path)
     with open(full_path, "r") as f:
@@ -74,12 +77,14 @@ def load_jsonl(file_path):
                 conv["analysis"] = ""
                 instance_id = conv.get("instance_id")
                 if instance_id:
-                    analysis = analysis_df[
-                        (analysis_df["run_id"] == run_id)
-                        & (analysis_df["instance_id"] == conv["instance_id"])
-                    ]
-                    if not analysis.empty:
-                        conv["analysis"] = analysis.iloc[0].get("analysis", "")
+                    # Only try to get analysis if CSV was loaded successfully
+                    if analysis_df is not None:
+                        analysis = analysis_df[
+                            (analysis_df["run_id"] == run_id)
+                            & (analysis_df["instance_id"] == conv["instance_id"])
+                        ]
+                        if not analysis.empty:
+                            conv["analysis"] = analysis.iloc[0].get("analysis", "")
 
                     test_output_path = os.path.join(
                         RUN_EVALUATION_LOG_DIR, EXP_TYPE, run_id, instance_id
@@ -148,56 +153,80 @@ def index():
 @app.route("/matrix")
 def instance_matrix():
     """Generate a matrix showing instance performance across different runs"""
-    # Get all available log files
-    log_files = get_available_logs()
+    print("Loading matrix from evaluation reports...")
 
-    # Dictionary to hold the matrix data
-    # Format: {instance_id: {run_id: {"success": bool, "log_url": url}}}
     matrix = {}
-
-    # Lists to track all unique instances and runs
     all_instances = set()
     all_runs = set()
 
-    # Process each log file
-    for log_path in log_files:
-        # Load log if not already loaded
-        if log_path not in conversations:
-            load_jsonl(log_path)
+    # Load all evaluation reports
+    report_files = list(EVALUATION_REPORTS_DIR.glob(f"*.{EXP_TYPE}.report.json"))
+    print(f"Found {len(report_files)} report files")
 
-        # Extract run_id from path (folder name containing output.jsonl)
-        run_id = Path(log_path).parent.name
-        all_runs.add(run_id)
+    for report_path in report_files:
+        try:
+            with open(report_path, "r") as f:
+                report_data = json.load(f)
 
-        # Process each conversation in this log file
-        for idx, conv in enumerate(conversations[log_path]):
-            instance_id = conv.get("instance_id")
-            if not instance_id:
+            run_id = report_path.stem.replace(f".{EXP_TYPE}.report", "")
+
+            # Skip excluded models
+            if any(excluded_model in run_id for excluded_model in EXCLUDED_MODELS):
                 continue
 
-            # Add instance to our tracking set
-            all_instances.add(instance_id)
+            all_runs.add(run_id)
 
-            # Check if there's test result data
-            test_result = conv.get("test_result", {})
-            success = test_result.get("opt_commit", False)
-
-            # Create URL for this specific conversation
-            log_url = url_for(
-                "view_by_instance_id",
-                log_path=Path(log_path).parent,
-                instance_id=instance_id,
+            # Get completed and successful instances
+            completed_ids = report_data.get("instance_sets", {}).get(
+                "completed_ids", []
+            )
+            opt_commit_ids = set(
+                report_data.get("instance_sets", {}).get("opt_commit_ids", [])
             )
 
-            # Initialize matrix entry for this instance if needed
-            if instance_id not in matrix:
-                matrix[instance_id] = {}
+            # Find corresponding log path for URL generation
+            log_files = get_available_logs()
+            log_path = next(
+                (log_file for log_file in log_files if run_id in log_file), None
+            )
 
-            # Add result for this run
-            matrix[instance_id][run_id] = {"success": success, "log_url": log_url}
+            # Process each completed instance
+            for instance_id in completed_ids:
+                all_instances.add(instance_id)
 
-    # Sort runs and instances for consistent display
-    sorted_runs = sorted(all_runs)
+                if instance_id not in matrix:
+                    matrix[instance_id] = {}
+
+                # Create URL
+                log_url = None
+                if log_path:
+                    log_url = url_for(
+                        "view_by_instance_id",
+                        log_path=Path(log_path).parent,
+                        instance_id=instance_id,
+                    )
+
+                # Determine success
+                success = instance_id in opt_commit_ids
+
+                matrix[instance_id][run_id] = {"success": success, "log_url": log_url}
+
+        except Exception as e:
+            print(f"Warning: Could not load report {report_path}: {e}")
+
+    print(
+        f"Matrix generated with {len(all_instances)} instances across {len(all_runs)} runs"
+    )
+
+    # Sort runs by success count (descending)
+    def success_count(run_id):
+        return sum(
+            1
+            for instance_id in matrix
+            if run_id in matrix[instance_id] and matrix[instance_id][run_id]["success"]
+        )
+
+    sorted_runs = sorted(all_runs, key=lambda run_id: (-success_count(run_id), run_id))
     sorted_instances = sorted(all_instances)
 
     return render_template(
@@ -209,13 +238,11 @@ def instance_matrix():
 def view_log(log_path):
     global current_log
 
-    # Normalize path to always include output.jsonl
     if not log_path.endswith("output.jsonl"):
         log_path = os.path.join(log_path, "output.jsonl")
 
     current_log = log_path
 
-    # Load the log file if it hasn't been loaded yet
     if log_path not in conversations:
         load_jsonl(log_path)
 
@@ -226,21 +253,17 @@ def view_log(log_path):
 def view_by_instance_id(log_path, instance_id):
     global current_log
 
-    # Normalize path to ensure it includes output.jsonl
     if not log_path.endswith("output.jsonl"):
         file_path = os.path.join(log_path, "output.jsonl")
     else:
         file_path = log_path
-        # Remove output.jsonl from path for consistent handling
         log_path = os.path.dirname(log_path)
 
     current_log = file_path
 
-    # Load file if needed
     if file_path not in conversations:
         load_jsonl(file_path)
 
-    # Try to find the instance ID in our mapping
     if file_path in instance_id_maps and instance_id in instance_id_maps[file_path]:
         current_indices[file_path] = instance_id_maps[file_path][instance_id]
 
@@ -268,33 +291,39 @@ def get_current_conversation(log_path):
 @app.route("/patches")
 def patches_index():
     """Redirect to the first available instance"""
-    # Load the CSV file
-    patches_df = pd.read_csv(
-        "~/gso/experiments/qualitative/analyses/gt_vs_model_patches.csv"
-    )
+    try:
+        patches_csv_path = "/home/gcpuser/gso-internal/experiments/qualitative/analyses/gt_vs_model_patches.csv"
+        if os.path.exists(patches_csv_path):
+            patches_df = pd.read_csv(patches_csv_path)
+        else:
+            return redirect(url_for("index"))
+    except Exception as e:
+        print(f"Warning: Could not load patches CSV: {e}")
+        return redirect(url_for("index"))
 
-    # If there are no instances, return to the main page
     if patches_df.empty:
         return redirect(url_for("index"))
 
-    # Get the first instance (as a dict to avoid Series truth value errors)
     first_instance = patches_df.iloc[0].to_dict()
     run_id = first_instance["run_id"]
     instance_id = first_instance["instance_id"]
 
-    # Redirect to the first instance
     return redirect(url_for("view_patches", run_id=run_id, instance_id=instance_id))
 
 
 @app.route("/patches/<string:run_id>/<string:instance_id>")
 def view_patches(run_id, instance_id):
     """View the patches for a specific instance"""
-    # Load the CSV file
-    patches_df = pd.read_csv(
-        "~/gso/experiments/qualitative/analyses/gt_vs_model_patches.csv"
-    )
+    try:
+        patches_csv_path = "/home/gcpuser/gso-internal/experiments/qualitative/analyses/gt_vs_model_patches.csv"
+        if os.path.exists(patches_csv_path):
+            patches_df = pd.read_csv(patches_csv_path)
+        else:
+            return "Patches CSV file not found", 404
+    except Exception as e:
+        print(f"Warning: Could not load patches CSV: {e}")
+        return "Error loading patches CSV", 500
 
-    # Find the current instance
     current_idx = patches_df[
         (patches_df["run_id"] == run_id) & (patches_df["instance_id"] == instance_id)
     ].index
@@ -303,11 +332,8 @@ def view_patches(run_id, instance_id):
         return "Instance not found", 404
 
     current_idx = current_idx[0]
-
-    # Get the current instance (convert to dict to avoid Series truth value errors)
     instance = patches_df.iloc[current_idx].to_dict()
 
-    # Get previous and next instances for navigation
     prev_instance = None
     next_instance = None
 
