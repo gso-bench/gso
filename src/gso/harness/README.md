@@ -75,7 +75,7 @@ uv run src/gso/harness/opt_at_k.py \
 
 
 > [!Note]
-> Several helper scripts are in the [plot](./plot/) directory for plotting various results:
+> Several helper scripts are in the [analysis/quantitative](../analysis/quantitative/) directory for plotting various results:
 > - Opt@1 and Opt@K comparisons across models
 > - Opt@K vs Steps vs Rollouts (performance across compute budgets)
 > - Per-problem optimization stats
