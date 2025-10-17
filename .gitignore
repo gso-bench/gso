@@ -171,4 +171,5 @@ eval_outputs
 *.report.json
 *.csv
 run_gso.sh
+run_detector.sh
 experiments/
