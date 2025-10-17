@@ -165,8 +165,9 @@ def make_run_report(
         .get("model_name_or_path", "None")
         .replace("/", "__")
     )
-    EVALUATION_REPORTS_DIR.mkdir(parents=True, exist_ok=True)
-    report_file = EVALUATION_REPORTS_DIR / Path(f"{model_name}.{run_id}.report.json")
+    run_log_dir = RUN_EVALUATION_LOG_DIR / run_id / model_name
+    run_log_dir.mkdir(parents=True, exist_ok=True)
+    report_file = run_log_dir / Path(f"{model_name}.{run_id}.report.json")
 
     with open(report_file, "w") as f:
         json.dump(report, f, indent=4)

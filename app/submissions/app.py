@@ -96,11 +96,10 @@ def load_jsonl(file_path):
                             conv["test_output"] = test_output_data
 
                     try:
-                        # Look for report in the reports directory
+                        # Look for reports in the run's log directory
+                        run_log_dir = RUN_EVALUATION_LOG_DIR / EXP_TYPE / run_id
                         possible_reports = list(
-                            EVALUATION_REPORTS_DIR.glob(
-                                f"*{run_id}.{EXP_TYPE}.report.json"
-                            )
+                            run_log_dir.glob(f"*.{EXP_TYPE}.report.json")
                         )
 
                         if possible_reports:
@@ -158,9 +157,11 @@ def instance_matrix():
     matrix = {}
     all_instances = set()
     all_runs = set()
+    report_files = []
+    for run_dir in RUN_EVALUATION_LOG_DIR.glob(f"{EXP_TYPE}/*"):
+        if run_dir.is_dir():
+            report_files.extend(list(run_dir.glob(f"*.{EXP_TYPE}.report.json")))
 
-    # Load all evaluation reports
-    report_files = list(EVALUATION_REPORTS_DIR.glob(f"*.{EXP_TYPE}.report.json"))
     print(f"Found {len(report_files)} report files")
 
     for report_path in report_files:

@@ -76,10 +76,10 @@ uv run src/gso/harness/prepare_images.py \
 2. **Running Evaluations**:
 ```bash
 uv run src/gso/harness/opt_at_k.py \
-    --prediction_paths <prediction_paths> \
+    --prediction_paths <prediction_path> \
     --timeout 3600 \
     --run_id <run_id> \
-    --k 10 \
+    --k 1 \
     --model <modelname>
 ```
 
