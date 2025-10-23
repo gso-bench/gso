@@ -2,159 +2,195 @@ import matplotlib.pyplot as plt
 import os
 import pandas as pd
 import seaborn as sns
-from pathlib import Path
+import glob
 from tqdm import tqdm
-import argparse
 
 from gso.harness.utils import natural_sort_key
-from gso.harness.opt_at_k import merge_reports
-from gso.constants import EVALUATION_REPORTS_DIR
-from gso.harness.plot.helpers import *
+from gso.analysis.quantitative.helpers import *
 
-PLOT_PASSED = True
-PLOT_HAS_SPEEDUP = True
-PLOT_COMMIT = False
+# =============================================================================
+# CONFIGURATION - Just configure what you want to plot
+# =============================================================================
 
-# Add argument parsing
-parser = argparse.ArgumentParser(description="Run and plot Opt@K evaluations")
-parser.add_argument(
-    "--eval_reports", type=str, nargs="+", help="evaluated reports", required=True
-)
-parser.add_argument("--model_name", type=str, help="Model name", required=True)
-parser.add_argument("--k", type=int, default=10, help="Maximum K value")
-parser.add_argument(
-    "--output_dir", type=str, default="plots", help="Directory to save plots"
-)
-parser.add_argument(
-    "--fixed_first_run", action="store_true", help="Keep first run fixed across trials"
-)
-parser.add_argument(
-    "--num_trials", type=int, default=500, help="Number of bootstrap trials"
-)
-args = parser.parse_args()
+MODEL_CONFIGS = {
+    "o4-mini": "~/gso/reports/archives/scale/o4-mini_maxiter_100_N_v0.35.0-no-hint-run_*scale*",
+    "claude-3.6": "~/gso/reports/archives/scale/claude-3-5-sonnet-v2-20241022_maxiter_100_N_v0.35.0-no-hint-run_*scale*",
+}
 
-# Create plots directory if it doesn't exist
-os.makedirs(args.output_dir, exist_ok=True)
+METRICS_TO_PLOT = ["passed", "speedup", "commit"]
+K_MAX = 10
+OUTPUT_DIR = "plots"
+FIXED_FIRST_RUN = False
+NUM_TRIALS = 500
 
-# sort report files
-reports = sorted(args.eval_reports, key=natural_sort_key)
+os.makedirs(OUTPUT_DIR, exist_ok=True)
+is_single_model = len(MODEL_CONFIGS) == 1
+is_multi_model = len(MODEL_CONFIGS) > 1
 
-# raise if less than k reports are found
-if len(reports) < args.k:
-    raise ValueError(f"Found {len(reports)} reports, expected {args.k}")
+# Process each model
+all_data = []
 
+for model_name, pattern in MODEL_CONFIGS.items():
+    reports = sorted(glob.glob(os.path.expanduser(pattern)), key=natural_sort_key)
+    if not reports or len(reports) < K_MAX:
+        print(f"Skipping {model_name}: {len(reports) if reports else 0} reports")
+        continue
 
-# Calculate Opt@K with the reference approach
-passed_at_k_rates, base_at_k_rates, commit_at_k_rates, main_at_k_rates = (
-    calculate_opt_at_k_smooth(reports, args.k, args.fixed_first_run, args.num_trials)
-)
+    print(f"Processing {model_name} with {len(reports)} reports...")
+    passed_at_k_rates, base_at_k_rates, commit_at_k_rates, _ = (
+        calculate_opt_at_k_smooth(reports, K_MAX, FIXED_FIRST_RUN, NUM_TRIALS)
+    )
 
-# Create a DataFrame in long format for seaborn (directly from reference)
-k_values = list(range(1, args.k + 1))
-plot_data = []
+    if is_single_model and METRICS_TO_PLOT:
+        # Single model with multiple metrics
+        metric_data = {
+            "passed": (passed_at_k_rates, "Passed Tests"),
+            "speedup": (base_at_k_rates, "Has Speedup over Base"),
+            "commit": (commit_at_k_rates, "Opt@K"),
+        }
 
+        for metric in METRICS_TO_PLOT:
+            rates, metric_name = metric_data[metric]
+            for k, rate_info in enumerate(rates, 1):
+                error = rate_info[1] if k < K_MAX else 0
+                all_data.append(
+                    {
+                        "k": k,
+                        "Rate": rate_info[0],
+                        "Error": error,
+                        "Metric": metric_name,
+                        "Lower": rate_info[0] - error,
+                        "Upper": rate_info[0] + error,
+                    }
+                )
+    else:
+        # Multi model with Opt@K only
+        for k, rate_info in enumerate(commit_at_k_rates, 1):
+            error = rate_info[1] if k < K_MAX else 0
+            all_data.append(
+                {
+                    "k": k,
+                    "Rate": rate_info[0],
+                    "Error": error,
+                    "Model": model_name,
+                    "Lower": rate_info[0] - error,
+                    "Upper": rate_info[0] + error,
+                }
+            )
 
-# Add data for passed
-if PLOT_PASSED:
-    for k, rates in enumerate(passed_at_k_rates, 1):
-        error = rates[1] if k < args.k else 0
-        plot_data.append(
-            {
-                "k": k,
-                "Rate": rates[0],
-                "Error": error,
-                "Metric": "Passed Tests",
-                "Lower": rates[0] - error,
-                "Upper": rates[0] + error,
-            }
-        )
+if not all_data:
+    print("No data to plot!")
+    exit(1)
 
-# Add data for speedup on base
-if PLOT_HAS_SPEEDUP:
-    for k, rates in enumerate(base_at_k_rates, 1):
-        error = rates[1] if k < args.k else 0
-        plot_data.append(
-            {
-                "k": k,
-                "Rate": rates[0],
-                "Error": error,
-                "Metric": "Has Speedup over Base",
-                "Lower": rates[0] - error,
-                "Upper": rates[0] + error,
-            }
-        )
-
-# Add data for commit
-if PLOT_COMMIT:
-    for k, rates in enumerate(commit_at_k_rates, 1):
-        error = rates[1] if k < args.k else 0
-        plot_data.append(
-            {
-                "k": k,
-                "Rate": rates[0],
-                "Error": error,
-                "Metric": "Opt@K",
-                "Lower": rates[0] - error,
-                "Upper": rates[0] + error,
-            }
-        )
-
-df_plot = pd.DataFrame(plot_data)
-colors = METRICS_COLOR_MAP
-plt.figure(figsize=(8, 6))
+df = pd.DataFrame(all_data)
+plt.figure(figsize=(8, 6) if is_single_model else (6, 4))
 setup_plot_style()
 
-# Create the plot
+if is_single_model:
+    hue_col = "Metric"
+    style_col = "Metric"
+    palette = METRICS_COLOR_MAP
+    markers = {"Opt@K": "o", "Has Speedup over Base": "o", "Passed Tests": "o"}
+    ylabel = "% Problems"
+    ylim = (-3, 101)
+    legend_loc = "lower right"
+    output_path = os.path.join(
+        OUTPUT_DIR, f"opt_at_k.{list(MODEL_CONFIGS.keys())[0]}.png"
+    )
+else:
+    hue_col = "Model"
+    style_col = "Model"
+    palette = {
+        model: MODEL_COLOR_MAP.get(model, "#999999") for model in df["Model"].unique()
+    }
+    markers = True
+    ylabel = "Opt@K (%)"
+    ylim = (0, 25)
+    legend_loc = "upper left"
+    output_path = os.path.join(OUTPUT_DIR, "opt_at_k_comparison_new.png")
+
 sns.lineplot(
-    data=df_plot,
+    data=df,
     x="k",
     y="Rate",
-    hue="Metric",
-    style="Metric",
-    markers={"Opt@K": "o", "Has Speedup over Base": "o", "Passed Tests": "o"},
+    hue=hue_col,
+    style=style_col,
+    markers=markers,
     markeredgewidth=0,
     markersize=5,
     dashes=False,
-    palette=colors,
+    palette=palette,
 )
 
-# Add error bands
-for metric, color in colors.items():
-    metric_data = df_plot[df_plot["Metric"] == metric]
+# Error bands
+for group in df[hue_col].unique():
+    group_data = df[df[hue_col] == group]
+    color = (
+        palette[group] if isinstance(palette, dict) else palette.get(group, "#999999")
+    )
     plt.fill_between(
-        metric_data["k"],
-        metric_data["Lower"],
-        metric_data["Upper"],
+        group_data["k"],
+        group_data["Lower"],
+        group_data["Upper"],
         alpha=0.2,
         color=color,
         linewidth=0,
     )
 
-# Add value labels
-for metric, color in colors.items():
-    metric_data = df_plot[df_plot["Metric"] == metric]
-    for idx, (_, row) in enumerate(metric_data.iterrows()):
-        if idx in [0, 2, 4, 7, 9]:
+# Value labels
+if is_single_model:
+    # Single model: annotate specific indices
+    for metric, color in METRICS_COLOR_MAP.items():
+        metric_data = df[df["Metric"] == metric]
+        for idx, (_, row) in enumerate(metric_data.iterrows()):
+            if idx in [0, 2, 4, 7, 9]:
+                plt.annotate(
+                    f'{row["Rate"]:.1f}',
+                    (row["k"], row["Rate"]),
+                    textcoords="offset points",
+                    xytext=(0, 8),
+                    ha="center",
+                    color="#3b3b3b",
+                    fontsize=12,
+                )
+else:
+    # Multi model: smart positioning based on relative performance
+    rates_by_k = df.pivot(index="k", columns="Model", values="Rate")
+    annotation_ks = [2, 4, 6, 8, 10]
+
+    for model in df["Model"].unique():
+        model_data = df[df["Model"] == model].sort_values("k")
+        for _, row in model_data.iterrows():
+            k = row["k"]
+            if k not in annotation_ks:
+                continue
+
+            y = row["Rate"]
+            other = [m for m in df["Model"].unique() if m != model][0]
+            other_y = rates_by_k.loc[k, other]
+
+            offset = 8
+            xytext = (0, offset) if y > other_y else (0, -offset)
+            va = "bottom" if y > other_y else "top"
+
             plt.annotate(
-                f'{row["Rate"]:.1f}',
-                (row["k"], row["Rate"]),
+                f"{y:.1f}",
+                (k, y),
                 textcoords="offset points",
-                xytext=(0, 8),
+                xytext=xytext,
                 ha="center",
+                va=va,
                 color="#3b3b3b",
                 fontsize=12,
             )
 
-# Customize plot
+plt.ylabel(ylabel)
+plt.ylim(ylim)
+plt.legend(title=None, loc=legend_loc)
 plt.tick_params(axis="both", direction="out", length=3, width=1)
 plt.xlabel("# Rollouts (K)")
-plt.ylabel("% Problems")
-plt.xticks(k_values)
-plt.ylim(-3, 101)
-plt.grid(False)  #  linestyle="-", alpha=0.005)
-plt.legend(title=None, loc="lower right")
+plt.xticks(list(range(1, K_MAX + 1)))
+plt.grid(False)
 
-# Save the plot
-output_path = os.path.join(args.output_dir, f"opt_at_k.{args.model_name}.png")
 plt.savefig(output_path, dpi=300, bbox_inches="tight")
 print(f"Plot saved as {output_path}")
