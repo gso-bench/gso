@@ -9,7 +9,7 @@ from datasets import load_dataset, load_from_disk, Dataset
 
 from gso.data import Problem, APICommitMap
 from gso.data.dataset import GSOInstance
-from gso.constants import EXPS_DIR, DATASET_DIR
+from gso.constants import EXPS_DIR, DATASET_DIR, EVALUATION_REPORTS_DIR
 
 ############## MAIN DATASET ##############
 
@@ -82,6 +82,18 @@ def load_gso_predictions(predictions_path: str, dataset_name: str, split: str):
             raise ValueError(f"Each prediction must contain '{'instance_id'}'")
 
     return predictions
+
+
+############## MODEL EVALUATION REPORTS ##############
+
+
+def load_report(report_path: str) -> dict:
+    """Load a model evaluation report."""
+    full_path = EVALUATION_REPORTS_DIR / report_path
+    if not full_path.exists():
+        raise FileNotFoundError(f"Report not found: {full_path}")
+
+    return load_json(full_path)
 
 
 ############## INTERMEDIATE DATA ##############

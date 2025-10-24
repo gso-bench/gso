@@ -4,14 +4,12 @@ and extract insights about why certain models succeed where others fail on speci
 """
 
 import json
-import sys
-from pathlib import Path
 from typing import Dict
 import openai
 import concurrent.futures
 from concurrent.futures import ThreadPoolExecutor
 
-from gso.utils.io import load_gso_dataset, load_json
+from gso.utils.io import load_gso_dataset, load_report
 from gso.constants import EVALUATION_REPORTS_DIR, RUN_EVALUATION_LOG_DIR
 
 MODEL_CONFIG = {
@@ -36,15 +34,6 @@ MODEL_CONFIG = {
         "run_dir": "claude-opus-4-20250514_maxiter_100_N_v0.51.1-no-hint-run_1",
     },
 }
-
-
-def load_report(report_path: str) -> dict:
-    """Load a model evaluation report."""
-    full_path = EVALUATION_REPORTS_DIR / report_path
-    if not full_path.exists():
-        raise FileNotFoundError(f"Report not found: {full_path}")
-
-    return load_json(full_path)
 
 
 def load_model_patch(run_dir: str, instance_id: str) -> str | None:
