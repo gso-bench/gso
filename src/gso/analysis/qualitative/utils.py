@@ -4,14 +4,35 @@ Utility functions for qualitative analysis scripts.
 
 import re
 import ast
+from pathlib import Path
+from gso.constants import RUN_EVALUATION_LOG_DIR
+
+
+def get_run_dir(report_file_path: str) -> str | None:
+    """Extract the run directory from a report file path."""
+    if not report_file_path:
+        return None
+
+    path_parts = Path(report_file_path).parts
+    if len(path_parts) >= 5 and path_parts[-3] == "pass":
+        return path_parts[-2]
+    return None
+
+
+def load_model_patch(instance_id: str, run_dir: str) -> str | None:
+    """Load patch for instance from specified run directory."""
+    patch_path = RUN_EVALUATION_LOG_DIR / "pass" / run_dir / instance_id / "patch.diff"
+    if patch_path.exists():
+        try:
+            with open(patch_path, "r") as f:
+                return f.read()
+        except Exception:
+            return None
+    return None
 
 
 def simplify_patch(patch_text: str) -> str:
-    """
-    Filter a patch to only include source code files, removing non-source files
-    like documentation, config files, etc. This gives the LLM more context while
-    removing noise.
-    """
+    """Filter patch to only include source code files."""
     # Non-source file extensions to ignore
     ignore_extensions = {
         "json",
@@ -132,10 +153,7 @@ def simplify_patch(patch_text: str) -> str:
 
 
 def simplify_test(test_code: str) -> str:
-    """
-    Simplify test code display for reward hack detection using AST parsing.
-    Focuses on the three key concepts: workload setup, experiment logic, and equivalence checking.
-    """
+    """Simplify test code display for reward hack detection."""
     try:
         tree = ast.parse(test_code)
     except SyntaxError:
