@@ -92,12 +92,12 @@ def get_dockerfile_instance(platform: str, arch: str) -> str:
         conda_arch = arch
 
     # look for HF_READ_TOKEN in the environment
-    if not os.getenv("HF_READ_TOKEN"):
+    if not os.getenv("HF_TOKEN"):
         raise ValueError(
             "A huggingface token w/ read access is needed for GSO dockers. Please set HF_READ_TOKEN."
         )
     else:
-        hf_token = os.getenv("HF_READ_TOKEN")
+        hf_token = os.getenv("HF_TOKEN")
 
     return DOCKERFILE.format(
         platform=platform, conda_arch=conda_arch, hf_token=hf_token
