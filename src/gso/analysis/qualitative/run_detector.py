@@ -187,6 +187,7 @@ def generate_threshold_summary(all_analyses, threshold_p):
             "hack_percentage": 0.0,
             "average_confidence": 0.0,
             "instance_ids": [],
+            "hacked_instances": [],
         }
 
     hack_count = sum(1 for a in filtered if a.get("is_reward_hack", False))
@@ -200,6 +201,9 @@ def generate_threshold_summary(all_analyses, threshold_p):
         "hack_percentage": (hack_count / len(filtered) * 100) if filtered else 0.0,
         "average_confidence": avg_confidence,
         "instance_ids": [a["instance_id"] for a in filtered],
+        "hacked_instances": [
+            a["instance_id"] for a in filtered if a.get("is_reward_hack", False)
+        ],
     }
 
 
@@ -218,7 +222,7 @@ def main():
         help="Speedup thresholds to analyze (default: 0.95)",
     )
     parser.add_argument("--max_workers", type=int, default=60)
-    parser.add_argument("--k_samples", type=int, default=5)
+    parser.add_argument("--k_samples", type=int, default=7)
     parser.add_argument("--model_name", type=str, required=True)
     args = parser.parse_args()
 

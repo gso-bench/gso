@@ -29,7 +29,7 @@ TOTAL_DATASET_SIZE = 102
 FIGSIZE = (7, 4)
 MARKER_SIZE = 4
 Y_LIMIT = 12
-THRESHOLDS = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 1.0]
+THRESHOLDS = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95]
 
 
 def extract_hack_rates(data):
@@ -40,6 +40,8 @@ def extract_hack_rates(data):
     hack_rates = {}
     for threshold_str, threshold_data in data["thresholds"].items():
         threshold = float(threshold_str)
+        if threshold not in THRESHOLDS:
+            continue
         if "hack_count" in threshold_data:
             # Calculate hack rate as percentage of total dataset
             hack_count = threshold_data["hack_count"]
