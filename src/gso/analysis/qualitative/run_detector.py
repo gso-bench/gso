@@ -42,6 +42,8 @@ def get_instances_passing_threshold(report_paths, threshold_p, dataset):
         run_dir = Path(report_path).parent.name
         opt_stats = report.get("opt_stats", {})
         instance_sets = report.get("instance_sets", {})
+        passed_ids = set(instance_sets.get("passed_ids", []))
+        empty_patch_ids = set(instance_sets.get("empty_patch_ids", []))
 
         # Get all attempted instances
         attempted_instances = set()
@@ -51,10 +53,17 @@ def get_instances_passing_threshold(report_paths, threshold_p, dataset):
 
         # Check each instance against threshold
         for instance_id in attempted_instances:
-            if instance_id not in instance_lookup or instance_id not in opt_stats:
-                continue
 
-            stats = opt_stats[instance_id]
+            # skip instances that don't have opt stats only in threshold mode
+            if threshold_p > 0.0:
+                if instance_id not in instance_lookup or instance_id not in opt_stats:
+                    continue
+            else:
+                # skip empty patches in no-threshold mode
+                if instance_id in empty_patch_ids:
+                    continue
+
+            stats = opt_stats.get(instance_id, {})
             base_mean = stats.get("base_mean", 0.0)
             patch_mean = stats.get("patch_mean", 0.0)
             pb_speedup_gm = stats.get("gm_speedup_patch_base", 0.0)
@@ -66,7 +75,7 @@ def get_instances_passing_threshold(report_paths, threshold_p, dataset):
                 and pc_speedup_hm > threshold_p
             )
 
-            if passes_threshold:
+            if passes_threshold or threshold_p == 0.0:
                 # Keep the best run for this instance
                 if (
                     instance_id not in best_runs
@@ -75,6 +84,7 @@ def get_instances_passing_threshold(report_paths, threshold_p, dataset):
                     best_runs[instance_id] = {
                         "run_dir": run_dir,
                         "pc_speedup_hm": pc_speedup_hm,
+                        "is_correct": instance_id in passed_ids,
                     }
 
     return best_runs
@@ -164,6 +174,7 @@ def analyze_at_lowest_threshold(
                 if "error" not in result:
                     instance_id = result["instance_id"]
                     result["pc_speedup_hm"] = best_runs[instance_id]["pc_speedup_hm"]
+                    result["is_correct"] = best_runs[instance_id]["is_correct"]
                 all_results.append(result)
             except Exception as e:
                 all_results.append({"instance_id": "unknown", "error": str(e)})
@@ -221,7 +232,7 @@ def main():
         default=[0.95],
         help="Speedup thresholds to analyze (default: 0.95)",
     )
-    parser.add_argument("--max_workers", type=int, default=60)
+    parser.add_argument("--max_workers", type=int, default=80)
     parser.add_argument("--k_samples", type=int, default=7)
     parser.add_argument("--model_name", type=str, required=True)
     args = parser.parse_args()
@@ -270,19 +281,27 @@ def main():
     }
 
     # Choose output format based on thresholds
+    analysis_dir = EVALUATION_REPORTS_DIR / "analysis" / "hack_detection"
+    analysis_dir.mkdir(parents=True, exist_ok=True)
+
     if len(thresholds) == 1 and thresholds[0] == 0.95:
-        # Single threshold mode: flatten structure for backward compatibility
+        # Single threshold mode
         output_data.update(threshold_results[str(thresholds[0])])
         file_name = f"{model_name}_hack_detection.json"
+        output_path = analysis_dir / "default_threshold" / file_name
+    elif min_threshold == 0.0:
+        # No-threshold mode
+        output_data.update(threshold_results[str(min_threshold)])
+        file_name = f"{model_name}_hack_detection_no_threshold.json"
+        output_path = analysis_dir / "no_threshold" / file_name
     else:
-        # Multi-threshold mode: nest under "thresholds"
+        # Multi-threshold mode
         output_data["thresholds"] = threshold_results
         file_name = f"{model_name}_hack_detection_thresholded.json"
+        output_path = analysis_dir / "thresholded" / file_name
 
     # Save output
-    output_path = EVALUATION_REPORTS_DIR / "analysis" / file_name
     output_path.parent.mkdir(parents=True, exist_ok=True)
-
     with open(output_path, "w") as f:
         json.dump(output_data, f, indent=2)
 
