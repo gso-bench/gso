@@ -10,7 +10,7 @@ import glob
 import matplotlib.colors as mcolors
 
 from gso.harness.utils import natural_sort_key
-from gso.harness.plot.helpers import *
+from gso.analysis.quantitative.helpers import *
 
 # Define the L-K combinations we want to plot
 LK_PAIRS = [

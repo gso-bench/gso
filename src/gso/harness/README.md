@@ -55,7 +55,7 @@ Your agent/model/system's predictions should be a jsonl file with one line per t
 }
 ```
 
-## Evaluate your rollouts (opt@K)
+## Evaluate your rollouts (Opt@K)
 
 ```bash
 uv run src/gso/harness/opt_at_k.py \
@@ -68,14 +68,14 @@ uv run src/gso/harness/opt_at_k.py \
 ```
 - `--model` is the model/agent name to use for reporting.
 - `--dataset_name` can be used for local jsonl file or a huggingface hub dataset.
-- `--prediction_paths` is a space separated list of predictions jsonl files (OR) a glob pattern.
+- `--prediction_paths` is a space separated list of `K` predictions jsonl files (OR) a glob pattern.
 - `--timeout` is the maximum time allowed for each task.
 - `--run_id` is a unique identifier for your run.
 - `--k` is the number of rollouts to evaluate.
 
 
 > [!Note]
-> Several helper scripts are in the [plot](./plot/) directory for plotting various results:
+> Several helper scripts are in the [analysis/quantitative](../analysis/quantitative/) directory for plotting various results:
 > - Opt@1 and Opt@K comparisons across models
 > - Opt@K vs Steps vs Rollouts (performance across compute budgets)
 > - Per-problem optimization stats

@@ -4,7 +4,7 @@ import json
 import numpy as np
 import argparse
 from gso.harness.grading.metrics import speedup
-from gso.harness.plot.helpers import *
+from gso.analysis.quantitative.helpers import *
 
 # Add argument parsing
 parser = argparse.ArgumentParser(

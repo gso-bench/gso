@@ -11,7 +11,7 @@ import glob
 from gso.harness.utils import natural_sort_key
 from gso.harness.opt_at_k import merge_reports
 from gso.constants import EVALUATION_REPORTS_DIR
-from gso.harness.plot.helpers import *
+from gso.analysis.quantitative.helpers import *
 
 MODEL_CONFIGS = {
     "gpt-4o": "~/gso/reports/gpt-4o_maxiter_100_N_v0.35.0-no-hint-run_*pass*",
