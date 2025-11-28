@@ -29,8 +29,8 @@ class GradeInstanceTask:
 
 
 def grad_instance_mp(task: GradeInstanceTask):
-    max_retries = 5
-    sleep_time = 60
+    max_retries = 3
+    sleep_time = 330
     instance_id = task.instance.instance_id
 
     # if reformat_reports, set max_retries to 0

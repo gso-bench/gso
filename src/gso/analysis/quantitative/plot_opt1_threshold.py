@@ -15,6 +15,8 @@ from gso.constants import PLOTS_DIR, EVALUATION_REPORTS_DIR, MIN_PROB_SPEEDUP
 # =============================================================================
 
 MODEL_CONFIGS = {
+    "Opus-4.5": "/home/gcpuser/gso-internal/logs/run_evaluation/pass/claude-opus-4-5-20251101_maxiter_100_N_v0.51.1-no-hint-run_*",
+    "Gemini-3-Pro": "/home/gcpuser/gso-internal/logs/run_evaluation/pass/gemini-3-pro-preview_maxiter_100_N_v0.51.1-no-hint-run_*",
     "Sonnet-4.5": "/home/gcpuser/gso-internal/logs/run_evaluation/pass/claude-sonnet-4-5-20250929_maxiter_100_N_v0.51.1-no-hint-run_*",
     "Gemini-2.5-Pro": "/home/gcpuser/gso-internal/logs/run_evaluation/pass/gemini-2.5-pro_maxiter_100_N_v0.51.1-no-hint-run_*",
     "Qwen-3-Coder": "/home/gcpuser/gso-internal/logs/run_evaluation/pass/qwen3-coder-plus_maxiter_100_N_v0.51.1-no-hint-run_*",
@@ -32,7 +34,7 @@ P_VALUES = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 1.0]
 NUM_TRIALS = 500
 FIGSIZE = (7, 4)
 MARKER_SIZE = 4
-Y_LIMIT = 80
+Y_LIMIT = 100
 USE_COLOR_MAP = False
 SHOW_STD = False
 

@@ -35,6 +35,8 @@ MODEL_REPORTS_NO_THRESHOLD = {
     "Qwen-3-Coder": "qwen3-coder_hack_detection_no_threshold.json",
     "Kimi-K2": "kimi-k2_hack_detection_no_threshold.json",
     "GLM-4.5-Air": "glm-4.5-air_hack_detection_no_threshold.json",
+    "Opus-4.5": "claude-opus-4.5_hack_detection_no_threshold.json",
+    "Gemini-3-Pro": "gemini-3-pro_hack_detection_no_threshold.json",
 }
 
 # Plot configuration

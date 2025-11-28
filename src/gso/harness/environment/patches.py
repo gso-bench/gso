@@ -3,6 +3,7 @@ def apply_patch_requests(test: str) -> str:
 import requests
 import hashlib
 import os
+import json
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
@@ -47,6 +48,83 @@ def patched_get(url, *args, **kwargs):
 
 # replace w/ patched version
 requests.get = patched_get
+
+# Patch requests.Session to cache HuggingFace Hub API calls
+# This intercepts all session requests including those from huggingface_hub
+_original_session_request = requests.Session.request
+
+def _cached_session_request(self, method, url, **kwargs):
+    # Only cache GET requests to HuggingFace API
+    if method.upper() == 'GET' and 'huggingface.co' in str(url):
+        cache_path = url_to_filename(str(url))
+        
+        if os.path.exists(cache_path):
+            with open(cache_path, 'rb') as f:
+                cached_content = f.read()
+            response = requests.Response()
+            response.status_code = 200
+            response.url = str(url)
+            response._content = cached_content
+            response.headers['X-From-Cache'] = 'true'
+            response.headers['Content-Type'] = 'application/json'
+            if os.getenv("DEBUG_GSO") == "true":
+                print(f"HF cache HIT: {url}")
+            return response
+        
+        if os.getenv("DEBUG_GSO") == "true":
+            print(f"HF cache MISS: {url}")
+        
+        response = _original_session_request(self, method, url, **kwargs)
+        if response.status_code == 200:
+            with open(cache_path, 'wb') as f:
+                f.write(response.content)
+        return response
+    
+    return _original_session_request(self, method, url, **kwargs)
+
+requests.Session.request = _cached_session_request
+
+# Patch httpx for HuggingFace Hub (which uses httpx, not requests)
+try:
+    import httpx
+    
+    _original_httpx_request = httpx.Client.request
+    
+    def _cached_httpx_request(self, method, url, **kwargs):
+        url_str = str(url)
+        if method.upper() == 'GET' and 'huggingface.co' in url_str:
+            cache_path = url_to_filename(url_str)
+            
+            if os.path.exists(cache_path):
+                with open(cache_path, 'rb') as f:
+                    cached_content = f.read()
+                if os.getenv("DEBUG_GSO") == "true":
+                    print(f"HTTPX cache HIT: {url_str[:80]}")
+                # Build a proper request object for the response
+                request = httpx.Request(method, url)
+                response = httpx.Response(
+                    status_code=200,
+                    content=cached_content,
+                    headers={'content-type': 'application/json', 'x-from-cache': 'true'},
+                    request=request
+                )
+                return response
+            
+            if os.getenv("DEBUG_GSO") == "true":
+                print(f"HTTPX cache MISS: {url_str[:80]}")
+            
+            response = _original_httpx_request(self, method, url, **kwargs)
+            if response.status_code == 200:
+                with open(cache_path, 'wb') as f:
+                    f.write(response.content)
+            return response
+        
+        return _original_httpx_request(self, method, url, **kwargs)
+    
+    httpx.Client.request = _cached_httpx_request
+    
+except ImportError:
+    pass  # httpx not installed
 """
     return patch_code + "\n\n" + test
 
