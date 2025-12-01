@@ -11,6 +11,7 @@ def make_run_report(
     full_dataset: list,
     run_id: str,
     client: docker.DockerClient | None = None,
+    verbose: bool = False,
 ) -> Path:
     """
     Generate a comprehensive evaluation report for a GSO run.
@@ -172,26 +173,31 @@ def make_run_report(
     with open(report_file, "w") as f:
         json.dump(report, f, indent=4)
 
-    # Print summary
-    summary = report["summary"]
-    opt_base = summary["opt_base"] / summary["total_instances"]
-    opt_commit = summary["opt_commit"] / summary["total_instances"]
-    opt_main = summary["opt_main"] / summary["total_instances"]
-    print("\n=== Evaluation Summary ===")
-    print(f"Total instances: {summary['total_instances']}")
-    print(f"Instances submitted: {summary['total_predictions']}")
-    print(f"Instances completed: {summary['completed_instances']}")
-    print(f"Incomplete incomplete: {summary['incomplete_instances']}")
-    print("-" * 10)
-    print(f"Instances that passed: {summary['passed_instances']}")
-    print(f"Instances with failed tests: {summary['test_failed_instances']}")
-    print(f"Instances with failed patch: {summary['patch_failed_instances']}")
-    print(f"Instances with empty patches: {summary['empty_patch_instances']}")
-    print(f"Instances with errors: {summary['error_instances']}")
-    print("-" * 10)
-    print(f"opt(base): {summary['opt_base']} ({opt_base*100:.2f}%) ")
-    print(f"opt(commit): {summary['opt_commit']} ({opt_commit*100:.2f}%)")
-    print(f"opt(main): {summary['opt_main']} ({opt_main*100:.2f}%) ")
+    # Print summary (only if verbose)
+    if verbose:
+        summary = report["summary"]
+        opt_base = summary["opt_base"] / summary["total_instances"]
+        opt_commit = summary["opt_commit"] / summary["total_instances"]
+        opt_main = summary["opt_main"] / summary["total_instances"]
+        print("\n=== Evaluation Summary ===")
+        print(f"Total instances: {summary['total_instances']}")
+        print(f"Instances submitted: {summary['total_predictions']}")
+        print(f"Instances completed: {summary['completed_instances']}")
+        print(f"Incomplete incomplete: {summary['incomplete_instances']}")
+        print("-" * 10)
+        print(f"Instances that passed: {summary['passed_instances']}")
+        print(f"Instances with failed tests: {summary['test_failed_instances']}")
+        print(f"Instances with failed patch: {summary['patch_failed_instances']}")
+        print(f"Instances with empty patches: {summary['empty_patch_instances']}")
+        print(f"Instances with errors: {summary['error_instances']}")
+        print("-" * 10)
+        print(f"Instances that improved over base: {summary['opt_base']}")
+        print(f"Instances that improved over commit: {summary['opt_commit']}")
+        print(f"Instances that improved over main: {summary['opt_main']}")
+        print("-" * 10)
+        print(f"opt(base): {summary['opt_base']} ({opt_base*100:.2f}%) ")
+        print(f"opt(commit): {summary['opt_commit']} ({opt_commit*100:.2f}%)")
+        print(f"opt(main): {summary['opt_main']} ({opt_main*100:.2f}%) ")
 
-    print(f"\nReport written to: {report_file}")
+    print(f"\nRun Report: {report_file}")
     return report_file

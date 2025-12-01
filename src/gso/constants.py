@@ -37,4 +37,4 @@ LOW_TEST_FALLBACK_SPEEDUP = 1.1  # min speedup for problems with low test count
 
 # --------- Grading Constants ---------
 OPT_THRESH = 0.95  # min speedup to consider as `matching or exceeding` commit perf
-HIGH_RESOURCE_REPOS = ["abetlen/llama-cpp-python"]
+HIGH_RESOURCE_REPOS = ["abetlen/llama-cpp-python", "huggingface/tokenizers"]

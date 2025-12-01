@@ -124,14 +124,25 @@ install_repo() {{
 """
 
 SKIP_MAIN = True  # Toggle to skip main branch testing
-RUN_BASE = """run_tests_for_commit /gso_test_{i}.py "base_{i}.txt" "--reference" "gso_{i}" """
-RUN_PATCH = """run_tests_for_commit /gso_test_{i}.py "result_{i}.txt" "--eqcheck" "gso_{i}" """
+RUN_BASE = (
+    """run_tests_for_commit /gso_test_{i}.py "base_{i}.txt" "--reference" "gso_{i}" """
+)
+RUN_PATCH = (
+    """run_tests_for_commit /gso_test_{i}.py "result_{i}.txt" "--eqcheck" "gso_{i}" """
+)
 RUN_COMMIT = """run_tests_for_commit /gso_test_{i}.py "commit_{i}.txt" "--reference" "gso_{i}" """
-RUN_MAIN = """run_tests_for_commit /gso_test_{i}.py "main_{i}.txt" "--reference" "gso_{i}" """
+RUN_MAIN = (
+    """run_tests_for_commit /gso_test_{i}.py "main_{i}.txt" "--reference" "gso_{i}" """
+)
 PRINT_PERF = lambda i, f: f"""echo "{TEST_DELIMITER.format(i=i)}" && cat {f}_{i}.txt"""
-MAX_TIME = lambda repo: 0 if repo in ["abetlen/llama-cpp-python"] else 300
+MAX_TIME = lambda repo: (
+    0 if repo in ["abetlen/llama-cpp-python", "huggingface/tokenizers"] else 300
+)
 MAX_ITERS = lambda repo: (
-    1 if repo in ["abetlen/llama-cpp-python", "microsoft/onnxruntime"] else 5
+    1
+    if repo
+    in ["abetlen/llama-cpp-python", "microsoft/onnxruntime", "huggingface/tokenizers"]
+    else 5
 )
 
 

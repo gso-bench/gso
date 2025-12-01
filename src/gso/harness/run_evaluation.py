@@ -5,6 +5,7 @@ import resource
 import docker
 import time
 import re
+import warnings
 
 from gso.utils.io import load_gso_dataset, load_gso_predictions
 from gso.harness.environment.docker_utils import cleanup_docker
@@ -15,6 +16,8 @@ from gso.harness.utils import retag_remote_to_local_image
 from gso.utils.multiprocess import run_tasks_in_parallel_iter
 from gso.constants import HIGH_RESOURCE_REPOS
 from gso.data.dataset import GSOInstance
+
+warnings.filterwarnings("ignore", category=RuntimeWarning, module="numpy")
 
 
 @dataclass
@@ -29,8 +32,8 @@ class GradeInstanceTask:
 
 
 def grad_instance_mp(task: GradeInstanceTask):
-    max_retries = 5
-    sleep_time = 60
+    max_retries = 3
+    sleep_time = 330
     instance_id = task.instance.instance_id
 
     # if reformat_reports, set max_retries to 0
@@ -209,6 +212,7 @@ def main(
     reformat_reports,
     rerun_all=False,
     report_dir=".",
+    verbose=False,
 ):
     """Run eval harness for a given dataset and predictions."""
     assert len(run_id) > 0, "Run ID must be provided"
@@ -250,7 +254,9 @@ def main(
             reformat_reports=reformat_reports,
         )
 
-    return make_run_report(predictions, full_dataset, run_id, client=None)
+    return make_run_report(
+        predictions, full_dataset, run_id, client=None, verbose=verbose
+    )
 
 
 if __name__ == "__main__":
@@ -313,6 +319,11 @@ if __name__ == "__main__":
         type=int,
         default=1_800,
         help="Timeout (in seconds) for running an eval for each instance",
+    )
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Print detailed per-run summaries",
     )
 
     args = parser.parse_args()

@@ -18,6 +18,7 @@ def run_evaluation(
     max_workers=10,
     instance_ids=None,
     rerun_all=False,
+    verbose=False,
 ):
     """Run evaluation script and return path to generated report."""
     cmd = [
@@ -45,12 +46,13 @@ def run_evaluation(
     if rerun_all:
         cmd.append("--rerun_all")
 
+    if verbose:
+        cmd.append("--verbose")
+
     output = subprocess.check_output(cmd, text=True)
     print(output)
     report_path = next(
-        line.split(": ")[1]
-        for line in output.split("\n")
-        if "Report written to:" in line
+        line.split(": ")[1] for line in output.split("\n") if "Run Report:" in line
     )
     return report_path
 
@@ -205,9 +207,9 @@ def merge_reports(full_dataset, report_files, k):
 
     # Print summary
     summary = report["summary"]
-    opt_base = summary["opt_base"] / summary["total_instances"]
-    opt_commit = summary["opt_commit"] / summary["total_instances"]
-    opt_main = summary["opt_main"] / summary["total_instances"]
+    score = round(summary["opt_commit"] / summary["total_instances"] * 100, 2)
+    report["summary"]["score"] = score
+
     print("\n=== Evaluation Summary ===")
     print(f"Total instances: {summary['total_instances']}")
     print(f"Instances submitted: {summary['total_predictions']}")
@@ -221,9 +223,11 @@ def merge_reports(full_dataset, report_files, k):
     print(f"Instances with base errors: {summary['base_failed_instances']}")
     print(f"Instances with errors: {summary['error_instances']}")
     print("-" * 10)
-    print(f"opt(base)@{k}: {summary['opt_base']} ({opt_base*100:.2f}%) ")
-    print(f"opt(commit)@{k}: {summary['opt_commit']} ({opt_commit*100:.2f}%)")
-    print(f"opt(main)@{k}: {summary['opt_main']} ({opt_main*100:.2f}%) ")
+    print(f"Instances that improved over base: {summary['opt_base']}")
+    print(f"Instances that improved over commit: {summary['opt_commit']}")
+    print("=" * 10)
+    print(f"score [opt@{k}]: {score}%")
+    print("=" * 10)
 
     return report
 
@@ -288,6 +292,11 @@ def main():
         default=10,
         help="Max workers for parallel processing",
     )
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Print detailed per-run summaries",
+    )
 
     args = parser.parse_args()
 
@@ -308,6 +317,7 @@ def main():
             args.max_workers,
             args.instance_ids,
             args.rerun_all,
+            args.verbose,
         )
         report_files.append(report_path)
 

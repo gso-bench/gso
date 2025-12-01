@@ -218,24 +218,68 @@ def generate_threshold_summary(all_analyses, threshold_p):
     }
 
 
+def print_score_summary(report_path: str, hacked_instances: list[str]):
+    """Print score and score_hack_control from the report."""
+    with open(report_path, "r") as f:
+        report = json.load(f)
+
+    total = report["summary"]["total_instances"]
+    opt_commit = report["summary"]["opt_commit"]
+    score = report["summary"].get("score", round(opt_commit / total * 100, 2))
+
+    opt_commit_ids = set(report["instance_sets"].get("opt_commit_ids", []))
+    hacked_in_opt_commit = opt_commit_ids & set(hacked_instances)
+    legitimate_count = opt_commit - len(hacked_in_opt_commit)
+    score_hack_control = round((legitimate_count / total) * 100, 2)
+
+    print(f"\n===== Hack Detection Summary =====")
+    print(f"Total instances: {total}")
+    print(f"Hacks: {len(hacked_instances)}")
+    print(f"Improved over commit: {opt_commit}")
+    print(f"Hacks & improved over commit: {len(hacked_in_opt_commit)}")
+    print(f"Legitimate: {legitimate_count}")
+    print("=" * 10)
+    print(f"score: {score}%")
+    print(f"score_hack_control: {score_hack_control}%")
+    print("=" * 10)
+
+
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--run_dirs",
-        required=True,
-        help="Run directory glob pattern (e.g., 'gpt-5*_run_*')",
-    )
-    parser.add_argument(
-        "--thresholds",
-        type=float,
-        nargs="+",
-        default=[0.95],
-        help="Speedup thresholds to analyze (default: 0.95)",
-    )
+    parser.add_argument("--run_dirs", required=True, help="Run directory glob pattern")
+    parser.add_argument("--thresholds", type=float, nargs="+", default=[0.0])
     parser.add_argument("--max_workers", type=int, default=80)
     parser.add_argument("--k_samples", type=int, default=7)
     parser.add_argument("--model_name", type=str, required=True)
+    parser.add_argument(
+        "--report_path", type=str, required=True, help="Path to merged report"
+    )
+    parser.add_argument(
+        "--reformat_reports", action="store_true", help="Reuse existing results"
+    )
     args = parser.parse_args()
+
+    # Reformat mode: reuse existing detection results
+    if args.reformat_reports:
+        detection_dir = (
+            EVALUATION_REPORTS_DIR / "analysis" / "hack_detection" / "no_threshold"
+        )
+        detection_file = (
+            detection_dir / f"{args.model_name}_hack_detection_no_threshold.json"
+        )
+
+        if not detection_file.exists():
+            print(f"Error: No detection file found at {detection_file}")
+            print("Run detector first without --reformat_reports")
+            return
+
+        with open(detection_file, "r") as f:
+            detection_data = json.load(f)
+
+        hacked_instances = detection_data.get("hacked_instances", [])
+        print(f"Loaded {len(hacked_instances)} hacked instances from existing results")
+        print_score_summary(args.report_path, hacked_instances)
+        return
 
     # Load dataset
     dataset = load_gso_dataset("gso-bench/gso", "test")
@@ -305,11 +349,16 @@ def main():
     with open(output_path, "w") as f:
         json.dump(output_data, f, indent=2)
 
-    print(f"\n{'='*80}")
-    print(f"SUMMARY:")
-    print(f"{'='*80}")
-    print(f"Total instances analyzed: {len(all_analyses)}")
-    print(f"Results saved to: {output_path}")
+    print(f"\nResults saved to: {output_path}")
+
+    # Get hacked instances for score calculation
+    if min_threshold == 0.0:
+        hacked_instances = output_data.get("hacked_instances", [])
+    else:
+        threshold_key = "0.95" if "0.95" in threshold_results else str(max(thresholds))
+        hacked_instances = threshold_results[threshold_key].get("hacked_instances", [])
+
+    print_score_summary(args.report_path, hacked_instances)
 
 
 if __name__ == "__main__":
