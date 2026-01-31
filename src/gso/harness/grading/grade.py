@@ -15,6 +15,7 @@ from gso.harness.environment.docker_utils import (
     exec_run_with_timeout,
     remove_image,
 )
+from gso.harness.environment.patches import apply_patches
 
 
 class EvaluationError(Exception):
@@ -126,6 +127,16 @@ def grade_instance(
             f"Eval script for {instance_id} written to {eval_file}; copying to container..."
         )
         copy_to_container(container, eval_file, PurePosixPath("/eval.sh"))
+
+        # copy test scripts to container (with patches applied)
+        patched_tests = apply_patches(instance.instance_id, instance.tests)
+        for i, test_content in enumerate(patched_tests):
+            test_file = Path(log_dir / f"gso_test_{i}.py")
+            test_file.write_text(test_content)
+            copy_to_container(container, test_file, PurePosixPath(f"/gso_test_{i}.py"))
+        logger.info(
+            f"Copied {len(patched_tests)} test scripts to container for {instance_id}"
+        )
 
         # Run eval script, write output to logs
         test_output, timed_out, total_runtime = exec_run_with_timeout(
