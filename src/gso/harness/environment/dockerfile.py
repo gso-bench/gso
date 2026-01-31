@@ -80,6 +80,10 @@ RUN find / -maxdepth 1 -name 'gso_test_*.py' -exec bash -c "source .venv/bin/act
 
 # Automatically activate the env within the testbed directory
 RUN echo "source .venv/bin/activate" >> /root/.bashrc
+
+# Remove test scripts after pre-caching to prevent agent access
+# Tests will be injected at evaluation time
+RUN rm -f /gso_test*.py
 """
 
 
