@@ -15,6 +15,9 @@ from gso.constants import PLOTS_DIR, EVALUATION_REPORTS_DIR, MIN_PROB_SPEEDUP
 # =============================================================================
 
 MODEL_CONFIGS = {
+    "Gemini-3-Flash": "/home/gcpuser/gso-internal/logs/run_evaluation/pass/gemini-3-flash-preview_maxiter_100_N_v0.51.1-no-hint-run_*",
+    "GPT-5.1": "/home/gcpuser/gso-internal/logs/run_evaluation/pass/gpt-5.1-2025-11-13_maxiter_100_N_v0.51.1-no-hint-run_*",
+    "GPT-5.2": "/home/gcpuser/gso-internal/logs/run_evaluation/pass/gpt-5.2-2025-12-11_maxiter_100_N_v0.51.1-no-hint-run_*",
     "Opus-4.5": "/home/gcpuser/gso-internal/logs/run_evaluation/pass/claude-opus-4-5-20251101_maxiter_100_N_v0.51.1-no-hint-run_*",
     "Gemini-3-Pro": "/home/gcpuser/gso-internal/logs/run_evaluation/pass/gemini-3-pro-preview_maxiter_100_N_v0.51.1-no-hint-run_*",
     "Sonnet-4.5": "/home/gcpuser/gso-internal/logs/run_evaluation/pass/claude-sonnet-4-5-20250929_maxiter_100_N_v0.51.1-no-hint-run_*",
