@@ -75,8 +75,9 @@ COPY ./gso_test*.py /
 WORKDIR /testbed/
 
 # Run setup for all test and check if cache is full
-RUN find / -maxdepth 1 -name 'gso_test_*.py' -exec bash -c "source .venv/bin/activate && export HF_TOKEN={hf_token} && cd / && python {{}} prep.txt --reference --file_prefix prep" \;
-RUN find / -maxdepth 1 -name 'gso_test_*.py' -exec bash -c "source .venv/bin/activate && export DEBUG_GSO="true" && export HF_TOKEN={hf_token} && cd / && python {{}} prep.txt --reference --file_prefix prep" \;
+# HF_HUB_DISABLE_XET=1 avoids Xet storage backend issues during pre-caching
+RUN find / -maxdepth 1 -name 'gso_test_*.py' -exec bash -c "source .venv/bin/activate && export HF_TOKEN={hf_token} && export HF_HUB_DISABLE_XET=1 && cd / && python {{}} prep.txt --reference --file_prefix prep" \;
+RUN find / -maxdepth 1 -name 'gso_test_*.py' -exec bash -c "source .venv/bin/activate && export DEBUG_GSO="true" && export HF_TOKEN={hf_token} && export HF_HUB_DISABLE_XET=1 && cd / && python {{}} prep.txt --reference --file_prefix prep" \;
 
 # Automatically activate the env within the testbed directory
 RUN echo "source .venv/bin/activate" >> /root/.bashrc
