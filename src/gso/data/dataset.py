@@ -39,6 +39,14 @@ class GSOInstance:
     def install_repo_script(self):
         env_name = "testbed"
         repo_directory = f"/{env_name}"
+
+        # Pin setuptools<82 in build isolation to preserve pkg_resources
+        # for legacy setup.py projects (setuptools 82+ removed pkg_resources)
+        build_constraint_setup = [
+            "echo 'setuptools<82' > /tmp/uv_build_constraints.txt",
+            "export UV_BUILD_CONSTRAINT=/tmp/uv_build_constraints.txt",
+        ]
+
         repo_setup = [
             f"git clone -o origin {self.repo_url} {repo_directory}",
             f"chmod -R 777 {repo_directory}",  # nonroot user can run tests
@@ -51,6 +59,7 @@ class GSOInstance:
         return (
             "\n".join(
                 ["#!/bin/bash", "set -euxo pipefail"]
+                + build_constraint_setup
                 + repo_setup
                 + self.install_commands
             )
