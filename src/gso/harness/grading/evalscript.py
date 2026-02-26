@@ -159,9 +159,10 @@ def get_eval_script(instance) -> str:
 
     run_base = "\n".join([RUN_BASE.format(i=i) for i in range(test_count)])
 
-    # Set tokens
+    # Do not bake token literals into eval.sh; rely on container runtime env injection.
     setup_tokens = [
-        f"export HF_TOKEN={os.getenv('HF_TOKEN')}" if os.getenv("HF_TOKEN") else "",
+        'if [ -n "${HF_TOKEN:-}" ]; then export HF_TOKEN; '
+        'elif [ -n "${HF_READ_TOKEN:-}" ]; then export HF_TOKEN="${HF_READ_TOKEN}"; fi'
     ]
 
     eval_commands = [

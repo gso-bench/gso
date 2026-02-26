@@ -5,6 +5,7 @@ import docker
 import docker.errors
 import logging
 import traceback
+import os
 from datetime import timedelta
 from dataclasses import dataclass
 from pathlib import Path
@@ -61,12 +62,11 @@ def build_image(
 
     ansi_escape = re.compile(r"\x1B\[[0-?]*[ -/]*[@-~]")
     start_time = time.time()
-    client = docker.from_env()
     logger = setup_logger(image_name, build_dir / "build_image.log")
 
     logger.info(
         f"Building image {image_name}\n"
-        f"Using dockerfile:\n{dockerfile}\n"
+        "Using dockerfile template (contents omitted to avoid secret leakage in logs)\n"
         f"Adding ({len(setup_scripts)}) setup scripts to image build repo"
     )
 
@@ -87,33 +87,46 @@ def build_image(
         with open(dockerfile_path, "w") as f:
             f.write(dockerfile)
 
-        # Build the image
+        # Build the image with BuildKit secret so token never appears in layers/history
         print(f"Building {image_name} in {build_dir} with platform {platform}")
         logger.info(f"Building {image_name} in {build_dir} with platform {platform}")
 
-        response = client.api.build(
-            path=str(build_dir),
-            tag=image_name,
-            rm=True,
-            forcerm=True,
-            decode=True,
-            platform=platform,
-            nocache=nocache,
-        )
+        env = os.environ.copy()
+        env["DOCKER_BUILDKIT"] = "1"
+        cmd = [
+            "docker",
+            "buildx",
+            "build",
+            "--load",
+            "--platform",
+            platform,
+            "--tag",
+            image_name,
+            "--file",
+            str(dockerfile_path),
+            "--secret",
+            "id=hf_read_token,env=HF_READ_TOKEN",
+        ]
+        if nocache:
+            cmd.append("--no-cache")
+        cmd.append(str(build_dir))
 
-        buildlog = ""
-        for chunk in response:
-            if "stream" in chunk:
-                chunk_stream = ansi_escape.sub("", chunk["stream"])
-                logger.info(chunk_stream.strip())
-                buildlog += chunk_stream
-            elif "errorDetail" in chunk:
-                logger.error(
-                    f"Error: {ansi_escape.sub('', chunk['errorDetail']['message'])}"
-                )
-                raise docker.errors.BuildError(
-                    chunk["errorDetail"]["message"], buildlog
-                )
+        process = subprocess.run(
+            cmd,
+            check=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            env=env,
+        )
+        output = ansi_escape.sub("", process.stdout or "")
+        if output:
+            logger.info(output.strip())
+
+        if process.returncode != 0:
+            raise RuntimeError(
+                f"docker buildx failed for {image_name} with code {process.returncode}"
+            )
         logger.info("Image built successfully!")
     except subprocess.CalledProcessError as e:
         logger.error(f"Subprocess error during {image_name} build: {e}")
@@ -309,11 +322,11 @@ def create_container(
         # Create the container
         logger.info(f"Creating container for {instance.instance_id}...")
 
-        # Define arguments for running the container
+        # Inject HF token at runtime only (never into image layers/scripts).
+        runtime_hf_token = os.getenv("HF_READ_TOKEN") or os.getenv("HF_TOKEN")
         run_args = {}
         cap_add = run_args.get("cap_add", [])
-
-        container = client.containers.create(
+        container_kwargs = dict(
             image=instance.instance_image_key,
             name=instance.get_instance_container_name(run_id),
             user="root",
@@ -322,6 +335,10 @@ def create_container(
             platform=instance.platform,
             cap_add=cap_add,
         )
+        if runtime_hf_token:
+            container_kwargs["environment"] = {"HF_TOKEN": runtime_hf_token}
+
+        container = client.containers.create(**container_kwargs)
         logger.info(f"Container for {instance.instance_id} created: {container.id}")
         return container
     except Exception as e:

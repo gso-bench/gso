@@ -1,4 +1,5 @@
 DOCKERFILE = r"""
+# syntax=docker/dockerfile:1.4
 FROM --platform={platform} ubuntu:22.04
 
 ARG DEBIAN_FRONTEND=noninteractive
@@ -76,8 +77,9 @@ WORKDIR /testbed/
 
 # Run setup for all test and check if cache is full
 # HF_HUB_DISABLE_XET=1 avoids Xet storage backend issues during pre-caching
-RUN find / -maxdepth 1 -name 'gso_test_*.py' -exec bash -c "source .venv/bin/activate && export HF_TOKEN={hf_token} && export HF_HUB_DISABLE_XET=1 && cd / && python {{}} prep.txt --reference --file_prefix prep" \;
-RUN find / -maxdepth 1 -name 'gso_test_*.py' -exec bash -c "source .venv/bin/activate && export DEBUG_GSO="true" && export HF_TOKEN={hf_token} && export HF_HUB_DISABLE_XET=1 && cd / && python {{}} prep.txt --reference --file_prefix prep" \;
+# HF token is read from a BuildKit secret at build time only and never persisted.
+RUN --mount=type=secret,id=hf_read_token bash -lc 'set -euo pipefail; HF_TOKEN="$(cat /run/secrets/hf_read_token)"; export HF_TOKEN HF_HUB_DISABLE_XET=1; find / -maxdepth 1 -name "gso_test_*.py" -exec bash -c "source .venv/bin/activate && cd / && python {{}} prep.txt --reference --file_prefix prep" \;'
+RUN --mount=type=secret,id=hf_read_token bash -lc 'set -euo pipefail; HF_TOKEN="$(cat /run/secrets/hf_read_token)"; export DEBUG_GSO=true HF_TOKEN HF_HUB_DISABLE_XET=1; find / -maxdepth 1 -name "gso_test_*.py" -exec bash -c "source .venv/bin/activate && cd / && python {{}} prep.txt --reference --file_prefix prep" \;'
 
 # Automatically activate the env within the testbed directory
 RUN echo "source .venv/bin/activate" >> /root/.bashrc
@@ -101,9 +103,5 @@ def get_dockerfile_instance(platform: str, arch: str) -> str:
         raise ValueError(
             "A huggingface token w/ read access is needed for GSO dockers. Please set HF_READ_TOKEN."
         )
-    else:
-        hf_token = os.getenv("HF_READ_TOKEN")
 
-    return DOCKERFILE.format(
-        platform=platform, conda_arch=conda_arch, hf_token=hf_token
-    )
+    return DOCKERFILE.format(platform=platform, conda_arch=conda_arch)
