@@ -1,39 +1,16 @@
-import matplotlib.pyplot as plt
-import os
+import argparse
 import glob
 import json
+import os
+
+import matplotlib.pyplot as plt
 import numpy as np
 import random
-from pathlib import Path
 
 from gso.harness.utils import natural_sort_key
 from gso.analysis.quantitative.helpers import *
 from gso.constants import PLOTS_DIR, EVALUATION_REPORTS_DIR, MIN_PROB_SPEEDUP
 
-# =============================================================================
-# CONFIGURATION
-# =============================================================================
-
-MODEL_CONFIGS = {
-    "Opus-4.6": "/home/gcpuser/gso-internal/logs/run_evaluation/pass/vertex_ai__claude-opus-4-6*",
-    "Gemini-3-Flash": "/home/gcpuser/gso-internal/logs/run_evaluation/pass/gemini-3-flash-preview_maxiter_100_N_v0.51.1-no-hint-run_*",
-    "GPT-5.1": "/home/gcpuser/gso-internal/logs/run_evaluation/pass/gpt-5.1-2025-11-13_maxiter_100_N_v0.51.1-no-hint-run_*",
-    "GPT-5.2": "/home/gcpuser/gso-internal/logs/run_evaluation/pass/gpt-5.2-2025-12-11_maxiter_100_N_v0.51.1-no-hint-run_*",
-    "Opus-4.5": "/home/gcpuser/gso-internal/logs/run_evaluation/pass/claude-opus-4-5-20251101_maxiter_100_N_v0.51.1-no-hint-run_*",
-    "Gemini-3-Pro": "/home/gcpuser/gso-internal/logs/run_evaluation/pass/gemini-3-pro-preview_maxiter_100_N_v0.51.1-no-hint-run_*",
-    "Sonnet-4.5": "/home/gcpuser/gso-internal/logs/run_evaluation/pass/claude-sonnet-4-5-20250929_maxiter_100_N_v0.51.1-no-hint-run_*",
-    "Gemini-2.5-Pro": "/home/gcpuser/gso-internal/logs/run_evaluation/pass/gemini-2.5-pro_maxiter_100_N_v0.51.1-no-hint-run_*",
-    "Qwen-3-Coder": "/home/gcpuser/gso-internal/logs/run_evaluation/pass/qwen3-coder-plus_maxiter_100_N_v0.51.1-no-hint-run_*",
-    "Kimi-K2": "/home/gcpuser/gso-internal/logs/run_evaluation/pass/Kimi-K2-Instruct_maxiter_100_N_v0.51.1-no-hint-run_*",
-    "GPT-5": "/home/gcpuser/gso-internal/logs/run_evaluation/pass/gpt-5-2025-08-07_maxiter_100_N_v0.51.1-no-hint-run_*",
-    "Opus-4": "/home/gcpuser/gso-internal/logs/run_evaluation/pass/claude-opus-4-20250514_maxiter_100_N_v0.51.1-no-hint-run_*",
-    "o3": "/home/gcpuser/gso-internal/logs/run_evaluation/pass/o3_maxiter_100_N_v0.35.0-no-hint-run_*",
-    "Sonnet-4": "/home/gcpuser/gso-internal/logs/run_evaluation/pass/claude-sonnet-4-20250514_maxiter_100_N_v0.35.0-no-hint-run_*",
-    # "Claude-3.6": "/home/gcpuser/gso-internal/logs/run_evaluation/pass/claude-3-5-sonnet-v2-20241022_maxiter_100_N_v0.35.0-no-hint-run_*",
-    # "o4-mini": "/home/gcpuser/gso-internal/logs/run_evaluation/pass/o4-mini_maxiter_100_N_v0.35.0-no-hint-run_*",
-}
-
-# Threshold values for p (speedup thresholds)
 P_VALUES = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 1.0]
 NUM_TRIALS = 500
 FIGSIZE = (7, 4)
@@ -119,7 +96,7 @@ def calculate_opt_at_k_with_threshold_from_reports(
     return opt_at_k_trials.mean(), opt_at_k_trials.std()
 
 
-def plot_opt1_vs_threshold(results_data, figsize=FIGSIZE):
+def plot_opt1_vs_threshold(results_data, model_configs, figsize=FIGSIZE):
     """Plot Opt@1 vs threshold with error bands."""
     import matplotlib.ticker as mtick
 
@@ -173,9 +150,9 @@ def plot_opt1_vs_threshold(results_data, figsize=FIGSIZE):
     ax.grid(True, linestyle=":", linewidth=0.5)
     ax.legend(
         frameon=True,
-        fontsize=10 if len(MODEL_CONFIGS) > 3 else 14,
+        fontsize=10 if len(model_configs) > 3 else 14,
         loc="upper right",
-        ncol=2 if len(MODEL_CONFIGS) > 3 else 1,
+        ncol=2 if len(model_configs) > 3 else 1,
     )
 
     plt.tight_layout()
@@ -187,9 +164,23 @@ def plot_opt1_vs_threshold(results_data, figsize=FIGSIZE):
 
 def main():
     """Main function to run the analysis."""
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--models",
+        nargs="+",
+        required=True,
+        help='Each entry: "DisplayName::glob_pattern"',
+    )
+    args = parser.parse_args()
+
+    model_configs = {}
+    for entry in args.models:
+        name, _, pattern = entry.partition("::")
+        model_configs[name] = pattern
+
     results_data = {}
 
-    for model_name, pattern in MODEL_CONFIGS.items():
+    for model_name, pattern in model_configs.items():
         print(f"\nProcessing {model_name}...")
 
         # Find report files (they are in subdirectories)
@@ -227,7 +218,7 @@ def main():
 
     # Plot the results
     setup_plot_style()
-    plot_opt1_vs_threshold(results_data)
+    plot_opt1_vs_threshold(results_data, model_configs)
 
     # save results_data to a json file in reports directory
     results_dir = (EVALUATION_REPORTS_DIR / "analysis").resolve()
