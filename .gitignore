@@ -172,6 +172,6 @@ eval_outputs
 *.csv
 run_gso.sh
 run_detector.sh
-run_plots.sh
+run_analysis.sh
 plot_models.yaml
 experiments/
