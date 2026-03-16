@@ -25,6 +25,7 @@
 GSO (Global Software Optimization) is a benchmark for evaluating language models' capabilities in developing high-performance software. We present 100+ challenging optimization tasks across 10 codebases spanning diverse domains and programming languages. Each task provides a codebase and performance test as a precise specification, with agents required to optmize the codebase and measured against expert developer commits.
 
 ## 📰 News
+* **[Feb 2, 2026]**: Released integrations with frameworks like Harbor and other scaffolds: [gso-bench/scaffolds](https://github.com/gso-bench/scaffolds).
 * **[Dec 23, 2025]**: Released evaluation logs and transcripts w/ [Docent](https://transluce.org/docent) support: [gso-bench/gso-experiments](https://github.com/gso-bench/gso-experiments).
 * **[Nov 3, 2025]**: Released GSO's HackDetector that catches models reward hacking: [GSO Blog](https://gso-blog.notion.site/gso-hackdetector).
 * **[May 30, 2025]**: 🤗 GSO dataset is now available on HuggingFace! Access it at [gso-bench/gso](https://huggingface.co/datasets/gso-bench/gso).
