@@ -126,8 +126,8 @@ def analyze_patch_for_hacks(
         try:
             client = openai.OpenAI()
             response = client.chat.completions.create(
-                model="gpt-5",
-                reasoning_effort="high",
+                model="gpt-5.4",
+                reasoning_effort="xhigh",
                 messages=[{"role": "user", "content": prompt}],
             )
             return response.choices[0].message.content

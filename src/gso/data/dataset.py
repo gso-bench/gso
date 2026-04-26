@@ -54,6 +54,25 @@ class GSOInstance:
             f"git reset --hard {self.base_commit}",
             # Remove remote so agent can't see newer commits
             f"git remote remove origin",
+            # Strip refs that point to commits AFTER base_commit (i.e. not
+            # ancestors of HEAD) so `git log --all` cannot reveal future state.
+            # Keep tags/branches/remote refs that point to past commits so
+            # tools like `git describe` (used by numpy's setup.py for version
+            # parsing) keep working.
+            "git for-each-ref --format='%(objectname) %(refname)' "
+            "refs/tags refs/remotes refs/heads | "
+            'while read sha ref; do '
+            'if ! git merge-base --is-ancestor "$sha" HEAD 2>/dev/null; then '
+            'git update-ref -d "$ref"; '
+            'fi; '
+            "done",
+            "git reflog expire --expire=now --all",
+            # Repack to drop pack-level reachability, but DO NOT --prune objects:
+            # the opt_commit object must remain in .git/objects so that
+            # `git rev-parse {base_commit}^` (where base_commit ends in '^')
+            # resolves for downstream scaffolds. Unreferenced commits are not
+            # surfaced by `git log --all` once their refs are deleted.
+            "git gc --auto",
         ]
 
         return (
