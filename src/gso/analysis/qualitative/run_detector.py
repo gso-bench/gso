@@ -249,7 +249,7 @@ def main():
     parser.add_argument("--run_dirs", required=True, help="Run directory glob pattern")
     parser.add_argument("--thresholds", type=float, nargs="+", default=[0.0])
     parser.add_argument("--max_workers", type=int, default=80)
-    parser.add_argument("--k_samples", type=int, default=7)
+    parser.add_argument("--k_samples", type=int, default=10)
     parser.add_argument("--model_name", type=str, required=True)
     parser.add_argument(
         "--report_path", type=str, required=True, help="Path to merged report"
