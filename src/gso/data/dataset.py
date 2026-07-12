@@ -91,7 +91,12 @@ class GSOInstance:
             [
                 f"git remote add origin {self.repo_url}",  # add remote back
                 "git fetch origin",  # fetch all branches
-                "git clean -xfd",  # clean up untracked files
+                # Clean submodule contents FIRST — if the agent's patch added
+                # untracked files inside a submodule dir, they would otherwise
+                # block the later `git checkout <opt_commit>` step. See
+                # gso-internal fix/eval-infra task #9.
+                'git submodule foreach --recursive "git checkout -- . 2>/dev/null || true; git clean -xfd 2>/dev/null || true"',
+                "git clean -xfd",  # clean outer repo untracked files
                 "git reset --hard origin/main || git reset --hard origin/master || git reset --hard origin/simd/master",  # reset to main
             ]
         )

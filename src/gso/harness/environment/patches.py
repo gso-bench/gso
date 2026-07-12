@@ -3,6 +3,8 @@ def apply_patch_requests(test: str) -> str:
 import requests
 import hashlib
 import os
+import re
+import io
 import json
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
@@ -16,6 +18,54 @@ def url_to_filename(url):
     hash_digest = hashlib.sha256(url.encode()).hexdigest()
     return os.path.join(CACHE_DIR, hash_digest)
 
+# Wikimedia thumbnail-size compatibility shim.
+# Wikimedia has tightened accepted thumbnail sizes, so URLs like
+#   /thumb/{path}/{file}/{N}px-{file}
+# now return 400 for arbitrary N. We rewrite to the original (full-size)
+# image and resize with PIL to the requested {N}px width. See gso-bench/gso#31, #32.
+_WIKI_THUMB_RE = re.compile(
+    r"^(https://upload\\.wikimedia\\.org/wikipedia/commons/thumb/([^/]+/[^/]+)/([^/]+))/([0-9]+)px-([^/]+)$"
+)
+
+def _wikimedia_original_url(match):
+    # https://upload.wikimedia.org/wikipedia/commons/<hash_dirs>/<file>
+    _thumb_full, hash_dirs, file_name, _px, _repeated = match.groups()
+    return "https://upload.wikimedia.org/wikipedia/commons/" + hash_dirs + "/" + file_name
+
+def _resize_to_thumbnail_bytes(image_bytes, target_px, source_url):
+    from PIL import Image
+    im = Image.open(io.BytesIO(image_bytes))
+    # Wikimedia thumbnail semantics: N px is the WIDTH of the thumbnail,
+    # with height scaled to preserve aspect ratio.
+    w, h = im.size
+    if w == 0:
+        return image_bytes
+    new_w = int(target_px)
+    new_h = max(1, round(h * (new_w / w)))
+    im = im.resize((new_w, new_h))
+    buf = io.BytesIO()
+    fmt = 'PNG' if source_url.lower().endswith('.png') else 'JPEG'
+    save_kwargs = {'quality': 90} if fmt == 'JPEG' else {}
+    im.save(buf, format=fmt, **save_kwargs)
+    return buf.getvalue()
+
+def _fetch_wikimedia_fallback(url, *args, **kwargs):
+    match = _WIKI_THUMB_RE.match(url)
+    if not match:
+        return None
+    orig_url = _wikimedia_original_url(match)
+    target_px = int(match.group(4))
+    if os.getenv("DEBUG_GSO") == "true":
+        print(f"Wikimedia thumb 400; rewriting to original + resize({target_px}px): {url}")
+    orig_resp = original_get(orig_url, *args, **kwargs)
+    if orig_resp.status_code != 200:
+        return None
+    try:
+        content = _resize_to_thumbnail_bytes(orig_resp.content, target_px, url)
+    except Exception:
+        return None
+    return content
+
 def patched_get(url, *args, **kwargs):
     cache_path = url_to_filename(url)
 
@@ -28,7 +78,7 @@ def patched_get(url, *args, **kwargs):
         response._content = cached_content
         response.headers['X-From-Cache'] = 'true'
         return response
-    
+
     if os.getenv("DEBUG_GSO") == "true":
         print(f"WARN: cache miss for url: {url} in file: {__file__}")
 
@@ -41,6 +91,20 @@ def patched_get(url, *args, **kwargs):
         kwargs['headers']['User-Agent'] = "CoolBot/1.0 (https://example.org/coolbot/; coolbot@example.org)"
 
     response = original_get(url, *args, **kwargs)
+
+    # Wikimedia thumbnail 400 fallback: fetch original + resize to requested px
+    if response.status_code == 400 and 'upload.wikimedia.org/wikipedia/commons/thumb/' in url:
+        fallback_bytes = _fetch_wikimedia_fallback(url, *args, **kwargs)
+        if fallback_bytes is not None:
+            with open(cache_path, 'wb') as f:
+                f.write(fallback_bytes)
+            fake = requests.Response()
+            fake.status_code = 200
+            fake.url = url
+            fake._content = fallback_bytes
+            fake.headers['X-Wiki-Thumb-Rewrite'] = 'true'
+            return fake
+
     if response.status_code == 200:
         with open(cache_path, 'wb') as f:
             f.write(response.content)
