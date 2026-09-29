@@ -72,6 +72,7 @@ def merge_reports(full_dataset, report_files, k):
 
     STATUS_SETS = [
         "completed_ids",
+        "incomplete_ids",
         "passed_ids",
         "base_failed_ids",
         "patch_failed_ids",
@@ -137,8 +138,18 @@ def merge_reports(full_dataset, report_files, k):
             current_report = json.load(f)
             current_sets = current_report["instance_sets"]
 
-            # Update instance statuses
-            for instance_id in current_sets["completed_ids"]:
+            # Empty patches and infrastructure errors may have no completed report.
+            report["instance_sets"]["completed_ids"].update(
+                current_sets["completed_ids"]
+            )
+            submitted_ids = set().union(
+                *(
+                    current_sets.get(f"{status}_ids", [])
+                    for status in STATUS_PRIORITY
+                    if status is not None
+                )
+            )
+            for instance_id in submitted_ids:
                 status = get_instance_status(instance_id, current_sets)
                 current_priority = STATUS_PRIORITY.get(instance_status.get(instance_id))
                 new_priority = STATUS_PRIORITY.get(status)
@@ -151,9 +162,12 @@ def merge_reports(full_dataset, report_files, k):
 
     # Populate instance sets based on best status
     for instance_id, status in instance_status.items():
-        report["instance_sets"]["completed_ids"].add(instance_id)
         if status:
             report["instance_sets"][f"{status}_ids"].add(instance_id)
+
+    report["instance_sets"]["incomplete_ids"] = {
+        instance.instance_id for instance in full_dataset
+    } - set(instance_status)
 
     # Populate opt stats
     opt_commit_ids = set(report["instance_sets"]["opt_commit_ids"])
@@ -186,6 +200,7 @@ def merge_reports(full_dataset, report_files, k):
         "total_instances": len(full_dataset),
         "total_predictions": len(instance_status),
         "completed_instances": "completed_ids",
+        "incomplete_instances": "incomplete_ids",
         "passed_instances": "passed_ids",
         "patch_failed_instances": "patch_failed_ids",
         "test_failed_instances": "test_failed_ids",
