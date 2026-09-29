@@ -645,7 +645,7 @@ wheels = [
 
 [[package]]
 name = "gsobench"
-version = "0.1.7"
+version = "0.1.9"
 source = { editable = "." }
 dependencies = [
     { name = "black" },
