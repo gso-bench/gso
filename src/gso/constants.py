@@ -30,7 +30,7 @@ EVALUATION_REPORTS_DIR = Path("reports")
 PLOTS_DIR = Path("plots")
 
 # --------- Build Constants ---------
-MIN_PROB_SPEEDUP = 1.2  # min speedup to consider a problem as a benchmark instance
+MIN_PROB_SPEEDUP = 1.1  # min speedup to consider a problem as a benchmark instance
 MAX_TEST_COUNT = 20  # max number of tests to run per problem
 LOW_TEST_IDEAL_TEST_COUNT = 5  # target test count with low test count
 LOW_TEST_FALLBACK_SPEEDUP = 1.1  # min speedup for problems with low test count

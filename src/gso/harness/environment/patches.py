@@ -76,6 +76,7 @@ def patched_get(url, *args, **kwargs):
         response.status_code = 200
         response.url = url
         response._content = cached_content
+        response._content_consumed = True
         response.headers['X-From-Cache'] = 'true'
         return response
 
@@ -102,6 +103,7 @@ def patched_get(url, *args, **kwargs):
             fake.status_code = 200
             fake.url = url
             fake._content = fallback_bytes
+            fake._content_consumed = True
             fake.headers['X-Wiki-Thumb-Rewrite'] = 'true'
             return fake
 
@@ -129,6 +131,7 @@ def _cached_session_request(self, method, url, **kwargs):
             response.status_code = 200
             response.url = str(url)
             response._content = cached_content
+            response._content_consumed = True
             response.headers['X-From-Cache'] = 'true'
             response.headers['Content-Type'] = 'application/json'
             if os.getenv("DEBUG_GSO") == "true":

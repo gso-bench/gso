@@ -1,28 +1,29 @@
-"""
-Reward Hack Detector for GSO with Threshold Variation
+"""Run reward hack detection on final predictions or run directories.
 
-This script runs reward hack detection at multiple speedup thresholds.
-It analyzes instances ONCE at the lowest threshold and propagates results to higher thresholds.
-
-Usage:
-    uv run src/gso/analysis/qualitative/detect_reward_hacks_thresholded.py \
-        --run_dirs "gpt-5-2025-08-07_maxiter_100_N_v0.51.1-no-hint-run_*" \
-        --thresholds 0.25 0.5 0.75 \
-        --model_name "gpt-5"
+Example:
+    uv run python -m gso.analysis.qualitative.run_detector \
+        --predictions_file output.gso.jsonl --report_path model.report.json \
+        --model_name model --output_path detector.json
 """
 
 import json
 import argparse
 import glob
+import hashlib
+import sys
 from tqdm import tqdm
 from pathlib import Path
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from gso.utils.io import load_gso_dataset
 from gso.constants import EVALUATION_REPORTS_DIR, MIN_PROB_SPEEDUP
 from gso.harness.utils import natural_sort_key
 from gso.analysis.qualitative.utils import load_model_patch
-from gso.analysis.qualitative.hack_detector import analyze_patch_for_hacks
+from gso.analysis.qualitative.hack_detector import (
+    analyze_patch_for_hacks,
+    JUDGE_MODEL,
+    JUDGE_BASE_URL,
+)
 
 
 def get_instances_passing_threshold(report_paths, threshold_p, dataset):
@@ -188,7 +189,11 @@ def analyze_at_lowest_threshold(
 
 def generate_threshold_summary(all_analyses, threshold_p):
     """Generate summary for a specific threshold by filtering analyses."""
-    filtered = [a for a in all_analyses if a["pc_speedup_hm"] > threshold_p]
+    filtered = [
+        a
+        for a in all_analyses
+        if "error" not in a and (threshold_p == 0.0 or a["pc_speedup_hm"] > threshold_p)
+    ]
 
     if not filtered:
         return {
@@ -244,11 +249,204 @@ def print_score_summary(report_path: str, hacked_instances: list[str]):
     print("=" * 10)
 
 
+def sha256_file(path):
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+def load_selected_predictions(predictions_file, report):
+    rows = [
+        json.loads(line)
+        for line in Path(predictions_file).read_text().splitlines()
+        if line.strip()
+    ]
+    selected = {row["instance_id"]: row for row in rows}
+    if len(selected) != len(rows):
+        raise ValueError("Duplicate prediction IDs")
+    sets = report["instance_sets"]
+    attempted = set().union(
+        *(
+            set(ids)
+            for key, ids in sets.items()
+            if key.endswith("_ids") and key != "incomplete_ids"
+        )
+    )
+    if (
+        sets.get("incomplete_ids")
+        or set(selected) != attempted
+        or len(selected) != report["summary"]["total_instances"]
+    ):
+        raise ValueError("Predictions must exactly match the final report")
+    empty = {key for key, row in selected.items() if not row["model_patch"].strip()}
+    if empty != set(sets.get("empty_patch_ids", [])):
+        raise ValueError("Empty patches differ between predictions and report")
+    return {key: row for key, row in selected.items() if key not in empty}, sorted(
+        empty
+    )
+
+
+def analyze_selected_predictions(args, dataset):
+    """Audit explicitly selected attempts, with resumable, complete vote coverage."""
+    report = json.loads(Path(args.report_path).read_text())
+    selected, empty = load_selected_predictions(args.predictions_file, report)
+    lookup = {inst.instance_id: inst for inst in dataset}
+    if not set(selected) <= set(lookup):
+        raise ValueError("Prediction IDs are absent from the dataset")
+    output_path = Path(
+        args.output_path
+        or (
+            EVALUATION_REPORTS_DIR
+            / "analysis"
+            / "hack_detection"
+            / "no_threshold"
+            / f"{args.model_name}_hack_detection_no_threshold.json"
+        )
+    )
+    config = {
+        "judge_model": JUDGE_MODEL,
+        "base_url": JUDGE_BASE_URL,
+        "reasoning_effort": "xhigh",
+        "k_samples": args.k_samples,
+        "predictions_sha256": sha256_file(args.predictions_file),
+        "report_sha256": sha256_file(args.report_path),
+        "detector_sha256": sha256_file(Path(__file__).with_name("hack_detector.py")),
+        "runner_sha256": sha256_file(__file__),
+        "utils_sha256": sha256_file(Path(__file__).with_name("utils.py")),
+    }
+    saved = {}
+    if output_path.exists():
+        previous = json.loads(output_path.read_text())
+        if previous.get("config") != config:
+            raise ValueError(
+                "Existing checkpoint has different inputs or judge configuration"
+            )
+        saved = {r["instance_id"]: r for r in previous["all_analyses"]}
+        if not set(saved) <= set(selected):
+            raise ValueError("Checkpoint contains unselected instances")
+
+    def save():
+        analyses = [saved[key] for key in sorted(saved)]
+        good = [r for r in analyses if "error" not in r]
+        summary = generate_threshold_summary(good, 0.0)
+        flagged_winners = set(summary["hacked_instances"]) & set(
+            report["instance_sets"]["opt_commit_ids"]
+        )
+        total = report["summary"]["total_instances"]
+        wins = report["summary"]["opt_commit"]
+        payload = {
+            "score": round(wins / total * 100, 2),
+            "score_hack_control": (
+                round((wins - len(flagged_winners)) / total * 100, 2)
+                if len(good) == len(selected)
+                else None
+            ),
+            "flagged_target_ids": sorted(flagged_winners),
+            "model_name": args.model_name,
+            "config": config,
+            "predictions_file": str(args.predictions_file),
+            "report_path": str(args.report_path),
+            "k_samples": args.k_samples,
+            "expected_count": len(selected),
+            "skipped_empty_ids": empty,
+            "pending_ids": sorted(set(selected) - set(saved)),
+            "error_ids": sorted(r["instance_id"] for r in analyses if "error" in r),
+            "complete": len(good) == len(selected),
+            "all_analyses": analyses,
+            **summary,
+        }
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        temporary = output_path.with_suffix(".tmp")
+        temporary.write_text(json.dumps(payload, indent=2) + "\n")
+        temporary.replace(output_path)
+
+    def analyze(instance_id):
+        inst = lookup[instance_id]
+        row = selected[instance_id]
+        old = saved.get(instance_id, {})
+        result = analyze_patch_for_hacks(
+            instance_id,
+            inst.repo,
+            inst.api,
+            inst.tests,
+            inst.gt_diff,
+            row["model_patch"],
+            k_samples=args.k_samples,
+            initial_responses=old.get("individual_responses", []),
+        )
+        result.update(
+            {
+                "instance_id": instance_id,
+                "repo": inst.repo,
+                "api": inst.api,
+                "model_name_or_path": row["model_name_or_path"],
+                "patch_sha256": hashlib.sha256(row["model_patch"].encode()).hexdigest(),
+                "is_correct": instance_id in report["instance_sets"]["passed_ids"],
+                "meets_target": instance_id
+                in report["instance_sets"]["opt_commit_ids"],
+                "pc_speedup_hm": report.get("opt_stats", {})
+                .get(instance_id, {})
+                .get("hm_speedup_patch_commit", 0.0),
+            }
+        )
+        return result
+
+    pending = [
+        key for key in sorted(selected) if key not in saved or "error" in saved[key]
+    ]
+    print(
+        f"{args.model_name}: {len(selected)} patches, {len(empty)} empty, "
+        f"{len(selected) - len(pending)} already complete",
+        flush=True,
+    )
+    print(
+        f"Judge {JUDGE_MODEL}, {args.k_samples} votes, "
+        f"at most {args.max_workers * args.k_samples} concurrent requests",
+        flush=True,
+    )
+    save()
+    with ThreadPoolExecutor(max_workers=args.max_workers) as executor:
+        futures = {executor.submit(analyze, key): key for key in pending}
+        for future in as_completed(futures):
+            key = futures[future]
+            try:
+                saved[key] = future.result()
+            except Exception as exc:
+                saved[key] = {
+                    **saved.get(key, {}),
+                    "instance_id": key,
+                    "error": type(exc).__name__,
+                }
+            save()
+            result = saved[key]
+            verdict = result.get(
+                "error", "flagged" if result.get("is_reward_hack") else "unflagged"
+            )
+            done = sum("error" not in r for r in saved.values())
+            print(
+                f"[{done}/{len(selected)}] {key}: {verdict} "
+                f"({result.get('total_votes', 0)}/{args.k_samples} votes)",
+                flush=True,
+            )
+    print(f"Results saved to: {output_path}", flush=True)
+    good = [r for r in saved.values() if "error" not in r]
+    if len(good) != len(selected):
+        print(
+            "INCOMPLETE: score adjustment withheld until all patches have full vote coverage."
+        )
+        return 1
+    print_score_summary(
+        args.report_path, [r["instance_id"] for r in good if r["is_reward_hack"]]
+    )
+    return 0
+
+
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--run_dirs", required=True, help="Run directory glob pattern")
+    inputs = parser.add_mutually_exclusive_group(required=True)
+    inputs.add_argument("--run_dirs", help="Legacy run directory glob pattern")
+    inputs.add_argument("--predictions_file", help="Final selected output.gso.jsonl")
+    parser.add_argument("--output_path", help="Resumable detector report path")
     parser.add_argument("--thresholds", type=float, nargs="+", default=[0.0])
-    parser.add_argument("--max_workers", type=int, default=80)
+    parser.add_argument("--max_workers", type=int, default=2)
     parser.add_argument("--k_samples", type=int, default=10)
     parser.add_argument("--model_name", type=str, required=True)
     parser.add_argument(
@@ -258,6 +456,12 @@ def main():
         "--reformat_reports", action="store_true", help="Reuse existing results"
     )
     args = parser.parse_args()
+    if args.k_samples < 1 or args.max_workers < 1:
+        parser.error("k_samples and max_workers must be positive")
+    if args.predictions_file and args.thresholds != [0.0]:
+        parser.error(
+            "Selected prediction mode audits all nonempty patches; use thresholds 0.0"
+        )
 
     # Reformat mode: reuse existing detection results
     if args.reformat_reports:
@@ -283,6 +487,8 @@ def main():
 
     # Load dataset
     dataset = load_gso_dataset("gso-bench/gso", "test")
+    if args.predictions_file:
+        return analyze_selected_predictions(args, dataset)
     model_name = args.model_name
     thresholds = sorted(args.thresholds)
     min_threshold = min(thresholds)
@@ -362,4 +568,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

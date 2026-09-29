@@ -13,8 +13,8 @@
     <a href="LICENSE">
         <img alt="License" src="https://img.shields.io/badge/License-MIT-blue">
     </a>
-    <a href="https://pypi.org/project/gso/">
-        <img src="https://img.shields.io/badge/pypi-v0.1.0-blue">
+    <a href="https://pypi.org/project/gsobench/">
+        <img src="https://img.shields.io/pypi/v/gsobench">
     </a>
 </p> -->
 
